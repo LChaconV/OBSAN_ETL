@@ -1,0 +1,50 @@
+irca_transform:
+  source:
+    bronze_dir: "data/bronze/irca"
+    silver_fact_dir: "data/silver/irca"
+
+  run:
+    process_latest_run_only: true
+
+  validation:
+    required_columns:
+      - ":id"
+      - ":updated_at"
+      - "a_o"
+      - "municipiocodigo"
+      - "departamentocodigo"
+      - "irca"
+
+  typing:
+    numeric_columns:
+      - "irca"
+      - "a_o"
+    text_columns:
+      - "municipiocodigo"
+      - "departamentocodigo"
+    datetime_columns:
+      - ":updated_at"
+
+  deduplication:
+    id_column: ":id"
+    order_column: ":updated_at"
+    keep: "last"
+
+  fact_table:
+    grain:
+      - "a_o"
+      - "departamentocodigo"
+      - "municipiocodigo"
+    metric_column: "irca"
+    rename_columns:
+      a_o: "year"
+      departamentocodigo: "id_dept"
+      municipiocodigo: "id_mun"
+      irca: "irca_value"
+    output_columns:
+      - "id_irca_fact"
+      - "year"
+      - "id_dept"
+      - "id_mun"
+      - "irca_value"
+    file_prefix: "irca"

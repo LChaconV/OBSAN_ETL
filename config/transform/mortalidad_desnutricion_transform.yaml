@@ -1,0 +1,118 @@
+mortalidad_desnutricion_transform:
+
+  source:
+    bronze_dir: "data/bronze/mortalidad_desnutricion"
+    silver_fact_dir: "data/silver/mortalidad_desnutricion"
+    silver_dimension_dir: "data/silver/mortalidad_desnutricion"
+    golden_fact_dir: "data/golden/mortalidad_desnutricion"
+    
+  run:
+    process_latest_run_only: true
+
+  validation:
+    required_columns:
+      - "CONSECUTIVE"
+      - "COD_EVE"
+      - "FEC_DEF"
+      - "ANO"
+      - "EDAD"
+      - "COD_PAIS_O"
+      - "COD_DPTO_O"
+      - "COD_MUN_O"
+
+    
+
+  filter:
+    column: "COD_EVE"
+    value: 112
+
+  # -----------------------------------
+  # Manejo de fechas
+  # -----------------------------------
+  date_parsing:
+    source_column: "FEC_DEF"
+    parsed_column: "date_event"
+    invalid_flag_column: "invalid_date"
+    formats:
+      - "%d/%m/%Y"
+      - "%Y-%m-%d"
+      - "%d/%m/%Y %H:%M"
+
+  date_transformation:
+    column: "date_event"
+    type: "month_start"
+
+  # -----------------------------------
+  # Tipado
+  # -----------------------------------
+  typing:
+    string_columns:
+      - "CONSECUTIVE"
+      - "COD_PAIS_O"
+      - "COD_DPTO_O"
+      - "COD_MUN_O"
+
+    numeric_columns:
+      - "ANO"
+      - "EDAD"
+
+  # -----------------------------------
+  # Columnas derivadas
+  # -----------------------------------
+  derived_columns:
+    id_muni:
+      type: "concat"
+      columns:
+        - "COD_DPTO_O"
+        - "COD_MUN_O"
+
+  # -----------------------------------
+  # Renombramiento
+  # -----------------------------------
+  rename_columns:
+    CONSECUTIVE: "id_consecutive"
+    ANO: "year"
+    EDAD: "age"
+    COD_PAIS_O: "id_country"
+    COD_DPTO_O: "id_dept"
+
+
+  # -----------------------------------
+  # Tabla de hechos
+  # -----------------------------------
+  fact_table:
+
+    grain:
+      - "date_event"
+      - "year"
+      - "age"
+      - "id_muni"
+
+    metric_column: "id_consecutive"
+
+    aggregation:
+      total_cases: "count"
+
+    output_columns:
+
+      - "date_event"
+      - "year"
+      - "age"
+      - "id_muni"
+      - "total_cases"
+
+    file_prefix: "mortalidad_desnutricion"
+  
+  # -----------------------------------
+  # Tabla de hechos golden
+  # -----------------------------------
+  fact_table_golden:
+
+    grain_golden:
+      - "year"
+      - "age"
+      - "id_muni"
+
+    aggregation:
+      total_cases: "count"
+    file_prefix: "mortalidad_desnutricion"

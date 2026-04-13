@@ -1,0 +1,22 @@
+mortalidad_desnutricion:
+  last_loaded_value: null
+  row_count_db: 0
+  last_load_timestamp: null
+subregion:
+  last_incremental_value: '9900'
+  incremental_column: id_subregion
+  last_run_at: '2026-04-01T01:04:54.459400+00:00'
+  last_row_count: 141
+  extraction_mode: db_load_geo_parquet
+perfil_antioquia:
+  last_incremental_value: perfil_antioquia_run_2026_03_28.csv
+  incremental_column: run_filename
+  last_run_at: '2026-04-05T16:20:17.002504+00:00'
+  last_row_count: 18
+  extraction_mode: db_load_gold_run
+divipola:
+  last_incremental_value: '99773'
+  incremental_column: id_mun
+  last_run_at: '2026-04-09T16:34:17.028016+00:00'
+  last_row_count: 1123
+  extraction_mode: db_load

@@ -1,0 +1,58 @@
+familias_accion_transform:
+  source:
+    bronze_dir: "data/bronze/beneficiarios_familias_en_accion"
+    silver_fact_dir: "data/silver/beneficiarios_familias_en_accion"
+
+  run:
+    process_latest_run_only: true
+
+  validation:
+    required_columns:
+      - ":id"
+      - ":updated_at"
+      - "codigodepartamentoatencion"
+      - "codigomunicipioatencion"
+      - "tipobeneficio"
+      - "fechaultimobeneficioasignado"
+      - "cantidaddebeneficiarios"
+      - "estadobeneficiario"
+
+  typing:
+    numeric_columns:
+      - "cantidaddebeneficiarios"
+    text_columns:
+      - "codigodepartamentoatencion"
+      - "codigomunicipioatencion"
+      - "tipobeneficio"
+      
+    datetime_columns:
+      - ":updated_at"
+      - "fechaultimobeneficioasignado"
+
+  deduplication:
+    id_column: ":id"
+    order_column: ":updated_at"
+    keep: "last"
+
+  fact_table:
+    grain:
+      - "fechaultimobeneficioasignado"
+      - "codigodepartamentoatencion"
+      - "codigomunicipioatencion"
+      - "tipobeneficio"
+      - "estadobeneficiario"
+    metric_column: "cantidaddebeneficiarios"
+    rename_columns:
+      fechaultimobeneficioasignado: "date_event"
+      codigodepartamentoatencion: "id_dept"
+      codigomunicipioatencion: "id_mun"
+      tipobeneficio: "benefit_type"
+      cantidaddebeneficiarios: "beneficiary_count"
+      unidad: "unit"  
+    output_columns:
+      - "date_event"
+      - "id_dept"
+      - "id_mun"
+      - "beneficiary_count"
+      - "benefit_type"
+    file_prefix: "beneficiarios_familias_en_accion"

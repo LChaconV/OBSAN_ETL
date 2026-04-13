@@ -1,0 +1,58 @@
+erradicacion_cultivos_transform:
+  source:
+    bronze_dir: "data/bronze/erradicacion_cultivos"
+    silver_fact_dir: "data/silver/erradicacion_cultivos"
+
+  run:
+    process_latest_run_only: true
+
+  validation:
+    required_columns:
+      - ":id"
+      - ":updated_at"
+      - "fecha_hecho"
+      - "cod_depto"
+      - "cod_muni"
+      - "tipo_de_cultivo"
+      - "cantidad"
+      - "unidad"
+
+
+  typing:
+    numeric_columns:
+      - "cantidad"
+    text_columns:
+      - "cod_depto"
+      - "cod_muni"
+      - "tipo_de_cultivo"
+      - "unidad"
+    datetime_columns:
+      - ":updated_at"
+      - "fecha_hecho"
+
+  deduplication:
+    id_column: ":id"
+    order_column: ":updated_at"
+    keep: "last"
+
+  fact_table:
+    grain:
+      - "fecha_hecho"
+      - "cod_depto"
+      - "cod_muni"
+      - "tipo_de_cultivo"
+    metric_column: "cantidad"
+    rename_columns:
+      fecha_hecho: "date_event"
+      cod_depto: "id_dept"
+      cod_muni: "id_mun"
+      tipo_de_cultivo: "id_ilicit_crop"
+      cantidad: "quantity"
+      unidad: "unit"  
+    output_columns:
+      - "id_erradicacion_fact"
+      - "date_event"
+      - "id_dept"
+      - "id_mun"
+      - "quantity"
+    file_prefix: "erradicacion_cultivos"

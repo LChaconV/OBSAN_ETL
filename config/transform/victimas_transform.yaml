@@ -1,0 +1,79 @@
+victimas_transform:
+  source:
+    bronze_dir: "data/bronze/victimas"
+    silver_fact_dir: "data/silver/victimas"
+    golden_fact_dir: "data/golden/victimas"
+    silver_dimension_dir: "data/golden/dimensions"
+
+  run:
+    process_latest_run_only: true
+
+  validation:
+    required_columns:
+      - "fecha_corte"
+      - "cod_ciudad_muni"
+      - "param_hecho"
+      - "hecho"
+      - "sexo"
+      - "per_ocu"
+      - ":id"
+      - ":updated_at"
+
+  date_parsing:
+    source_column: "fecha_corte"
+    raw_column: "fecha_corte_raw"
+    parsed_column: "date_victim"
+    invalid_flag_column: "invalid_date"
+    formats:
+      - "%d/%m/%Y"
+      - "%Y/%m/%d"
+      - "%d/%m/%y"
+      - "%d/%m/%Y %H:%M"
+
+  typing:
+    numeric_columns:
+      - "per_ocu"
+      - "param_hecho"
+    text_columns:
+      - "cod_ciudad_muni"
+      - "hecho"
+      - "sexo"
+    datetime_columns:
+      - ":updated_at"
+
+  deduplication:
+    id_column: ":id"
+    order_column: ":updated_at"
+    keep: "last"
+
+  business_rules:
+    metric_column: "per_ocu"
+    drop_null_in_metric: true
+
+  dimensions:
+    victim_event_type:
+      source_id_column: "param_hecho"
+      source_name_column: "hecho"
+      output_id_column: "id_victim_event"
+      output_name_column: "event_name"
+      file_name: "victim_event_type.parquet"
+
+  fact_table:
+    grain:
+      - "date_victim"
+      - "cod_ciudad_muni"
+      - "param_hecho"
+      - "sexo"
+    metric_column: "per_ocu"
+    rename_columns:
+      cod_ciudad_muni: "id_mun"
+      param_hecho: "id_victim_event"
+      per_ocu: "victim_count"
+    output_columns:
+      - "id_victim_fact"
+      - "date_victim"
+      - "id_mun"
+      - "id_victim_event"
+      - "sexo"
+      - "victim_count"
+    file_prefix: "victimas"

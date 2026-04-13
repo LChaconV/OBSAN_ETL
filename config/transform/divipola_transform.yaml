@@ -1,0 +1,5 @@
+divipola:
+  source:
+    bronze_dir: "data/bronze/division politica"
+    silver_fact_dir: "data/silver/divipola"
+    prefix: "divipola"

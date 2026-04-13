@@ -1,0 +1,14 @@
+# ============================================================
+# PARÁMETROS DE CONEXIÓN A POSTGRESQL
+# ============================================================
+postgresql:
+  user: "postgres"
+  pass: "admin123"
+  host: "localhost"
+  port: 5432
+  database: "postgres"
+
+# Parámetros opcionales de rendimiento
+pooling:
+  min_size: 1
+  max_size: 5

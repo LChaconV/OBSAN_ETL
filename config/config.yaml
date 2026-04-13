@@ -1,0 +1,24 @@
+paths:
+  data: data
+
+silver:
+  divipola_dir: data/silver/divipola
+  divipola_file: divipola.parquet
+
+  subregiones_dir: data/silver/subregiones
+  subregiones_file: subregiones_nacional.parquet
+
+  pme_dir : data/silver/pmenfoquediferencial
+  pme_sex_p_file : pme_sexopoblacion.csv
+  pme_sex_h_file : pme_sexojefehogar.csv
+
+
+data_silver:
+  columns:
+    divipola:
+      id_mun: MpCodigo
+      name_mun: MpNombre
+      name_dept: Depto
+      id_dept: departamentos — Departamentos_Diciembre_2025_shp/Depto.shp_DeCodigo
+      geometry: geometry
+

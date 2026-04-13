@@ -1,0 +1,264 @@
+# ============================================================
+# CAPA MAESTRA (DIMENSIONES GEOGRÁFICAS)
+# ============================================================
+
+subregion:
+  name: "Subregiones de Colombia"
+  path_gold: "data/golden/subregiones/subregion.parquet"
+
+
+# ============================================================
+# CAPA DE HECHOS (INDICADORES SAN)
+# ============================================================
+perfil_antioquia:
+  path_gold: "data/golden/perfil_antioquia"
+
+mortalidad_desnutricion:
+  name: "Mortalidad por Desnutrición"
+  base_url: ""
+
+  path_gold: "data/golden/mortalidad_desnutricion"
+
+desnutricion_aguda_5:
+  name: "Desnutrición Aguda en Menores de 5 Años"
+  base_url: ""
+
+  path_gold: "data/golden/desnutricion_aguda_5"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+subregiones:
+  name: "Subregiones de Colombia"
+  base_url: "https://www.datos.gov.co/es/dataset/Subregiones-Provincias-de-Colombia/gxph-cw5a"
+  storage:
+    bronze_dir: "data/bronze/subregiones"
+    file: "subregiones_provincias_colombia.geojson"
+    file_prefix: "subregiones_provincias_colombia"
+
+
+
+
+
+
+
+
+
+
+
+
+
+## -----------------------------------
+victimas:
+  name: "Cifras de Víctimas Municipal"
+  base_url: "https://www.datos.gov.co/resource/9qih-4vkc.json"
+
+  incremental:
+    enabled: true
+    column: ":updated_at"
+    start_value: null
+
+  pagination:
+    page_size: 50000
+    sleep_seconds: 0.2
+
+  request:
+    timeout_seconds: 60
+    max_retries: 5
+
+  select_columns:
+    - ":id"
+    - ":updated_at"
+    - "fecha_corte"
+    - "cod_ciudad_muni"
+    - "param_hecho"
+    - "hecho"
+    - "sexo"
+    - "per_ocu"
+
+  storage:
+    bronze_dir: "data/bronze/victimas"
+    file_prefix: "victimas"
+
+irca:
+  name: "Indice de Riesgo de la Calidad de Agua Potable"
+  web_site: "https://www.datos.gov.co/Salud-y-Protecci-n-Social/Indice-de-Riesgo-de-la-Calidad-de-Agua-Potable/nxt2-39c3"
+  base_url: "https://www.datos.gov.co/resource/nxt2-39c3.json"
+
+  incremental:
+    enabled: true
+    column: ":updated_at"
+    start_value: "2025-06-01T00:00:00.000"
+
+  pagination:
+    page_size: 50000
+    sleep_seconds: 0.2
+
+  request:
+    timeout_seconds: 60
+    max_retries: 5
+
+  select_columns:
+    - ":id"
+    - ":updated_at"
+    - "a_o"
+    - "municipiocodigo"
+    - "departamentocodigo"
+    - "irca"
+
+  storage:
+    bronze_dir: "data/bronze/irca"
+    file_prefix: "irca"
+
+coca:
+
+  name: "Cultivos de coca en Colombia"
+  web:_site: "https://www.datos.gov.co/Seguridad-y-Defensa/Cultivos-de-coca-en-Colombia/v3rx-q7t3"
+  base_url: "https://www.datos.gov.co/resource/v3rx-q7t3.json"
+
+  incremental:
+    enabled: true
+    column: ":updated_at"
+    start_value: "2024-01-01T00:00:00.000"
+
+  pagination:
+    page_size: 50000
+    sleep_seconds: 0.2
+
+  request:
+    timeout_seconds: 60
+    max_retries: 5
+
+  select_columns:
+    - ":id"
+    - ":updated_at"
+    - "grilla1"
+    - "the_geom"
+    - "areacoca_2001"
+    - "areacoca_2002"
+    - "areacoca_2003"
+    - "areacoca2004"
+    - "areacoca_2005"
+    - "areacoca_2006"
+    - "areacoca_2007"
+    - "areacoca_2008"
+    - "areacoca_2009"
+    - "areacoca_2010"
+    - "areacoca_2011"
+    - "areacoca_2012"
+    - "areacoca_2013"
+
+  storage:
+    bronze_dir: "data/bronze/coca"
+    file_prefix: "coca"
+
+erradicacion_cultivos:
+  name: "Erradicación de Cultivos de Coca"
+  web_site: "https://www.datos.gov.co/Seguridad-y-Defensa/ERRADICACI-N/p72f-qcvk/about_data"
+  base_url: "https://www.datos.gov.co/resource/p72f-qcvk.json"
+
+  incremental:
+    enabled: true
+    column: ":updated_at"
+    start_value: "2025-06-01T00:00:00.000"
+
+  pagination:
+    page_size: 50000
+    sleep_seconds: 0.2
+
+  request:
+    timeout_seconds: 60
+    max_retries: 5
+
+  select_columns:
+    - ":id"
+    - ":updated_at"
+    - "fecha_hecho"
+    - "cod_depto"
+    - "cod_muni"
+    - "tipo_de_cultivo"
+    - "cantidad"
+    - "unidad"
+
+  storage:
+    bronze_dir: "data/bronze/erradicacion_cultivos"
+    file_prefix: "erradicacion_cultivos"
+
+beneficiarios_familias_en_accion:
+  name: "Beneficiarios de Familias en Acción"
+  web_site: "https://www.datos.gov.co/Inclusi-n-Social-y-Reconciliaci-n/Beneficiarios-M-s-Familias-en-Acci-n/xfif-myr2/about_data"
+  base_url: "https://www.datos.gov.co/resource/xfif-myr2.json"
+
+  incremental:
+    enabled: true
+    column: ":updated_at"
+    start_value: null
+
+  pagination:
+    page_size: 50000
+    sleep_seconds: 0.2
+
+  request:
+    timeout_seconds: 60
+    max_retries: 5
+
+  select_columns:
+    - ":id"
+    - ":updated_at"
+    - "codigodepartamentoatencion"
+    - "codigomunicipioatencion"
+    - "tipobeneficio"
+    - "estadobeneficiario"
+    - "fechaultimobeneficioasignado"
+    - "cantidaddebeneficiarios"
+
+  storage:
+    bronze_dir: "data/bronze/beneficiarios_familias_en_accion"
+    file_prefix: "beneficiarios_familias_en_accion"
+
+beneficiarios_iraca:
+  name: "Beneficiarios del IRACA"
+  web_site: "https://www.datos.gov.co/Inclusi-n-Social-y-Reconciliaci-n/Beneficiarios-IRACA/y52n-eqn5/about_data"
+  base_url: "https://www.datos.gov.co/resource/y52n-eqn5.json"
+
+  incremental:
+    enabled: true
+    column: ":updated_at"
+    start_value: null
+
+  pagination:
+    page_size: 50000
+    sleep_seconds: 0.2
+
+  request:
+    timeout_seconds: 60
+    max_retries: 5
+
+  select_columns:
+    - ":id"
+    - ":updated_at"
+    - "cantidaddebeneficiarios"
+    - "codigodepartamentoatencion"
+    - "codigomunicipioatencion"
+    - "fechaultimobeneficioasignado"
+    - "estadobeneficiario"
+    - "tipobeneficio"
+
+  storage:
+    bronze_dir: "data/bronze/beneficiarios_iraca"
+    file_prefix: "beneficiarios_iraca"

@@ -1,0 +1,124 @@
+desnutricion_aguda_5_transform:
+
+  source:
+    bronze_dir: "data/bronze/desnutricion_aguda_5"
+    silver_fact_dir: "data/silver/desnutricion_aguda_5"
+    silver_dimension_dir: "data/silver/desnutricion_aguda_5"
+    golden_fact_dir: "data/golden/desnutricion_aguda_5"
+  run:
+    process_latest_run_only: true
+
+  validation:
+    required_columns:
+      - "CONSECUTIVE"
+      - "confirmados"
+      - "CON_FIN"
+      - "FEC_NOT"
+      - "ANO"
+      - "EDAD"
+      - "COD_PAIS_O"
+      - "COD_DPTO_O"
+      - "COD_MUN_O"
+      - "COD_EVE"
+    
+
+  filter:
+    column: "COD_EVE"
+    value: 113
+
+  # -----------------------------------
+  # Manejo de fechas
+  # -----------------------------------
+  date_parsing:
+    source_column: "FEC_NOT"
+    parsed_column: "date_event"
+    invalid_flag_column: "invalid_date"
+    formats:
+      - "%d/%m/%Y"
+      - "%Y-%m-%d"
+      - "%d/%m/%Y %H:%M"
+
+  date_transformation:
+    column: "date_event"
+    type: "month_start"
+
+  # -----------------------------------
+  # Tipado
+  # -----------------------------------
+  typing:
+    string_columns:
+      - "CONSECUTIVE"
+      - "COD_PAIS_O"
+      - "COD_DPTO_O"
+      - "COD_MUN_O"
+
+    numeric_columns:
+      - "confirmados"
+      - "ANO"
+      - "EDAD"
+
+  # -----------------------------------
+  # Columnas derivadas
+  # -----------------------------------
+  derived_columns:
+    id_muni:
+      type: "concat"
+      columns:
+        - "COD_DPTO_O"
+        - "COD_MUN_O"
+
+  # -----------------------------------
+  # Renombramiento
+  # -----------------------------------
+  rename_columns:
+    CONSECUTIVE: "id_consecutive"
+    confirmados: "confirmed"
+    CON_FIN: "condition_end"
+    ANO: "year"
+    EDAD: "age"
+    COD_PAIS_O: "id_country"
+    COD_DPTO_O: "id_dept"
+
+  # -----------------------------------
+  # Tabla de hechos
+  # -----------------------------------
+  fact_table:
+
+    grain:
+      - "confirmed"
+      - "condition_end"
+      - "date_event"
+      - "year"
+      - "age"
+      - "id_muni"
+
+    metric_column: "id_consecutive"
+
+    aggregation:
+      total_cases: "count"
+
+    output_columns:
+      - "confirmed"
+      - "condition_end"
+      - "date_event"
+      - "year"
+      - "age"
+      - "id_muni"
+      - "total_cases"
+
+    file_prefix: "desnutricion_aguda_5"
+  # -----------------------------------
+  # Tabla de hechos golden
+  # -----------------------------------
+  fact_table_golden:
+
+    grain_golden:
+      - "year"
+      - "age"
+      - "id_muni"
+      - "confirmed"
+      - "condition_end"
+
+    aggregation:
+      total_cases: "count"
+    file_prefix: "desnutricion_aguda_5"

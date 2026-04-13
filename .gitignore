@@ -1,0 +1,20 @@
+# Entornos virtuales
+.venv/
+
+# Configuración local
+.vscode/
+# Python
+__pycache__/
+*.pyc
+
+*csv
+*parquet
+*.log
+*.tmp   
+*geojson
+*.shp
+data/
+visualizaciones/
+logs/
+*.ipynb
+.env
