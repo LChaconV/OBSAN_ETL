@@ -371,11 +371,11 @@ def main() -> None:
     df = normalize_types(df, config)
     df = parse_fecha_corte(df, config)
     df = deduplicate_by_id(df, config)
-    df = apply_business_rules(df, config)
+    df_cleaned = apply_business_rules(df, config)
 
     event_df = upsert_victim_event_type(df, dimension_dir, config)
-    victim_unit = build_victim_unit(df, config)
-    victim_unit_golden = build_victim_unit_golden(df, config)
+    victim_unit = build_victim_unit(df_cleaned, config)
+    victim_unit_golden = build_victim_unit_golden(df_cleaned, config)
 
     save_victim_unit(victim_unit, run_name, fact_dir, config)
     save_victim_unit(victim_unit_golden, run_name, fact_dir_golden, config)

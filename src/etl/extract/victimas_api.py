@@ -408,7 +408,7 @@ def main() -> None:
     setup_logging(LOG_DIR, "victimas_etl.log")
     logging.info("Iniciando extracción de víctimas")
 
-    config = load_source_config("victimas")
+    config = load_source_config()
     state = load_state()
 
     extraction_mode = get_extraction_mode(config)
