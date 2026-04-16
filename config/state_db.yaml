@@ -20,3 +20,9 @@ divipola:
   last_run_at: '2026-04-09T16:34:17.028016+00:00'
   last_row_count: 1123
   extraction_mode: db_load
+victimas_golden_load:
+  last_incremental_value: victimas_run_20260414_172611.parquet
+  incremental_column: file_name
+  last_run_at: '2026-04-16T20:01:52.033031+00:00'
+  last_row_count: 81156
+  extraction_mode: golden_load
