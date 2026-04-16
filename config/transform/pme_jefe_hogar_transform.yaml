@@ -1,0 +1,40 @@
+pme_jefe_hogar_transform:
+
+  source:
+    bronze_dir: "data/bronze/PMEnfoqueDiferencial"
+    silver_fact_dir: "data/silver/pme_jefe_hogar"
+  
+    golden_fact_dir: "data/golden/pme_jefe_hogar"
+  run:
+    process_latest_run_only: true
+
+  validation:
+    required_columns:
+      - "year"
+      - "id_dept"
+      - "sexo_jefe_hogar"
+      - "estimacion"
+  typing:
+    numeric_columns:
+      - "year"
+      - "estimacion"
+    text_columns:
+      - "id_dept"
+      - "sexo_jefe_hogar"
+  fact_table:
+    grain:
+      - "year"
+      - "id_dept"
+      - "sexo_jefe_hogar"
+    metric_column: "estimacion"
+    rename_columns:
+      "year": "year"
+      "id_dept": "id_dept"
+      "sexo_jefe_hogar": "sex_head_hh"
+      "estimacion": "mp_idx_val"
+    output_columns:
+      - "year"
+      - "id_dept"
+      - "sex_head_hh"
+      - "mp_idx_val"
+    file_prefix: "pme_jefe_hogar"

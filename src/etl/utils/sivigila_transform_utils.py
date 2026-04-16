@@ -155,7 +155,7 @@ def transform_dates(df: pd.DataFrame, config: dict) -> pd.DataFrame:
 def create_id_muni(df: pd.DataFrame) -> pd.DataFrame:
     df["COD_DPTO_O"] = df["COD_DPTO_O"].astype(str).str.zfill(2)
     df["COD_MUN_O"] = df["COD_MUN_O"].astype(str).str.zfill(3)
-    df["id_muni"] = df["COD_DPTO_O"] + df["COD_MUN_O"]
+    df["id_mun"] = df["COD_DPTO_O"] + df["COD_MUN_O"]
     return df
 
 

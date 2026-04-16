@@ -42,6 +42,46 @@ def load_latest_bronze_run(run_dir: Path) -> pd.DataFrame:
     logging.info("Filas cargadas desde bronze: %s", len(df))
     return df
 
+def load_latest_silver_run(silver_dir: Path, extension: str = ".csv") -> pd.DataFrame:
+    # 1. Buscar archivos con la extensión indicada
+    files = [p for p in silver_dir.iterdir() if p.is_file() and p.suffix == extension]
+
+    # 2. Validar que existan archivos
+    if not files:
+        raise ValueError(f"No hay archivos {extension} en {silver_dir}")
+
+    # 3. Ordenar y tomar el más reciente (por nombre)
+    latest_file = sorted(files)[-1]
+    run_part = "_run_" + latest_file.stem.split("run_")[1]
+    logging.info("Archivo más reciente: %s", latest_file.name)
+
+    # 4. Leer el archivo como DataFrame
+    if extension == ".csv":
+        df = pd.read_csv(latest_file)
+    elif extension == ".parquet":
+        df = pd.read_parquet(latest_file)
+    elif extension == ".xlsx":
+        df = pd.read_excel(latest_file)
+    else:
+        raise ValueError(f"Extensión no soportada: {extension}")
+
+    return df, run_part
+
+def ensure_two_digits(df: pd.DataFrame, column: str) -> pd.DataFrame:
+    df[column] = df[column].apply(
+        lambda x: str(int(x)).zfill(2) if pd.notnull(x) else x
+    )
+    return df
+
+def round_columns(df: pd.DataFrame, columns, n: int = 2) -> pd.DataFrame:
+    if isinstance(columns, str):
+        columns = [columns]
+
+    for col in columns:
+        df[col] = pd.to_numeric(df[col], errors="coerce").round(n)
+
+    return df
+
 def extract_run_name(run_dir: Path) -> str:
     return run_dir.name
 
