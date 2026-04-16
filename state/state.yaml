@@ -1,7 +1,7 @@
 victimas:
-  last_incremental_value: '2026-03-12T13:59:26.887000+00:00'
+  last_incremental_value: null
   incremental_column: :updated_at
-  last_run_at: '2026-04-14T17:47:24.930192+00:00'
+  last_run_at: null
   last_row_count: 8103787
   extraction_mode: incremental
 irca:
