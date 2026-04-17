@@ -39,9 +39,15 @@ def build_pme_jefe_hogar_fact(df: pd.DataFrame, config: dict) -> pd.DataFrame:
         .mean()
         .rename(columns=rename_columns)
     )
+    
+    pme_fact["id_gender"] = pme_fact["id_gender"].map({
+    "hombre": 1,
+    "mujer": 2
+        })
+
 
     pme_fact = pme_fact.sort_values(
-        ["year", "id_dept", "sex_head_hh"]
+        ["year", "id_dept", "id_gender"]
     ).reset_index(drop=True)
 
 
@@ -87,7 +93,7 @@ def main() -> None:
     #run_name = extract_run_name(run_dir)
 
     df,run_name = load_latest_silver_run(silver_dir)
-    print("soy run name",run_name )
+
     df = clean_columns(df)
     
 

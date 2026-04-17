@@ -52,7 +52,7 @@ def load_latest_silver_run(silver_dir: Path, extension: str = ".csv") -> pd.Data
 
     # 3. Ordenar y tomar el más reciente (por nombre)
     latest_file = sorted(files)[-1]
-    run_part = "_run_" + latest_file.stem.split("run_")[1]
+    run_part = "run_" + latest_file.stem.split("run_")[1]
     logging.info("Archivo más reciente: %s", latest_file.name)
 
     # 4. Leer el archivo como DataFrame
