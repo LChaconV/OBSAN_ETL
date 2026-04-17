@@ -97,17 +97,21 @@ def clean_text_data(df: pd.DataFrame) -> pd.DataFrame:
         if not isinstance(text, str):
             return text
         
-
         text = text.lower()
-
         text = unicodedata.normalize('NFKD', text)
         text = "".join([char for char in text if not unicodedata.combining(char)])
-   
         text = re.sub(r'[^a-z0-9\s]', '', text)
-        
         text = " ".join(text.split())
         
         return text
+
+    # 🔥 aplicar a columnas tipo string
+    str_cols = df.select_dtypes(include=["object", "string"]).columns
+
+    for col in str_cols:
+        df[col] = df[col].apply(normalize_string)
+
+    return df
 
 
     string_cols = df.select_dtypes(include=['object']).columns
@@ -155,6 +159,33 @@ def deduplicate_by_id(df: pd.DataFrame, config: dict) -> pd.DataFrame:
 
     after = len(df)
     logging.info("Duplicados técnicos eliminados por %s: %s", id_column, before - after)
+
+    return df
+
+def parse_fecha_corte(df: pd.DataFrame, config: dict) -> pd.DataFrame:
+    date_cfg = config["date_parsing"]
+
+    source_col = date_cfg["source_column"]
+    raw_col = date_cfg["raw_column"]
+    parsed_col = date_cfg["parsed_column"]
+    invalid_col = date_cfg["invalid_flag_column"]
+    formats = date_cfg["formats"]
+
+    df[raw_col] = df[source_col]
+
+    parsed_series = pd.Series(pd.NaT, index=df.index, dtype="datetime64[ns]")
+
+    for fmt in formats:
+        parsed_try = pd.to_datetime(
+            df[raw_col],
+            format=fmt,
+            errors="coerce",
+           # dayfirst=True if fmt == "%d/%m/%Y" else False,
+        )
+        parsed_series = parsed_series.fillna(parsed_try)
+
+    df[parsed_col] = parsed_series
+    df[invalid_col] = df[parsed_col].isna()
 
     return df
 # ============================================================

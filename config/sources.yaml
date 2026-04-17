@@ -52,17 +52,6 @@ subregiones:
     file_prefix: "subregiones_provincias_colombia"
 
 
-
-
-
-
-
-
-
-
-
-
-
 ## -----------------------------------
 victimas:
   name: "Cifras de Víctimas Municipal"
@@ -94,6 +83,41 @@ victimas:
   storage:
     bronze_dir: "data/bronze/victimas"
     file_prefix: "victimas"
+    
+beneficiarios_iraca:
+  name: "Beneficiarios del IRACA"
+  web_site: "https://www.datos.gov.co/Inclusi-n-Social-y-Reconciliaci-n/Beneficiarios-IRACA/y52n-eqn5/about_data"
+  base_url: "https://www.datos.gov.co/resource/y52n-eqn5.json"
+
+  incremental:
+    enabled: true
+    column: ":updated_at"
+    start_value: null
+
+  pagination:
+    page_size: 50000
+    sleep_seconds: 0.2
+
+  request:
+    timeout_seconds: 60
+    max_retries: 5
+
+  select_columns:
+    - ":id"
+    - ":updated_at"
+    - "cantidaddebeneficiarios"
+    - "codigodepartamentoatencion"
+    - "codigomunicipioatencion"
+    - "fechaultimobeneficioasignado"
+    - "estadobeneficiario"
+    - "tipobeneficio"
+
+  storage:
+    bronze_dir: "data/bronze/beneficiarios_iraca"
+    file_prefix: "beneficiarios_iraca"
+
+
+
 
 irca:
   name: "Indice de Riesgo de la Calidad de Agua Potable"
@@ -231,34 +255,3 @@ beneficiarios_familias_en_accion:
     bronze_dir: "data/bronze/beneficiarios_familias_en_accion"
     file_prefix: "beneficiarios_familias_en_accion"
 
-beneficiarios_iraca:
-  name: "Beneficiarios del IRACA"
-  web_site: "https://www.datos.gov.co/Inclusi-n-Social-y-Reconciliaci-n/Beneficiarios-IRACA/y52n-eqn5/about_data"
-  base_url: "https://www.datos.gov.co/resource/y52n-eqn5.json"
-
-  incremental:
-    enabled: true
-    column: ":updated_at"
-    start_value: null
-
-  pagination:
-    page_size: 50000
-    sleep_seconds: 0.2
-
-  request:
-    timeout_seconds: 60
-    max_retries: 5
-
-  select_columns:
-    - ":id"
-    - ":updated_at"
-    - "cantidaddebeneficiarios"
-    - "codigodepartamentoatencion"
-    - "codigomunicipioatencion"
-    - "fechaultimobeneficioasignado"
-    - "estadobeneficiario"
-    - "tipobeneficio"
-
-  storage:
-    bronze_dir: "data/bronze/beneficiarios_iraca"
-    file_prefix: "beneficiarios_iraca"

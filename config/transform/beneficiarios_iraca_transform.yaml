@@ -1,0 +1,80 @@
+beneficiarios_iraca_transform:
+  source:
+    bronze_dir: "data/bronze/beneficiarios_iraca"
+    silver_fact_dir: "data/silver/beneficiarios_iraca"
+    golden_fact_dir: "data/golden/beneficiarios_iraca"
+    silver_dimension_dir: "data/golden/dimensions"
+
+  run:
+    process_latest_run_only: true
+
+  validation:
+    required_columns:
+      - ":id"
+      - ":updated_at"
+      - "cantidaddebeneficiarios"
+      - "codigomunicipioatencion"
+      - "fechaultimobeneficioasignado"
+      - "estadobeneficiario"
+      - "tipobeneficio"
+
+  date_parsing:
+    source_column: "fechaultimobeneficioasignado"
+    raw_column: "fecha_corte_raw"
+    parsed_column: "date_iraca"
+    invalid_flag_column: "invalid_date"
+    formats:
+      - "%d/%m/%Y"
+      - "%Y/%m/%d"
+      - "%d/%m/%y"
+      - "%d/%m/%Y %H:%M"
+
+  typing:
+    numeric_columns:
+      - "cantidaddebeneficiarios"
+      
+    text_columns:
+
+      - "codigomunicipioatencion"
+      - "estadobeneficiario"
+      - "tipobeneficio"
+    datetime_columns:
+      - ":updated_at"
+
+  deduplication:
+    id_column: ":id"
+    order_column: ":updated_at"
+    keep: "last"
+
+  business_rules:
+    metric_column: "cantidaddebeneficiarios"
+    drop_null_in_metric: true
+
+  dimensions:
+    victim_event_type:
+      source_id_column: null
+      source_name_column: null
+      output_id_column: null
+      output_name_column: null
+      file_name: null
+
+  fact_table:
+    grain:
+      - "fechaultimobeneficioasignado"
+      - "codigomunicipioatencion"
+      - "estadobeneficiario"
+      - "tipobeneficio"
+    metric_column: "cantidaddebeneficiarios"
+    rename_columns:
+      fechaultimobeneficioasignado: "date_iraca"
+      codigomunicipioatencion: "id_mun"
+      estadobeneficiario: "status"
+      tipobeneficio: "type"
+      cantidaddebeneficiarios: "beneficiaries_count"
+    output_columns:
+      - "date_iraca"
+      - "id_mun"
+      - "status"
+      - "type"
+      - "beneficiaries_count"
+    file_prefix: "beneficiarios_iraca"

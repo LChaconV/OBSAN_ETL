@@ -4,27 +4,9 @@ victimas:
   last_run_at: null
   last_row_count: 8103787
   extraction_mode: incremental
-irca:
-  last_incremental_value: '2025-06-10T20:01:06.489000+00:00'
-  incremental_column: :updated_at
-  last_run_at: '2026-03-22T21:13:16.569995+00:00'
-  last_row_count: 1038
-  extraction_mode: incremental
-erradicacion_cultivos:
-  last_incremental_value: '2024-07-31T05:29:20.331000+00:00'
-  incremental_column: :updated_at
-  last_run_at: '2026-03-25T19:31:07.525602+00:00'
-  last_row_count: 3958594
-  extraction_mode: incremental
-beneficiarios_familias_en_accion:
-  last_incremental_value: '2024-07-31T05:29:20.331000+00:00'
-  incremental_column: :updated_at
-  last_run_at: '2026-03-25T19:49:11.168893+00:00'
-  last_row_count: 3958594
-  extraction_mode: incremental
 beneficiarios_iraca:
   last_incremental_value: '2024-08-16T21:36:04.603000+00:00'
   incremental_column: :updated_at
-  last_run_at: '2026-03-25T22:31:44.680851+00:00'
+  last_run_at: '2026-04-17T20:24:32.397575+00:00'
   last_row_count: 182430
   extraction_mode: incremental

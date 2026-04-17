@@ -38,3 +38,9 @@ pme_por_genero_load:
   last_run_at: '2026-04-17T18:41:51.611788+00:00'
   last_row_count: 192
   extraction_mode: golden_load
+beneficiarios_iraca_load:
+  last_incremental_value: beneficiarios_iraca_run_20260417_202413.parquet
+  incremental_column: file_name
+  last_run_at: '2026-04-17T23:05:15.398500+00:00'
+  last_row_count: 849
+  extraction_mode: golden_load
