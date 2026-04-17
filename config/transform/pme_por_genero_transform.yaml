@@ -1,0 +1,45 @@
+pme_por_genero_transform:
+
+  source:
+    bronze_dir: "data/bronze/PMEnfoqueDiferencial"
+    silver_fact_dir: "data/silver/pme_por_genero"
+    golden_fact_dir: "data/golden/pme_por_genero"
+    dimension_dir: "data/golden/dimensions"
+  run:
+    process_latest_run_only: true
+
+  validation:
+    required_columns:
+      - "year"
+      - "id_dept"
+      - "genero"
+      - "estimacion"
+  typing:
+    numeric_columns:
+      - "year"
+      - "estimacion"
+    text_columns:
+      - "id_dept"
+      - "genero"
+
+  dimensions:
+    gender_type:
+      file_name: "dim_gender.csv"
+
+  fact_table:
+    grain:
+      - "year"
+      - "id_dept"
+      - "genero"
+    metric_column: "estimacion"
+    rename_columns:
+      "year": "year"
+      "id_dept": "id_dept"
+      "genero": "id_gender"
+      "estimacion": "mp_idx_val"
+    output_columns:
+      - "year"
+      - "id_dept"
+      - "id_gender"
+      - "mp_idx_val"
+    file_prefix: "pme_por_genero"
