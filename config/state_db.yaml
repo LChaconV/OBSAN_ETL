@@ -26,3 +26,9 @@ victimas_golden_load:
   last_run_at: '2026-04-16T20:01:52.033031+00:00'
   last_row_count: 81156
   extraction_mode: golden_load
+pme_jefe_hogar_golden_load:
+  last_incremental_value: pme_jefe_hogar__run_20260325_193724.parquet
+  incremental_column: file_name
+  last_run_at: '2026-04-17T00:00:28.902174+00:00'
+  last_row_count: 192
+  extraction_mode: golden_load
