@@ -44,3 +44,9 @@ beneficiarios_iraca_load:
   last_run_at: '2026-04-17T23:05:15.398500+00:00'
   last_row_count: 849
   extraction_mode: golden_load
+departamentos:
+  last_incremental_value: '99'
+  incremental_column: id_dept
+  last_run_at: '2026-04-18T21:11:27.698659+00:00'
+  last_row_count: 33
+  extraction_mode: db_load
