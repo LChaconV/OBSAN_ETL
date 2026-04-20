@@ -1,0 +1,5 @@
+red_vial:
+  source:
+    bronze_dir: "data/bronze/red_vial"
+    silver_fact_dir: "data/silver/red_vial"
+    prefix: "red_vial"

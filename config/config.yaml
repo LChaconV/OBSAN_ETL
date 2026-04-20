@@ -11,6 +11,10 @@ silver:
   departamentos_dir: data/silver/departamentos
   departamentos_file: departamentos.parquet
 
+  red_vial_dir: data/silver/red_vial
+  red_vial_file: red_vial.parquet
+
+
   pme_dir : data/silver/pmenfoquediferencial
   pme_sex_p_file : pme_sexopoblacion.csv
   pme_sex_h_file : pme_sexojefehogar.csv
@@ -28,4 +32,8 @@ data_silver:
     departamentos:
       id_dept: DeCodigo
       name_dept: DeNombre
+      geometry: geometry
+    
+    red_vial:
+      id_road: Código Tramo
       geometry: geometry

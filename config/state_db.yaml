@@ -50,3 +50,9 @@ departamentos:
   last_run_at: '2026-04-18T21:11:27.698659+00:00'
   last_row_count: 33
   extraction_mode: db_load
+red_vial:
+  last_incremental_value: P.D.
+  incremental_column: id_road
+  last_run_at: '2026-04-20T16:21:23.689162+00:00'
+  last_row_count: 313
+  extraction_mode: db_load
