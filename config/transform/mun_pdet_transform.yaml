@@ -1,0 +1,28 @@
+mun_pdet_transform:
+
+  source:
+    bronze_dir: "data/bronze/mun_pdet"
+    silver_fact_dir: "data/silver/mun_pdet"
+    golden_fact_dir: "data/golden/mun_pdet"
+    dimension_dir: "data/golden/dimensions"
+  run:
+    process_latest_run_only: true
+
+  validation:
+    required_columns:
+      - "id_mun"
+
+  typing:
+    numeric_columns:
+
+    text_columns:
+      - "id_mun"
+  
+
+  dimensions:
+    gender_type:
+      file_name: 
+
+  fact_table:
+ 
+    file_prefix: "mun_pdet"
