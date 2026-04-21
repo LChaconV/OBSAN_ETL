@@ -1,0 +1,42 @@
+poblacion_transform:
+
+  source:
+    bronze_dir: "data/bronze/poblacion"
+    silver_fact_dir: "data/silver/poblacion"
+    golden_fact_dir: "data/golden/poblacion"
+    dimension_dir: "data/golden/dimensions"
+  run:
+    process_latest_run_only: true
+
+  validation:
+    required_columns:
+      - "Código Entidad"
+      - "Año"
+      - "Dato Numérico"
+      - "Unidad de Medida"
+  typing:
+    numeric_columns:
+      - "Año"
+      - "Dato Numérico"
+    text_columns:
+      - "Código Entidad"
+  
+
+  dimensions:
+    gender_type:
+      file_name: 
+
+  fact_table:
+    grain:
+      - "Código Entidad"
+      - "Año"
+    metric_column: "Dato Numérico"
+    rename_columns:
+      "Año": "year"
+      "Código Entidad": "id_mun"
+      "Dato Numérico": "population"
+    output_columns:
+      - "year"
+      - "id_mun"
+      - "population"
+    file_prefix: "poblacion"
