@@ -2,7 +2,7 @@ erradicacion_cultivos_transform:
   source:
     bronze_dir: "data/bronze/erradicacion_cultivos"
     silver_fact_dir: "data/silver/erradicacion_cultivos"
-
+    golden_fact_dir: "data/golden/erradicacion_cultivos"
   run:
     process_latest_run_only: true
 
@@ -16,7 +16,16 @@ erradicacion_cultivos_transform:
       - "tipo_de_cultivo"
       - "cantidad"
       - "unidad"
-
+  date_parsing:
+    source_column: "fecha_hecho"
+    raw_column: "fecha_corte_raw"
+    parsed_column: "date_event"
+    invalid_flag_column: "invalid_date"
+    formats:
+      - "%d/%m/%Y"
+      - "%Y/%m/%d"
+      - "%d/%m/%y"
+      - "%d/%m/%Y %H:%M"
 
   typing:
     numeric_columns:
@@ -46,11 +55,11 @@ erradicacion_cultivos_transform:
       fecha_hecho: "date_event"
       cod_depto: "id_dept"
       cod_muni: "id_mun"
-      tipo_de_cultivo: "id_ilicit_crop"
+      tipo_de_cultivo: "id_illicit_crop"
       cantidad: "quantity"
       unidad: "unit"  
     output_columns:
-      - "id_erradicacion_fact"
+   
       - "date_event"
       - "id_dept"
       - "id_mun"

@@ -68,3 +68,9 @@ mun_pdet_load:
   last_run_at: '2026-04-21T15:14:43.507907+00:00'
   last_row_count: 170
   extraction_mode: golden_load
+erradicacion_cultivos_load:
+  last_incremental_value: erradicacion_cultivos_run_20260421_165826.parquet
+  incremental_column: file_name
+  last_run_at: '2026-04-22T16:52:39.640215+00:00'
+  last_row_count: 3987
+  extraction_mode: golden_load

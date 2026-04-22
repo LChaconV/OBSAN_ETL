@@ -115,6 +115,7 @@ def main() -> None:
 
     bronze_dir = PROJECT_ROOT / config["source"]["bronze_dir"]
     fact_dir = PROJECT_ROOT / config["source"]["silver_fact_dir"]
+    fact_dir_golden = PROJECT_ROOT / config["source"]["golden_fact_dir"]
 
     run_dir = get_latest_bronze_run(bronze_dir)
     run_name = extract_run_name(run_dir)
@@ -128,8 +129,18 @@ def main() -> None:
     df = deduplicate_by_id(df, config)
 
     erradicacion_fact = build_erradicacion_fact(df, config)
+    # Golden
+    df_golden= erradicacion_fact.copy()
+    df_golden["year"]= df_golden["date_event"].dt.year
+    df_golden = df_golden.drop(columns=["date_event"])
+
+    df_golden = (
+        df_golden.groupby(["id_dept", "id_mun", "id_illicit_crop", "year"], dropna=False, as_index=False)["quantity"]
+        .sum()
+    )
 
     save_fact_table(erradicacion_fact, run_name, fact_dir, config, "erradicacion_cultivos")
+    save_fact_table(df_golden, run_name, fact_dir_golden, config, "erradicacion_cultivos")
     log_summary(df, erradicacion_fact)
 
     logging.info("Transformación finalizada correctamente")
