@@ -2,8 +2,12 @@ import logging
 import time
 import pandas as pd
 from pathlib import Path
+
+from src.etl.utils.logging_utils import setup_logging, log_run_summary
 from src.etl.utils.extract_utils.file_utils import normalize_dataframe, create_run_directory, save_bronze_page
 from src.etl.utils.request_utils import  fetch_api_page
+
+from src.etl.utils.config_utils import load_yaml, save_yaml, load_source_config, load_state, update_state,get_incremental_max_value
 def get_extraction_mode(config: dict) -> str:
     incremental_cfg = config.get("incremental", {})
     enabled = incremental_cfg.get("enabled", False)
@@ -130,3 +134,58 @@ def load_run_parquets(files: list[Path]) -> pd.DataFrame:
 
     dfs = [pd.read_parquet(file) for file in files]
     return pd.concat(dfs, ignore_index=True)
+
+def extract_data(
+        PROJECT_ROOT: Path,
+        LOG_DIR: Path,
+        STATE_PATH: Path,
+        CONFIG_PATH: Path,
+        key: str,
+):  
+    log_name = f"{key}.log"
+    setup_logging(LOG_DIR, log_name)
+    logging.info("Iniciando extracción de %s", key)
+
+    config = load_source_config(key, CONFIG_PATH)
+    state = load_state(key, STATE_PATH)
+
+
+    extraction_mode = get_extraction_mode(config)
+    logging.info("Modo de extracción: %s", extraction_mode)
+    logging.info("Último valor incremental en state.yaml: %s", state.get("last_incremental_value"))
+
+    total_rows, run_dir, files = fetch_and_save_pages(config, state,PROJECT_ROOT)
+
+    if total_rows == 0:
+        logging.info("No hubo datos nuevos para descargar.")
+
+        if extraction_mode == "incremental":
+            update_state(
+                key=key,
+                incremental_value=state.get("last_incremental_value"),
+                incremental_column=config["incremental"].get("column"),
+                row_count=0,
+                extraction_mode=extraction_mode,
+                path_state =STATE_PATH,
+            )
+        return
+
+    df_run = load_run_parquets(files)
+    log_run_summary(df_run, config)
+
+    if extraction_mode == "incremental":
+        max_incremental_value = get_incremental_max_value(df_run, config)
+
+        update_state(
+            key=key,
+            incremental_value=max_incremental_value,
+            incremental_column=config["incremental"].get("column"),
+            row_count=total_rows,
+            extraction_mode=extraction_mode,
+            path_state =STATE_PATH,
+        )
+    else:
+        logging.info("Full refresh: no se actualiza checkpoint incremental.")
+
+    logging.info("Extracción finalizada.")
+    logging.info("Directorio de la corrida: %s", run_dir)
