@@ -1,0 +1,8 @@
+mercados_campesinos_transform:
+  source:
+    bronze_dir: "data/bronze/mercados_campesinos"
+    silver_fact_dir: "data/silver/mercados_campesinos"
+    golden_fact_dir: "data/golden/mercados_campesinos"
+    prefix: "mercados_campesinos"
+  fact_table:
+    file_prefix: "mercados_campesinos"

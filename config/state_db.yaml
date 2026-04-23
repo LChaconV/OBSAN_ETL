@@ -80,3 +80,9 @@ resguardo_indigena_load:
   last_run_at: '2026-04-22T18:04:07.925694+00:00'
   last_row_count: 959
   extraction_mode: golden_load
+mercados_campesinos_load:
+  last_incremental_value: mercados_campesinos_run_20260417_202413.parquet
+  incremental_column: file_name
+  last_run_at: '2026-04-23T16:32:56.579313+00:00'
+  last_row_count: 90
+  extraction_mode: golden_load
