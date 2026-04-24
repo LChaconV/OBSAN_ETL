@@ -129,19 +129,26 @@ def validate_required_columns(df: pd.DataFrame, required_columns: list[str]) -> 
         raise ValueError(f"Faltan columnas requeridas en bronze: {missing}")
 
 def normalize_types(df: pd.DataFrame, config: dict) -> pd.DataFrame:
-    typing_cfg = config["typing"]
+    typing_cfg = config.get("typing", {})
 
-    for col in typing_cfg.get("numeric_columns", []):
-        if col in df.columns:
-            df[col] = pd.to_numeric(df[col], errors="coerce")
+    numeric_columns = typing_cfg.get("numeric_columns") or []
+    datetime_columns = typing_cfg.get("datetime_columns") or []
+    text_columns = typing_cfg.get("text_columns") or []
 
-    for col in typing_cfg.get("datetime_columns", []):
-        if col in df.columns:
-            df[col] = pd.to_datetime(df[col], errors="coerce", utc=True)
+    if numeric_columns:
+        for col in numeric_columns:
+            if col in df.columns:
+                df[col] = pd.to_numeric(df[col], errors="coerce")
 
-    for col in typing_cfg.get("text_columns", []):
-        if col in df.columns:
-            df[col] = df[col].astype(str).str.strip()
+    if datetime_columns:
+        for col in datetime_columns:
+            if col in df.columns:
+                df[col] = pd.to_datetime(df[col], errors="coerce", utc=True)
+
+    if text_columns:
+        for col in text_columns:
+            if col in df.columns:
+                df[col] = df[col].astype(str).str.strip()
 
     return df
 

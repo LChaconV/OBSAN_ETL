@@ -255,3 +255,36 @@ beneficiarios_familias_en_accion:
     bronze_dir: "data/bronze/beneficiarios_familias_en_accion"
     file_prefix: "beneficiarios_familias_en_accion"
 
+produc_petroleo:
+  name: "Producción de Petróleo"
+  web_site: "https://www.datos.gov.co/Minas-y-Energ-a/Produccion-Fiscalizada-Crudo-Consolidada/fdvb-hsrf/data_preview"
+  base_url: "https://www.datos.gov.co/resource/fdvb-hsrf.json"
+
+  incremental:
+    enabled: true
+    column: ":updated_at"
+    start_value: null
+
+  pagination:
+    page_size: 50000
+    sleep_seconds: 0.2
+
+  request:
+    timeout_seconds: 60
+    max_retries: 5
+
+  select_columns:
+    - ":id"
+    - ":updated_at"
+    - "vigencia"
+    - "mes"
+    - "produccion_bls"
+    - "latitud"
+    - "longitud"
+    - "geolocalizacion"
+
+
+  storage:
+    bronze_dir: "data/bronze/produc_petroleo"
+    file_prefix: "produc_petroleo"
+

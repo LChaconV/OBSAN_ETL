@@ -16,3 +16,9 @@ erradicacion_cultivos:
   last_run_at: '2026-04-21T16:58:53.184302+00:00'
   last_row_count: 145531
   extraction_mode: incremental
+produc_petroleo:
+  last_incremental_value: '2026-03-02T20:47:31.649000+00:00'
+  incremental_column: :updated_at
+  last_run_at: '2026-04-24T16:32:25.451694+00:00'
+  last_row_count: 51924
+  extraction_mode: incremental

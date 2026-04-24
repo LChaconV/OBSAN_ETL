@@ -1,0 +1,60 @@
+produc_petroleo_transform:
+  source:
+    bronze_dir: "data/bronze/produc_petroleo"
+    silver_fact_dir: "data/silver/produc_petroleo"
+    golden_fact_dir: "data/golden/produc_petroleo"
+  run:
+    process_latest_run_only: true
+
+  validation:
+    required_columns:
+      - ":id"
+      - ":updated_at"
+      - "vigencia"
+      - "mes"
+      - "produccion_bls"
+      - "geolocalizacion"
+      - "latitud"
+      - "longitud"
+  date_parsing:
+    source_column: 
+    raw_column: 
+    parsed_column: 
+    invalid_flag_column: 
+    formats:
+      - "%d/%m/%Y"
+      - "%Y/%m/%d"
+      - "%d/%m/%y"
+      - "%d/%m/%Y %H:%M"
+
+  typing:
+    numeric_columns:
+      - "vigencia"
+      - "mes"
+      - "produccion_bls"
+    text_columns:
+      - "latitud"
+      - "longitud"
+      
+    datetime_columns:
+      - ":updated_at"
+  
+
+  deduplication:
+    id_column: ":id"
+    order_column: ":updated_at"
+    keep: "last"
+
+  fact_table:
+    grain:
+      - "vigencia"
+      - "mes"
+      - "latitud"
+      - "longitud"
+    metric_column: "produccion_bls"
+    rename_columns:
+      mes: "month"
+      vigencia: "year"
+      produccion_bls: "produc_bls"
+
+    file_prefix: "produc_petroleo"
