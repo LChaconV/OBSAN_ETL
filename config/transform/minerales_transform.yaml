@@ -1,0 +1,61 @@
+minerales_transform:
+  source:
+    bronze_dir: "data/bronze/minerales"
+    silver_fact_dir: "data/silver/minerales"
+    golden_fact_dir: "data/golden/minerales"
+  run:
+    process_latest_run_only: true
+
+  validation:
+    required_columns:
+
+  date_parsing:
+    source_column: 
+    raw_column: 
+    parsed_column: 
+    invalid_flag_column: 
+    formats:
+      - "%d/%m/%Y"
+      - "%Y/%m/%d"
+      - "%d/%m/%y"
+      - "%d/%m/%Y %H:%M"
+
+  typing:
+    numeric_columns:
+      - "periodo_liquidado2"
+      - "a_o_liquidado"
+      - "regalias_pagadas"
+      - "volumenes_de_explotacion"
+      
+    text_columns:
+      - "codigo_dane"
+      - "recurso_natural"
+      - "unidad_medida"
+      
+      
+    datetime_columns:
+      - ":updated_at"
+  
+
+  deduplication:
+    id_column: ":id"
+    order_column: ":updated_at"
+    keep: "last"
+
+  fact_table:
+    grain:
+      - "codigo_dane"
+      - "recurso_natural"
+      - "periodo_liquidado2"
+      - "a_o_liquidado"
+      - "unidad_medida"
+    metric_column: "regalias_pagadas"
+    rename_columns:
+      recurso_natural: "mineral_resource"
+      periodo_liquidado2: "month"
+      a_o_liquidado: "year"
+      regalias_pagadas: "royalties_cop"
+      unidad_medida: "unit_measure"
+      codigo_dane: "id_mun"
+
+    file_prefix: "minerales"

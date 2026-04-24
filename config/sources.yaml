@@ -353,3 +353,37 @@ regalias:
   storage:
     bronze_dir: "data/bronze/regalias"
     file_prefix: "regalias"
+
+minerales:
+  name: "Volúmen de Explotación de Minerales Asociados a Pagos de Regalías"
+  web_site: "https://www.datos.gov.co/Minas-y-Energ-a/ANM-Vol-men-de-Explotaci-n-de-Minerales-Asociados-/r85m-vv6c/about_data"
+  base_url: "https://www.datos.gov.co/resource/r85m-vv6c.json"
+
+  incremental:
+    enabled: true
+    column: ":updated_at"
+    start_value: null
+
+  pagination:
+    page_size: 50000
+    sleep_seconds: 0.2
+
+  request:
+    timeout_seconds: 60
+    max_retries: 5
+
+  select_columns:
+    - ":id"
+    - ":updated_at"
+    - "codigo_dane"
+    - "recurso_natural"
+    - "periodo_liquidado2"
+    - "a_o_liquidado"
+    - "unidad_medida"
+    - "regalias_pagadas"
+    - "volumenes_de_explotacion"
+
+
+  storage:
+    bronze_dir: "data/bronze/minerales"
+    file_prefix: "minerales"
