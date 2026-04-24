@@ -321,3 +321,35 @@ produc_gas:
     bronze_dir: "data/bronze/produc_gas"
     file_prefix: "produc_gas"
 
+regalias:
+  name: "regalías por campo de hidrocarburos"
+  web_site: "https://www.datos.gov.co/Minas-y-Energ-a/Consolidaci-n-de-liquidaci-n-de-regal-as-por-campo/j7js-yk74/about_data"
+  base_url: "https://www.datos.gov.co/resource/j7js-yk74.json"
+
+  incremental:
+    enabled: true
+    column: ":updated_at"
+    start_value: null
+
+  pagination:
+    page_size: 50000
+    sleep_seconds: 0.2
+
+  request:
+    timeout_seconds: 60
+    max_retries: 5
+
+  select_columns:
+    - ":id"
+    - ":updated_at"
+    - "a_o"
+    - "mes"
+    - "regaliascop"
+    - "latitud"
+    - "longitud"
+    - "geolocalizacion"
+
+
+  storage:
+    bronze_dir: "data/bronze/regalias"
+    file_prefix: "regalias"

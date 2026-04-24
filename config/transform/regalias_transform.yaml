@@ -1,0 +1,53 @@
+regalias_transform:
+  source:
+    bronze_dir: "data/bronze/regalias"
+    silver_fact_dir: "data/silver/regalias"
+    golden_fact_dir: "data/golden/regalias"
+  run:
+    process_latest_run_only: true
+
+  validation:
+    required_columns:
+
+  date_parsing:
+    source_column: 
+    raw_column: 
+    parsed_column: 
+    invalid_flag_column: 
+    formats:
+      - "%d/%m/%Y"
+      - "%Y/%m/%d"
+      - "%d/%m/%y"
+      - "%d/%m/%Y %H:%M"
+
+  typing:
+    numeric_columns:
+      - "a_o"
+      - "mes"
+      - "regaliascop"
+    text_columns:
+      - "latitud"
+      - "longitud"
+      
+    datetime_columns:
+      - ":updated_at"
+  
+
+  deduplication:
+    id_column: ":id"
+    order_column: ":updated_at"
+    keep: "last"
+
+  fact_table:
+    grain:
+      - "a_o"
+      - "mes"
+      - "latitud"
+      - "longitud"
+    metric_column: "regaliascop"
+    rename_columns:
+      mes: "month"
+      a_o: "year"
+      regaliascop: "royalties_cop"
+
+    file_prefix: "regalias"

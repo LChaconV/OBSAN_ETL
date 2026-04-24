@@ -28,3 +28,9 @@ produc_gas:
   last_run_at: '2026-04-24T17:56:20.785387+00:00'
   last_row_count: 69074
   extraction_mode: incremental
+regalias:
+  last_incremental_value: '2025-10-07T15:02:50.125000+00:00'
+  incremental_column: :updated_at
+  last_run_at: '2026-04-24T18:22:28.929197+00:00'
+  last_row_count: 203572
+  extraction_mode: incremental
