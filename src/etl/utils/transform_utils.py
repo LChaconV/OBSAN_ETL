@@ -72,6 +72,11 @@ def ensure_two_digits(df: pd.DataFrame, column: str) -> pd.DataFrame:
         lambda x: str(int(x)).zfill(2) if pd.notnull(x) else x
     )
     return df
+def ensure_five_digits(df: pd.DataFrame, column: str) -> pd.DataFrame:
+    df[column] = df[column].apply(
+        lambda x: str(int(x)).zfill(5) if pd.notnull(x) and str(x).strip() != "" else None
+    )
+    return df
 
 def round_columns(df: pd.DataFrame, columns, n: int = 2) -> pd.DataFrame:
     if isinstance(columns, str):

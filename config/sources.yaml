@@ -387,3 +387,38 @@ minerales:
   storage:
     bronze_dir: "data/bronze/minerales"
     file_prefix: "minerales"
+
+edu_superior:
+  name: "Matriculados en Educación Superior"
+  web_site: "https://www.datos.gov.co/Educaci-n/MEN_ESTADISTICAS-MATRICULA-POR-MUNICIPIOS_ES/y9ga-zwzy/about_data"
+  base_url: "https://www.datos.gov.co/resource/y9ga-zwzy.json"
+
+  incremental:
+    enabled: true
+    column: ":updated_at"
+    start_value: null
+
+  pagination:
+    page_size: 50000
+    sleep_seconds: 0.2
+
+  request:
+    timeout_seconds: 60
+    max_retries: 5
+
+  select_columns:
+    - ":id"
+    - ":updated_at"
+    - "a_o"
+    - "c_digo_deldepartamento"
+    - "c_digo_delmunicipio"
+    - "tecnica_profesional"
+    - "tecnologica"
+    - "universitaria"
+    - "especializacion"
+    - "maestria"
+    - "doctorado"
+
+  storage:
+    bronze_dir: "data/bronze/edu_superior"
+    file_prefix: "edu_superior"

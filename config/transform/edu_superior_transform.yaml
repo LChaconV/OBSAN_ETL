@@ -1,0 +1,70 @@
+edu_superior_transform:
+  source:
+    bronze_dir: "data/bronze/edu_superior"
+    silver_fact_dir: "data/silver/edu_superior"
+    golden_fact_dir: "data/golden/edu_superior"
+  run:
+    process_latest_run_only: true
+
+  validation:
+    required_columns: []
+
+  date_parsing:
+    source_column: 
+    raw_column: 
+    parsed_column: 
+    invalid_flag_column: 
+    formats:
+      - "%d/%m/%Y"
+      - "%Y/%m/%d"
+      - "%d/%m/%y"
+      - "%d/%m/%Y %H:%M"
+
+  typing:
+    numeric_columns:
+      - "a_o"
+      - "tecnica_profesional"
+      - "tecnologica"
+      - "universitaria"
+      - "especializacion"
+      - "maestria"
+      - "doctorado"
+  
+    text_columns:
+      - "c_digo_delmunicipio"
+
+      
+      
+    datetime_columns:
+      - ":updated_at"
+  
+
+  deduplication:
+    id_column: ":id"
+    order_column: ":updated_at"
+    keep: "last"
+
+  fact_table:
+    grain:
+      - "a_o"
+      - "c_digo_delmunicipio"
+
+    metric_column:
+      - "tecnica_profesional"
+      - "tecnologica"
+      - "universitaria"
+      - "especializacion"
+      - "maestria"
+      - "doctorado"
+    rename_columns:
+      a_o: "year"
+      c_digo_delmunicipio: "id_mun"
+      tecnica_profesional: "prof_technician"
+      tecnologica: "technologist"
+      universitaria: "university"
+      especializacion: "specialization"
+      maestria: "master"
+      doctorado: "doctorate"
+
+
+    file_prefix: "edu_superior"
