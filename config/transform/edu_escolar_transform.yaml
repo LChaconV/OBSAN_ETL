@@ -1,0 +1,59 @@
+edu_escolar_transform:
+  source:
+    bronze_dir: "data/bronze/edu_escolar"
+    silver_fact_dir: "data/silver/edu_escolar"
+    golden_fact_dir: "data/golden/edu_escolar"
+  run:
+    process_latest_run_only: true
+
+  validation:
+    required_columns: []
+ 
+  deduplication:
+    id_column: ":id"
+    order_column: ":updated_at"
+    keep: "last"
+
+  date_parsing:
+    source_column: 
+    raw_column: 
+    parsed_column: 
+    invalid_flag_column: 
+    formats:
+      - "%d/%m/%Y"
+      - "%Y/%m/%d"
+      - "%d/%m/%y"
+      - "%d/%m/%Y %H:%M"
+
+  fact_table:
+    rename_columns:
+      anno_inf: "year"
+      cod_dane_municipio: "id_mun"
+      codigo_grado: "id_grade"
+      grado: "grade"
+      total_matricula: "total"
+
+    grain:
+      - "year"
+      - "id_mun"
+      - "id_grade"
+    grain_golden:
+      - "year"
+      - "id_mun"
+    metric_column:
+      - "total"
+
+    file_prefix: "edu_escolar"
+
+  typing:
+    numeric_columns:
+      - "year"
+      - "total"
+  
+    text_columns:
+      - "id_mun"
+      - "id_grade"
+      - "grade"
+
+    datetime_columns:
+      - ":updated_at"

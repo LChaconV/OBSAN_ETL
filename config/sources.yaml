@@ -422,3 +422,34 @@ edu_superior:
   storage:
     bronze_dir: "data/bronze/edu_superior"
     file_prefix: "edu_superior"
+
+edu_escolar:
+  name: "Matriculados en Educación escolar"
+  web_site: "https://www.datos.gov.co/Educaci-n/MEN_MATRICULA_EN_EDUCACION_EN_PREESCOLAR-B-SICA-Y-/ngw5-c5nw/data_preview"
+  base_url: "https://www.datos.gov.co/resource/ngw5-c5nw.json"
+
+  incremental:
+    enabled: true
+    column: ":updated_at"
+    start_value: "2019-01-01T00:00:00.000"
+
+  pagination:
+    page_size: 50000
+    sleep_seconds: 0.2
+
+  request:
+    timeout_seconds: 60
+    max_retries: 5
+
+  select_columns:
+    - ":id"
+    - ":updated_at"
+    - "anno_inf"
+    - "cod_dane_municipio"
+    - "codigo_grado"
+    - "grado"
+    - "total_matricula"
+
+  storage:
+    bronze_dir: "data/bronze/edu_escolar"
+    file_prefix: "edu_escolar"

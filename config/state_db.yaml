@@ -116,3 +116,9 @@ edu_superior_load:
   last_run_at: '2026-04-25T22:47:13.274136+00:00'
   last_row_count: 9688
   extraction_mode: golden_load
+edu_escolar_load:
+  last_incremental_value: edu_escolar_run_20260426_000811.parquet
+  incremental_column: file_name
+  last_run_at: '2026-04-26T20:55:19.955690+00:00'
+  last_row_count: 6721
+  extraction_mode: golden_load
