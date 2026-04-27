@@ -74,7 +74,9 @@ def ensure_two_digits(df: pd.DataFrame, column: str) -> pd.DataFrame:
     return df
 def ensure_five_digits(df: pd.DataFrame, column: str) -> pd.DataFrame:
     df[column] = df[column].apply(
-        lambda x: str(int(x)).zfill(5) if pd.notnull(x) and str(x).strip() != "" else None
+        lambda x: str(int(float(x))).zfill(5)
+        if pd.notnull(x) and str(x).strip().lower() not in ["", "nan"]
+        else None
     )
     return df
 
