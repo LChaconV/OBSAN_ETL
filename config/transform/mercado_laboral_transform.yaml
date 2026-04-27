@@ -1,0 +1,64 @@
+mercado_laboral_transform:
+  source:
+    bronze_dir: "data/bronze/mercado_laboral"
+    silver_fact_dir: "data/silver/mercado_laboral"
+    golden_fact_dir: "data/golden/mercado_laboral"
+  run:
+    process_latest_run_only: true
+
+  validation:
+    required_columns: 
+ 
+  deduplication:
+    id_column: 
+    order_column: 
+    keep: "last"
+
+  date_parsing:
+    source_column: 
+    raw_column: 
+    parsed_column: 
+    invalid_flag_column: 
+    formats:
+      - "%d/%m/%Y"
+      - "%Y/%m/%d"
+      - "%d/%m/%y"
+      - "%d/%m/%Y %H:%M"
+
+  fact_table:
+    rename_columns:
+      año: "year"
+      código entidad: "id_mun"
+      indicador: "id_gender"
+      dato numérico: "total"
+      departamento: "name_dept"
+      entidad: "name_mun"
+      subcategoría : "sub_categ"
+
+    grain:
+      - "year"
+      - "id_mun"
+      - "id_gender"
+    grain_golden:
+    output_columns:
+      - "year"
+      - "id_mun"
+      - "id_gender"
+      - "total"
+    metric_column:
+      - "total"
+
+    file_prefix: "mercado_laboral"
+
+  typing:
+    numeric_columns:
+      - "year"
+      - "total"
+  
+    text_columns:
+      - "id_mun"
+      - "gender"
+
+
+    datetime_columns:
+      - 
