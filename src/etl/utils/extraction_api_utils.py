@@ -68,8 +68,8 @@ def fetch_and_save_pages(config: dict, state: dict,path_root:Path) -> tuple[int,
     select_columns = config.get("select_columns", [])
     select_clause = ",".join(select_columns) if select_columns else None
 
-    run_dir = create_run_directory(config,path_root)
-
+    #run_dir = create_run_directory(config,path_root)
+    run_dir = None
     total_rows = 0
     offset = 0
     page_number = 1
@@ -107,6 +107,9 @@ def fetch_and_save_pages(config: dict, state: dict,path_root:Path) -> tuple[int,
 
         if not rows:
             break
+
+        if run_dir is None:
+            run_dir = create_run_directory(config, path_root)
 
         df_page = pd.DataFrame(rows)
         df_page = normalize_dataframe(df_page)
@@ -168,7 +171,7 @@ def extract_data(
                 extraction_mode=extraction_mode,
                 path_state =STATE_PATH,
             )
-        return
+        return None
 
     df_run = load_run_parquets(files)
     log_run_summary(df_run, config)
