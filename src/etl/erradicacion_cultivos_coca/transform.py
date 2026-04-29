@@ -20,37 +20,6 @@ if str(PROJECT_ROOT) not in sys.path:
 
 CONFIG_PATH = PROJECT_ROOT / "config" / "transform" / "erradicacion_cultivos_transform.yaml"
 LOG_DIR = PROJECT_ROOT / "logs"
-# ============================================================
-# CONFIG
-# ============================================================
-"""""
-load_transform_config("erradicacion_cultivos_transform", CONFIG_PATH)
-"""
-# ============================================================
-# BRONZE
-# ============================================================
-"""
-get_latest_bronze_run(bronze_dir)
-load_latest_bronze_run(run_dir)
-extract_run_name(run_dir)
-"""
-# ============================================================
-# LIMPIEZA
-# ============================================================
-"""
-clean_columns(df)
-validate_required_columns(df, required_columns)
-normalize_types(df, config)
-"""
-
-
-# ============================================================
-# DEDUPLICACIÓN
-# ============================================================
-"""
-deduplicate_by_id(df, config)
-"""
-
 
 # ============================================================
 # TABLA DE HECHOS
@@ -86,12 +55,7 @@ def build_erradicacion_fact(df: pd.DataFrame, config: dict) -> pd.DataFrame:
     logging.info("Filas finales de erradicacion_fact (mensual): %s", len(erradicacion_fact))
 
     return erradicacion_fact
-# ============================================================
-# GUARDADO
-# ============================================================
-"""
-save_erradicacion_fact(erradicacion_fact, run_name, fact_dir, config)
-"""
+
 # ============================================================
 # RESUMEN
 # ============================================================
@@ -107,7 +71,7 @@ def log_summary(df: pd.DataFrame, erradicacion_fact: pd.DataFrame) -> None:
 # ============================================================
 # MAIN
 # ============================================================
-def main() -> None:
+def run() -> None:
     setup_logging(LOG_DIR, "erradicacion_cultivos_transform.log")
     logging.info("Iniciando transformación de erradicacion de cultivos")
 
@@ -147,4 +111,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    run()

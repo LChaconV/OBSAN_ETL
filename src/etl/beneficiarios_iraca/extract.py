@@ -30,7 +30,7 @@ STATE_PATH = PROJECT_ROOT / "state" / "state.yaml"
 LOG_DIR = PROJECT_ROOT / "logs"
 
 
-def run() -> None:
+def run(**kwargs) -> Path | None:
     setup_logging(LOG_DIR, "beneficiarios_iraca.log")
     logging.info("Iniciando extracción de Beneficiarios del IRACA")
 
@@ -56,7 +56,7 @@ def run() -> None:
                 extraction_mode=extraction_mode,
                 path_state =STATE_PATH,
             )
-        return
+        return None
 
     df_run = load_run_parquets(files)
     log_run_summary(df_run, config)
@@ -77,6 +77,7 @@ def run() -> None:
 
     logging.info("Extracción finalizada.")
     logging.info("Directorio de la corrida: %s", run_dir)
+    return run_dir
 
 
 if __name__ == "__main__":

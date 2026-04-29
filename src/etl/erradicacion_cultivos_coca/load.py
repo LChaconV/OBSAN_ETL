@@ -21,7 +21,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS ux_erad_illicit_crops
 ON erad_illicit_crops (year, id_mun, id_dept, id_illicit_crop);
 """
 
-if __name__ == "__main__":
+def run():
     load_parquet_to_postgres(
         transform_config_path=TRANSFORM_CONFIG_PATH,
         config_key="erradicacion_cultivos_transform",
@@ -35,3 +35,5 @@ if __name__ == "__main__":
         update_columns=["quantity"],
         state_field_name="last_incremental_value",
     )
+if __name__ == "__main__":
+    run()

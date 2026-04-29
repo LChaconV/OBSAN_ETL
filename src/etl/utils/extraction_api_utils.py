@@ -192,3 +192,4 @@ def extract_data(
 
     logging.info("Extracción finalizada.")
     logging.info("Directorio de la corrida: %s", run_dir)
+    return run_dir
