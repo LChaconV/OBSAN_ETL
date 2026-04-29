@@ -37,7 +37,7 @@ regalias:
 minerales:
   last_incremental_value: '2026-04-07T15:06:36.910000+00:00'
   incremental_column: :updated_at
-  last_run_at: '2026-04-24T21:09:08.287520+00:00'
+  last_run_at: '2026-04-29T20:37:53.094427+00:00'
   last_row_count: 70773
   extraction_mode: incremental
 edu_superior:
