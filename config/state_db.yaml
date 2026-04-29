@@ -93,9 +93,9 @@ produc_petroleo_load:
   last_row_count: 4650
   extraction_mode: golden_load
 produc_gas_load:
-  last_incremental_value: produc_gas_run_20260424_175615.parquet
+  last_incremental_value: produc_gas_run_20260429_201719.parquet
   incremental_column: file_name
-  last_run_at: '2026-04-24T18:04:06.919650+00:00'
+  last_run_at: '2026-04-29T20:17:26.064795+00:00'
   last_row_count: 4914
   extraction_mode: golden_load
 regalias_load:
