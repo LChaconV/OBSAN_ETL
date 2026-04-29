@@ -1,0 +1,109 @@
+bajo_peso_nacer_transform:
+
+  source:
+    bronze_dir: "data/bronze/bajo_peso_nacer"
+    silver_fact_dir: "data/silver/bajo_peso_nacer"
+    silver_dimension_dir: "data/silver/bajo_peso_nacer"
+    golden_fact_dir: "data/golden/bajo_peso_nacer"
+  run:
+    process_latest_run_only: true
+
+  validation:
+    required_columns:
+      - "CONSECUTIVE"
+      - "FECHA_NTO"
+      - "confirmados"
+      - "COD_DPTO_O"
+      - "COD_MUN_O"
+      - "COD_PAIS_O"
+
+
+    
+
+  filter:
+    column: "COD_EVE"
+    value: 110
+
+  # -----------------------------------
+  # Manejo de fechas
+  # -----------------------------------
+  date_parsing:
+    source_column: "FECHA_NTO"
+    parsed_column: "date_event"
+    invalid_flag_column: "invalid_date"
+    formats:
+      - "%d/%m/%Y"
+      - "%Y-%m-%d"
+      - "%d/%m/%Y %H:%M"
+
+  date_transformation:
+    column: "date_event"
+    type: "month_start"
+
+  # -----------------------------------
+  # Tipado
+  # -----------------------------------
+  typing:
+    string_columns:
+      - "CONSECUTIVE"
+      - "COD_DPTO_O"
+      - "COD_MUN_O"
+
+
+
+    numeric_columns:
+      - "confirmados"
+
+
+  # -----------------------------------
+  # Columnas derivadas
+  # -----------------------------------
+  derived_columns:
+    id_mun:
+      type: "concat"
+      columns:
+        - "COD_DPTO_O"
+        - "COD_MUN_O"
+
+  # -----------------------------------
+  # Renombramiento
+  # -----------------------------------
+  rename_columns:
+    CONSECUTIVE: "id_consecutive"
+    confirmados: "confirmed"
+    COD_PAIS_O: "id_country"
+    COD_DPTO_O: "id_dept"
+
+
+  # -----------------------------------
+  # Tabla de hechos
+  # -----------------------------------
+  fact_table:
+
+    grain:
+      - "date_event"
+      - "id_mun"
+
+    metric_column: "id_consecutive"
+
+    aggregation:
+      total_cases: "count"
+
+    output_columns:
+      - "date_event"
+      - "id_mun"
+      - "total_cases"
+
+    file_prefix: "bajo_peso_nacer"
+  # -----------------------------------
+  # Tabla de hechos golden
+  # -----------------------------------
+  fact_table_golden:
+
+    grain_golden:
+      - "year"
+      - "id_mun"
+
+    aggregation:
+      total_cases: "count"
+    file_prefix: "bajo_peso_nacer"
