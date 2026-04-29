@@ -32,7 +32,7 @@ def get_latest_silver_file(golden_dir: Path, file_prefix: str) -> Path | None:
         return None
     return sorted(files)[-1]
 
-def main() -> None:
+def run() -> None:
     setup_logging(LOG_DIR, "load_victimas_silver.log")
     logging.info("Iniciando carga de Victimas Capa Silver (victim_unit) a PostgreSQL")
 
@@ -107,4 +107,4 @@ def main() -> None:
         sys.exit(1)
 
 if __name__ == "__main__":
-    main()
+    run()

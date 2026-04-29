@@ -404,7 +404,7 @@ def log_run_summary(df: pd.DataFrame, config: dict) -> None:
 # ============================================================
 # MAIN
 # ============================================================
-def main() -> None:
+def run() -> None:
     setup_logging(LOG_DIR, "victimas_etl.log")
     logging.info("Iniciando extracción de víctimas")
 
@@ -427,7 +427,7 @@ def main() -> None:
                 row_count=0,
                 extraction_mode=extraction_mode,
             )
-        return
+        return None
 
     df_run = load_run_parquets(files)
     log_run_summary(df_run, config)
@@ -446,7 +446,8 @@ def main() -> None:
 
     logging.info("Extracción finalizada.")
     logging.info("Directorio de la corrida: %s", run_dir)
+    return run_dir
 
 
 if __name__ == "__main__":
-    main()
+    run()

@@ -349,7 +349,7 @@ def log_summary(df: pd.DataFrame, victim_unit: pd.DataFrame, config: dict) -> No
 # ============================================================
 # MAIN
 # ============================================================
-def main() -> None:
+def run() -> None:
     setup_logging(LOG_DIR, "victimas_transform.log")
     logging.info("Iniciando transformación de víctimas")
 
@@ -385,4 +385,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    run()
