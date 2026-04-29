@@ -30,12 +30,12 @@ STATE_PATH = PROJECT_ROOT / "state" / "state.yaml"
 LOG_DIR = PROJECT_ROOT / "logs"
 
 
-def main() -> None:
-    setup_logging(LOG_DIR, "irca_etl.log")
-    logging.info("Iniciando extracción de IRCA")
+def run(**kwargs) -> Path | None:
+    setup_logging(LOG_DIR, "beneficiarios_familias_en_accion.log")
+    logging.info("Iniciando extracción de Beneficiarios de Familias en Acción")
 
-    config = load_source_config("irca", CONFIG_PATH)
-    state = load_state("irca", STATE_PATH)
+    config = load_source_config("beneficiarios_familias_en_accion", CONFIG_PATH)
+    state = load_state("beneficiarios_familias_en_accion", STATE_PATH)
 
 
     extraction_mode = get_extraction_mode(config)
@@ -49,14 +49,14 @@ def main() -> None:
 
         if extraction_mode == "incremental":
             update_state(
-                key="irca",
+                key="beneficiarios_familias_en_accion",
                 incremental_value=state.get("last_incremental_value"),
                 incremental_column=config["incremental"].get("column"),
                 row_count=0,
                 extraction_mode=extraction_mode,
                 path_state =STATE_PATH,
             )
-        return
+        return None
 
     df_run = load_run_parquets(files)
     log_run_summary(df_run, config)
@@ -65,7 +65,7 @@ def main() -> None:
         max_incremental_value = get_incremental_max_value(df_run, config)
 
         update_state(
-            key="irca",
+            key="beneficiarios_familias_en_accion",
             incremental_value=max_incremental_value,
             incremental_column=config["incremental"].get("column"),
             row_count=total_rows,
@@ -77,7 +77,7 @@ def main() -> None:
 
     logging.info("Extracción finalizada.")
     logging.info("Directorio de la corrida: %s", run_dir)
-
+    return run_dir
 
 if __name__ == "__main__":
-    main()
+    run()

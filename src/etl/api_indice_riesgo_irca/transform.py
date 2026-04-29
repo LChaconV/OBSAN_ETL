@@ -23,47 +23,6 @@ LOG_DIR = PROJECT_ROOT / "logs"
 
 
 # ============================================================
-# CONFIG
-# ============================================================
-"""""
-load_transform_config("irca_transform", CONFIG_PATH)
-"""
-
-# ============================================================
-# BRONZE
-# ============================================================
-"""
-get_latest_bronze_run(bronze_dir)
-load_latest_bronze_run(run_dir)
-extract_run_name(run_dir)
-"""
-
-
-
-
-
-
-
-
-# ============================================================
-# LIMPIEZA
-# ============================================================
-"""
-clean_columns(df)
-validate_required_columns(df, required_columns)
-normalize_types(df, config)
-"""
-
-
-# ============================================================
-# DEDUPLICACIÓN
-# ============================================================
-"""
-deduplicate_by_id(df, config)
-"""
-
-
-# ============================================================
 # TABLA DE HECHOS
 # ============================================================
 
@@ -116,7 +75,7 @@ def log_summary(df: pd.DataFrame, irca_fact: pd.DataFrame) -> None:
 # ============================================================
 # MAIN
 # ============================================================
-def main() -> None:
+def run() -> None:
     setup_logging(LOG_DIR, "irca_transform.log")
     logging.info("Iniciando transformación de IRCA")
 
@@ -145,4 +104,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    run()
