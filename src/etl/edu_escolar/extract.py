@@ -25,10 +25,11 @@ if str(PROJECT_ROOT) not in sys.path:
 CONFIG_PATH = PROJECT_ROOT / "config" / "sources.yaml"
 STATE_PATH = PROJECT_ROOT / "state" / "state.yaml"
 LOG_DIR = PROJECT_ROOT / "logs"
-extract_data(
-    PROJECT_ROOT=PROJECT_ROOT,
-    LOG_DIR=LOG_DIR,
-    STATE_PATH=STATE_PATH,
-    CONFIG_PATH=CONFIG_PATH,
-    key="edu_escolar"
-)
+def run(**kwargs):
+    return extract_data(
+        PROJECT_ROOT=PROJECT_ROOT,
+        LOG_DIR=LOG_DIR,
+        STATE_PATH=STATE_PATH,
+        CONFIG_PATH=CONFIG_PATH,
+        key="edu_escolar"
+    )

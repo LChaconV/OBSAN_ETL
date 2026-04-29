@@ -47,7 +47,7 @@ edu_superior:
   last_row_count: 9989
   extraction_mode: incremental
 edu_escolar:
-  last_incremental_value: '2025-07-29T05:40:48.404000+00:00'
+  last_incremental_value: '2025-07-28T05:40:48.404000+00:00'
   incremental_column: :updated_at
   last_run_at: '2026-04-26T01:45:21.628434+00:00'
   last_row_count: 14706296
