@@ -43,8 +43,8 @@ minerales:
 edu_superior:
   last_incremental_value: '2025-10-29T13:56:36.483000+00:00'
   incremental_column: :updated_at
-  last_run_at: '2026-04-25T22:38:39.280837+00:00'
-  last_row_count: 19618
+  last_run_at: '2026-04-29T15:24:10.869510+00:00'
+  last_row_count: 0
   extraction_mode: incremental
 edu_escolar:
   last_incremental_value: '2025-07-29T05:40:48.404000+00:00'
