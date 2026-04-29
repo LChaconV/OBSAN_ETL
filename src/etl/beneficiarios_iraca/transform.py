@@ -86,13 +86,6 @@ def build_beneficiarios_iraca_fact_golden(df: pd.DataFrame, config: dict) -> pd.
     return beneficiarios_iraca_golden
 
 # ============================================================
-# GUARDADO
-# ============================================================
-"""
-save_beneficiarios_iraca_fact(beneficiarios_iraca_fact, run_name, fact_dir, config)
-"""
-
-# ============================================================
 # RESUMEN
 # ============================================================
 def log_summary(df: pd.DataFrame, beneficiarios_iraca_fact: pd.DataFrame) -> None:
@@ -107,7 +100,7 @@ def log_summary(df: pd.DataFrame, beneficiarios_iraca_fact: pd.DataFrame) -> Non
 # ============================================================
 # MAIN
 # ============================================================
-def main() -> None:
+def run() -> None:
     setup_logging(LOG_DIR, "beneficiarios_iraca_transform.log")
     logging.info("Iniciando transformación de iraca")
 
@@ -144,4 +137,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    run()

@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS iraca_beneficiaries(
 """
 
 
-if __name__ == "__main__":
+def run(**kwargs):
     load_parquet_to_postgres(
         transform_config_path=TRANSFORM_CONFIG_PATH,
         config_key="beneficiarios_iraca_transform",
@@ -31,7 +31,11 @@ if __name__ == "__main__":
         log_file_name="load_beneficiarios_iraca.log",
         create_table_sql=create_table_sql,
         load_mode="upsert",
-        conflict_columns=["year",  "id_mun", "type", "status"],
+        conflict_columns=["year", "id_mun", "type", "status"],
         update_columns=["beneficiaries_count"],
         state_field_name="last_incremental_value",
     )
+
+
+if __name__ == "__main__":
+    run()
