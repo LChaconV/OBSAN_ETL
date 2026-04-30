@@ -5,6 +5,7 @@ import sys
 from pathlib import Path
 
 import pandas as pd
+from shapely import Point
 
 from src.etl.utils.logging_utils import setup_logging
 from src.etl.utils.config_utils import load_yaml
@@ -33,18 +34,25 @@ def build_table(df: pd.DataFrame, config: dict) -> pd.DataFrame:
     
     df_temp = df.copy()
     
-    
+
     table_fact = (
         df_temp.groupby(grain, dropna=False, as_index=False)[metric_column]
         .sum()
         .rename(columns=rename_columns)
     )
     
-    table_fact = clean_text_data(table_fact )
+    #table_fact = clean_text_data(table_fact )
 
     table_fact = table_fact.sort_values(
         ["year", "month", "latitud", "longitud"]
     ).reset_index(drop=True)
+
+
+    """    df["geometry"] = df.apply(
+            lambda row: Point(row["longitud"], row["latitud"]),
+            axis=1
+        )
+    """
     ## Construir una fecha
     table_fact["date_event"] = pd.to_datetime(
     dict(year=table_fact["year"], month=table_fact["month"], day=1)
@@ -88,7 +96,6 @@ def run() -> None:
 
     df = normalize_types(df, config)
     df = deduplicate_by_id(df, config)
-
     table_fact = build_table(df, config)
 
     # Golden
@@ -98,6 +105,13 @@ def run() -> None:
         df_golden.groupby(["latitud","longitud", "year"], dropna=False, as_index=False)["royalties_cop"]
         .sum()
     )
+    df_golden["geometry"] = df_golden.apply(
+        lambda r: Point(r["longitud"], r["latitud"]),
+        axis=1
+    )
+    df_golden["geometry"] = df_golden["geometry"].astype(str)
+    df_golden = df_golden[df_golden["geometry"] != "POINT (0 0)"]
+
     df_golden = df_golden.drop(columns=["latitud", "longitud"])
 
     save_fact_table(table_fact, run_name, fact_dir, config, "regalias")

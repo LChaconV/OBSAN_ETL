@@ -27,7 +27,7 @@ STATE_PATH = PROJECT_ROOT / "state" / "state.yaml"
 LOG_DIR = PROJECT_ROOT / "logs"
 def run(**kwargs):
         
-    extract_data(
+    return extract_data(
         PROJECT_ROOT=PROJECT_ROOT,
         LOG_DIR=LOG_DIR,
         STATE_PATH=STATE_PATH,

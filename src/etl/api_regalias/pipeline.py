@@ -2,7 +2,7 @@ from . import extract, transform, load
 
 def run(**kwargs):
     print("Iniciando extracción...")
-    run_dir =extract.run(**kwargs)
+    run_dir = extract.run(**kwargs)
     print("Extracción completada")
 
     if run_dir is None:

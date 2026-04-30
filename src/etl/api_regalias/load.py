@@ -19,7 +19,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS ux_royalties
 ON royalties (year, geometry );
 """
 
-if __name__ == "__main__":
+def run(**kwargs):
     
     load_parquet_to_postgres(
         transform_config_path=TRANSFORM_CONFIG_PATH,
@@ -34,3 +34,5 @@ if __name__ == "__main__":
         update_columns=["royalties_cop"],
         state_field_name="last_incremental_value",
     )
+if __name__ == "__main__":
+    run()
