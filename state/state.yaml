@@ -25,8 +25,8 @@ produc_petroleo:
 produc_gas:
   last_incremental_value: '2026-03-02T20:54:28.965000+00:00'
   incremental_column: :updated_at
-  last_run_at: '2026-04-29T20:17:23.710439+00:00'
-  last_row_count: 69074
+  last_run_at: '2026-04-30T20:57:06.047346+00:00'
+  last_row_count: 0
   extraction_mode: incremental
 regalias:
   last_incremental_value: '2025-10-07T15:02:50.125000+00:00'

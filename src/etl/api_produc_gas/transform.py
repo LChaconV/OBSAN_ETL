@@ -4,6 +4,7 @@ import logging
 import sys
 from pathlib import Path
 
+from shapely import Point
 import pandas as pd
 
 from src.etl.utils.logging_utils import setup_logging
@@ -40,7 +41,7 @@ def build_table(df: pd.DataFrame, config: dict) -> pd.DataFrame:
         .rename(columns=rename_columns)
     )
     
-    table_fact = clean_text_data(table_fact )
+    #table_fact = clean_text_data(table_fact )
 
     table_fact = table_fact.sort_values(
         ["year", "month", "latitud", "longitud"]
@@ -99,6 +100,13 @@ def run() -> None:
         df_golden.groupby(["latitud","longitud", "year"], dropna=False, as_index=False)["produc_kpc"]
         .sum()
     )
+    df_golden["geometry"] = df_golden.apply(
+       lambda r: Point(r["longitud"], r["latitud"]),
+        axis=1
+    )
+    df_golden["geometry"] = df_golden["geometry"].astype(str)
+    df_golden = df_golden[df_golden["geometry"] != "POINT (0 0)"]
+
     df_golden = df_golden.drop(columns=["latitud", "longitud"])
 
     save_fact_table(table_fact, run_name, fact_dir, config, "produc_gas")

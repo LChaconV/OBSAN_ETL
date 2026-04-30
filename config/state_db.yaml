@@ -89,14 +89,14 @@ mercados_campesinos_load:
 produc_petroleo_load:
   last_incremental_value: produc_petroleo_run_20260429_211557.parquet
   incremental_column: file_name
-  last_run_at: '2026-04-29T21:16:02.134581+00:00'
-  last_row_count: 4650
+  last_run_at: '2026-04-30T21:38:23.814980+00:00'
+  last_row_count: 4638
   extraction_mode: golden_load
 produc_gas_load:
-  last_incremental_value: produc_gas_run_20260429_201719.parquet
+  last_incremental_value: produc_gas_run_20260430_204826.parquet
   incremental_column: file_name
-  last_run_at: '2026-04-29T20:17:26.064795+00:00'
-  last_row_count: 4914
+  last_run_at: '2026-04-30T21:32:53.514031+00:00'
+  last_row_count: 4902
   extraction_mode: golden_load
 regalias_load:
   last_incremental_value: regalias_run_20260430_200536.parquet
