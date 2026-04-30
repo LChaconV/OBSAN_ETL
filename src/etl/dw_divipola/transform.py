@@ -7,7 +7,10 @@ import yaml
 with open("config/config.yaml", "r", encoding="utf-8") as f:
     config = yaml.safe_load(f)
 
-def standardize_geography_columns(gdf: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
+with open("config/sources.yaml", "r", encoding="utf-8") as f:
+    sources_config = yaml.safe_load(f)
+
+def standardize_geography_columns(gdf: gpd.GeoDataFrame,column_map) -> gpd.GeoDataFrame:
     """
     Renombra columnas del dataset original.
     """
@@ -96,19 +99,22 @@ def simplify_mun_geometry(gdf):
     except Exception as e:
         print(f"Error procesando topología: {e}")
         return None
+def run() -> None:
+    filepath = sources_config['divipola']['storage']['bronze_dir'] + '/' + sources_config['divipola']['storage']['file']
+    gdf = gpd.read_file(filepath)  
+    column_map = config['data_silver']["columns"]["divipola"]     
+    gdf = gdf[list(column_map.values())]
 
-filepath = r"C:\Users\laura\OneDrive\PROYECTOS\Datos_OBSAN_web\observatorio-san\data\bronze\division politica\geojson\mun_dept_epsg_9377.geojson"
-gdf = gpd.read_file(filepath)  
-column_map = config['data_silver']["columns"]["divipola"]     
-gdf = gdf[list(column_map.values())]
+    gdf = standardize_geography_columns(gdf,column_map)
+    gdf = fill_dept_from_mun(gdf)
+    gdf=simplify_mun_geometry(gdf)
 
-gdf = standardize_geography_columns(gdf)
-gdf = fill_dept_from_mun(gdf)
-gdf=simplify_mun_geometry(gdf)
+    base = Path(config["silver"]["divipola_dir"])
+    file = config["silver"]["divipola_file"]
 
-base = Path(config["silver"]["divipola_dir"])
-file = config["silver"]["divipola_file"]
+    path = base / file
+    gdf.to_parquet(path)
+    print(gdf.head())
 
-path = base / file
-gdf.to_parquet(path)
-print(gdf)
+if __name__ == "__main__":
+    run()

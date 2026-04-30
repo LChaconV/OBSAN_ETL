@@ -33,3 +33,6 @@ def run(**kwargs):
         CONFIG_PATH=CONFIG_PATH,
         key="edu_escolar"
     )
+
+if __name__ == "__main__":
+    run()

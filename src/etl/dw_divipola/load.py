@@ -58,7 +58,7 @@ def ensure_db_infrastructure(engine) -> None:
 # ============================================================
 # PROCESO DE CARGA INCREMENTAL (LOAD)
 # ============================================================
-def main() -> None:
+def run() -> None:
     # Inicialización de logging formal
     setup_logging(LOG_DIR, "load_divipola.log")
     logging.info("Iniciando proceso de carga: dim_divipola")
@@ -124,4 +124,4 @@ def main() -> None:
         sys.exit(1)
 
 if __name__ == "__main__":
-    main()
+    run()

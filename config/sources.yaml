@@ -51,7 +51,13 @@ subregiones:
     file: "subregiones_provincias_colombia.geojson"
     file_prefix: "subregiones_provincias_colombia"
 
-
+divipola:
+  name: "Divipola"
+  base_url: "https://www.colombiaenmapas.gov.co/?e=-87.21140735351494,-5.776978010828192,-61.28367297852183,15.932526575975173,4686&b=igac&u=0&t=29&servicio=610"
+  storage:
+    bronze_dir: "data/bronze/divipola/geojson"
+    file: "mun_dept_epsg_9377.geojson"
+    file_prefix: "divipola"
 ## -----------------------------------
 victimas:
   name: "Cifras de Víctimas Municipal"
