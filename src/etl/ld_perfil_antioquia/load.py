@@ -38,7 +38,7 @@ def get_latest_run_file(directory: Path) -> Path | None:
 # ============================================================
 # PROCESO DE CARGA
 # ============================================================
-def main() -> None:
+def run() -> None:
     setup_logging(LOG_DIR, "load_perfil_antioquia.log")
     logging.info("Iniciando carga de indicadores: fact_perfil_antioquia")
 
@@ -149,4 +149,4 @@ def main() -> None:
         sys.exit(1)
 
 if __name__ == "__main__":
-    main()
+    run()

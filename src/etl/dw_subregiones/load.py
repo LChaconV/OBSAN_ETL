@@ -44,7 +44,7 @@ def ensure_subregion_infrastructure(engine) -> None:
             ON subregion USING GIST (geometry);
         """))
 
-def main() -> None:
+def run() -> None:
     setup_logging(LOG_DIR, "load_subregion.log")
     logging.info("Iniciando carga de geografía: subregion")
 
@@ -96,4 +96,4 @@ def main() -> None:
         sys.exit(1)
 
 if __name__ == "__main__":
-    main()
+    run()

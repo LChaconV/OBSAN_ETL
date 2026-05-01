@@ -94,7 +94,7 @@ def log_summary(df: pd.DataFrame, table_fact: pd.DataFrame) -> None:
 # ============================================================
 # MAIN
 # ============================================================
-def main() -> None:
+def run() -> None:
 
     setup_logging(LOG_DIR, "mercado_laboral.log")
     logging.info("Iniciando transformación")
@@ -141,4 +141,4 @@ def main() -> None:
     logging.info("Transformación finalizada correctamente")
 
 if __name__ == "__main__":
-    main()
+    run()

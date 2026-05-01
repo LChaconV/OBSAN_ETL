@@ -41,7 +41,7 @@ def get_latest_run_file(directory: Path) -> Path | None:
 # ============================================================
 # PROCESO DE CARGA (LOAD GOLD TO DB)
 # ============================================================
-def main() -> None:
+def run() -> None:
     setup_logging(LOG_DIR, "load_desnutricion_aguda.log")
     logging.info("Iniciando carga formal para la tabla: acute_malnutrition_5")
 
@@ -120,4 +120,4 @@ def main() -> None:
         sys.exit(1)
 
 if __name__ == "__main__":
-    main()
+    run()

@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS dim_mun_pdet (
 """
 
 
-if __name__ == "__main__":
+def run() -> None:
     load_parquet_to_postgres(
         transform_config_path=TRANSFORM_CONFIG_PATH,
         config_key="mun_pdet_transform",
@@ -27,3 +27,6 @@ if __name__ == "__main__":
         update_columns= None,
         state_field_name="last_incremental_value",
     )
+
+if __name__ == "__main__":
+    run()

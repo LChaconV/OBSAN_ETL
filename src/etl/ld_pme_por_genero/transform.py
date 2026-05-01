@@ -18,7 +18,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[3]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.append(str(PROJECT_ROOT))
 
-CONFIG_PATH = PROJECT_ROOT / "config" / "transform" / "pme_jefe_hogar_transform.yaml"
+CONFIG_PATH = PROJECT_ROOT / "config" / "transform" / "pme_por_genero_transform.yaml"
 LOG_DIR = PROJECT_ROOT / "logs"
 
 
@@ -26,7 +26,7 @@ LOG_DIR = PROJECT_ROOT / "logs"
 # TABLA DE HECHOS
 # ============================================================
 
-def build_pme_jefe_hogar_fact(df: pd.DataFrame, config: dict) -> pd.DataFrame:
+def build_pme_por_genero_fact(df: pd.DataFrame, config: dict) -> pd.DataFrame:
     fact_cfg = config["fact_table"]
 
     grain = fact_cfg["grain"]
@@ -80,11 +80,11 @@ def log_summary(df: pd.DataFrame, pme_fact: pd.DataFrame) -> None:
 # ============================================================
 # MAIN
 # ============================================================
-def main() -> None:
-    setup_logging(LOG_DIR, "pme_jefe_hogar_transform.log")
-    logging.info("Iniciando transformación de PME Jefe de Hogar")
+def run() -> None:
+    setup_logging(LOG_DIR, "pme_por_genero_transform.log")
+    logging.info("Iniciando transformación de PME según el genero")
 
-    config = load_transform_config("pme_jefe_hogar_transform", CONFIG_PATH)
+    config = load_transform_config("pme_por_genero_transform", CONFIG_PATH)
 
     silver_dir = PROJECT_ROOT / config["source"]["silver_fact_dir"]
     fact_dir = PROJECT_ROOT / config["source"]["golden_fact_dir"]
@@ -102,13 +102,13 @@ def main() -> None:
     df = normalize_types(df, config)
     df= ensure_two_digits(df, "id_dept")
 
-    pme_fact = build_pme_jefe_hogar_fact(df, config)
+    pme_fact = build_pme_por_genero_fact(df, config)
     pme_fact=round_columns(pme_fact, "mp_idx_val", 2)
-    save_fact_table(pme_fact, run_name, fact_dir, config, "pme_hh")
+    save_fact_table(pme_fact, run_name, fact_dir, config, "pme_gender")
     log_summary(df, pme_fact)
 
     logging.info("Transformación finalizada correctamente")
 
 
 if __name__ == "__main__":
-    main()
+    run()

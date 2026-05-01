@@ -26,23 +26,6 @@ desnutricion_aguda_5:
   path_gold: "data/golden/desnutricion_aguda_5"
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 subregiones:
   name: "Subregiones de Colombia"
   base_url: "https://www.datos.gov.co/es/dataset/Subregiones-Provincias-de-Colombia/gxph-cw5a"
@@ -58,6 +41,14 @@ divipola:
     bronze_dir: "data/bronze/divipola/geojson"
     file: "mun_dept_epsg_9377.geojson"
     file_prefix: "divipola"
+
+departamentos:
+  name: "Departamentos de Colombia"
+  base_url: ""
+  storage:
+    bronze_dir: "data/bronze/divipola/geojson"
+    file: "dept_epsg_9377.geojson"
+    file_prefix: "dept_epsg_9377"
 ## -----------------------------------
 victimas:
   name: "Cifras de Víctimas Municipal"

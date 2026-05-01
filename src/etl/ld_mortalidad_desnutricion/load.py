@@ -45,7 +45,7 @@ def get_latest_run_file(directory: Path) -> Path | None:
 # ============================================================
 # PROCESO DE CARGA (LOAD GOLD TO DB)
 # ============================================================
-def main() -> None:
+def run() -> None:
     setup_logging(LOG_DIR, "load_mortalidad_desnutricion.log")
     logging.info("Iniciando proceso de carga para: fact_mortalidad")
 
@@ -122,4 +122,4 @@ def main() -> None:
         sys.exit(1)
 
 if __name__ == "__main__":
-    main()
+    run()

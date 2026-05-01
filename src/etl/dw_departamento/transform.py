@@ -6,8 +6,11 @@ import yaml
 
 with open("config/config.yaml", "r", encoding="utf-8") as f:
     config = yaml.safe_load(f)
+with open("config/sources.yaml", "r", encoding="utf-8") as f:
+    sources_config = yaml.safe_load(f)
 
-def standardize_geography_columns(gdf: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
+
+def standardize_geography_columns(gdf: gpd.GeoDataFrame, column_map: dict) -> gpd.GeoDataFrame:
     """
     Renombra columnas del dataset original.
     """
@@ -52,18 +55,21 @@ def simplify_geometry(gdf):
     except Exception as e:
         print(f"Error procesando topología: {e}")
         return None
+def run():
+    filepath = sources_config['departamentos']['storage']['bronze_dir'] + '/' + sources_config['departamentos']['storage']['file']
+    gdf = gpd.read_file(filepath)  
+    column_map = config['data_silver']["columns"]["departamentos"]     
+    gdf = gdf[list(column_map.values())]
 
-filepath = r"C:\Users\laura\OneDrive\PROYECTOS\Datos_OBSAN_web\observatorio-san\data\bronze\division politica\geojson\dept_epsg_9377.geojson"
-gdf = gpd.read_file(filepath)  
-column_map = config['data_silver']["columns"]["departamentos"]     
-gdf = gdf[list(column_map.values())]
+    gdf = standardize_geography_columns(gdf,column_map)
+    gdf=simplify_geometry(gdf)
 
-gdf = standardize_geography_columns(gdf)
-gdf=simplify_geometry(gdf)
+    base = Path(config["silver"]["departamentos_dir"])
+    file = config["silver"]["departamentos_file"]
 
-base = Path(config["silver"]["departamentos_dir"])
-file = config["silver"]["departamentos_file"]
+    path = base / file
+    gdf.to_parquet(path)
+    print(gdf)
 
-path = base / file
-gdf.to_parquet(path)
-print(gdf)
+if __name__ == "__main__":
+    run()

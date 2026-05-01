@@ -22,7 +22,7 @@ def load_latest_kml_run(run_dir: Path):
     logging.info("Filas cargadas desde bronze: %s", len(df))
 
     return df
-def main():
+def run():
 
     config = load_transform_config("mercados_campesinos_transform", CONFIG_PATH)
 
@@ -42,4 +42,4 @@ def main():
     print(df.head())
 
 if __name__ == "__main__":
-    main()
+    run()

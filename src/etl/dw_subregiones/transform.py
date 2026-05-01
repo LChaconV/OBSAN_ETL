@@ -42,7 +42,7 @@ def validate_id_subregion(gdf):
     print("Validación de id_subregion finalizada.")
     return gdf
 
-def main() -> None:
+def run() -> None:
     # 1. CARGA DE CONFIGURACIONES
     # Carga la configuración de la fuente específica
     source_cfg = load_source_config("subregiones", SOURCES_CONFIG_PATH)
@@ -105,4 +105,4 @@ def main() -> None:
     print(gdf.info())
 
 if __name__ == "__main__":
-    main()
+    run()

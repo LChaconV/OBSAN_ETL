@@ -18,8 +18,7 @@ create_index_sql = """
 CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_mp_hh
 ON mp_sex_head_hh (year, id_dept, id_gender);
 """
-
-if __name__ == "__main__":
+def run() -> None:
     load_parquet_to_postgres(
         transform_config_path=TRANSFORM_CONFIG_PATH,
         config_key="pme_jefe_hogar_transform",
@@ -33,3 +32,5 @@ if __name__ == "__main__":
         update_columns=["mp_idx_val"],
         state_field_name="last_incremental_value",
     )
+if __name__ == "__main__":
+    run()
