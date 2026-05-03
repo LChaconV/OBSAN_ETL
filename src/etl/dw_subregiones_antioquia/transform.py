@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 import sys
 import geopandas as gpd
@@ -50,8 +51,10 @@ def run() -> None:
     general_cfg = load_yaml(GENERAL_CONFIG_PATH)
 
     # 2. DEFINICIÓN DE RUTAS (Entrada de Bronze y Salida de Silver)
-    # Ruta de entrada: data/bronze/subregiones/subregiones_provincias_colombia.geojson
-    ruta_entrada = PROJECT_ROOT / source_cfg["storage"]["bronze_dir"] / source_cfg["storage"]["file"]
+    ruta_entrada = os.environ.get("OBSAN_INPUT_FILE")
+    if not ruta_entrada:
+        raise ValueError("No se definió OBSAN_INPUT_FILE")
+    #ruta_entrada = PROJECT_ROOT / source_cfg["storage"]["bronze_dir"] / source_cfg["storage"]["file"]
 
     # Ruta de salida: data/silver/subregiones/subregiones_provincias_colombia.parquet
     output_dir = PROJECT_ROOT / general_cfg["silver"]["subregiones_dir"]
@@ -59,10 +62,7 @@ def run() -> None:
     ruta_salida = output_dir / output_name
 
     # 3. LECTURA DE DATOS
-    print(f"Iniciando lectura de datos desde Bronze: {ruta_entrada}")
-    if not ruta_entrada.exists():
-        print(f"Error: No se encontró el archivo en {ruta_entrada}")
-        return
+
 
     gdf = gpd.read_file(ruta_entrada)
 
