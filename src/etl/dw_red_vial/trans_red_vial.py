@@ -41,7 +41,7 @@ def simplify_geometry(gdf):
 
 
 # ------------------ LECTURA ------------------
-filepath = r"C:\Users\laura\ESCUELA COLOMBIANA DE INGENIERIA JULIO GARAVITO\Proyecto OBSAN - General\Datos_OBSAN_web\observatorio-san\data\bronze\red_vial\Red_Vial_20260420.csv"
+filepath = r"C:\Users\laura\ESCUELA COLOMBIANA DE INGENIERIA JULIO GARAVITO\Proyecto OBSAN - General\Datos_observatorio-san\observatorio-san\data\bronze\red_vial\Red_Vial_20260420.csv"
 
 df = pd.read_csv(filepath)
 

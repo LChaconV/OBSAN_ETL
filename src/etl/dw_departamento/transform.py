@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 import geopandas as gpd
 import topojson as tp
@@ -56,9 +57,12 @@ def simplify_geometry(gdf):
         print(f"Error procesando topología: {e}")
         return None
 def run():
-    filepath = sources_config['departamentos']['storage']['bronze_dir'] + '/' + sources_config['departamentos']['storage']['file']
-    gdf = gpd.read_file(filepath)  
-    column_map = config['data_silver']["columns"]["departamentos"]     
+    file_path = os.environ.get("OBSAN_INPUT_FILE")
+    if not file_path:
+        raise ValueError("No se definió OBSAN_INPUT_FILE")
+
+    gdf = gpd.read_file(file_path)
+    column_map = config['data_silver']["columns"]["departamentos"]
     gdf = gdf[list(column_map.values())]
 
     gdf = standardize_geography_columns(gdf,column_map)

@@ -47,7 +47,7 @@ beneficiarios_iraca_load:
 departamentos:
   last_incremental_value: '99'
   incremental_column: id_dept
-  last_run_at: '2026-04-18T21:11:27.698659+00:00'
+  last_run_at: '2026-05-02T16:42:46.161421+00:00'
   last_row_count: 33
   extraction_mode: db_load
 red_vial:
@@ -65,7 +65,7 @@ poblacion_load:
 mun_pdet_load:
   last_incremental_value: mun_pdet_run_20260421_202413.parquet
   incremental_column: file_name
-  last_run_at: '2026-04-21T15:14:43.507907+00:00'
+  last_run_at: '2026-05-02T16:58:12.805527+00:00'
   last_row_count: 170
   extraction_mode: golden_load
 erradicacion_cultivos_load:

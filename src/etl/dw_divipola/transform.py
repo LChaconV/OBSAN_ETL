@@ -1,3 +1,5 @@
+import os
+
 import pandas as pd
 import geopandas as gpd
 import topojson as tp
@@ -100,8 +102,16 @@ def simplify_mun_geometry(gdf):
         print(f"Error procesando topología: {e}")
         return None
 def run() -> None:
-    filepath = sources_config['divipola']['storage']['bronze_dir'] + '/' + sources_config['divipola']['storage']['file']
-    gdf = gpd.read_file(filepath)  
+    #filepath = sources_config['divipola']['storage']['bronze_dir'] + '/' + sources_config['divipola']['storage']['file']
+    #gdf = gpd.read_file(filepath) 
+
+    file_path = os.environ.get("OBSAN_INPUT_FILE")
+    if not file_path:
+        raise ValueError("No se definió OBSAN_INPUT_FILE")
+    
+    # usar file_path para leer el archivo
+    gdf = gpd.read_file(file_path) 
+
     column_map = config['data_silver']["columns"]["divipola"]     
     gdf = gdf[list(column_map.values())]
 
