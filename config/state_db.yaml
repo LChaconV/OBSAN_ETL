@@ -122,3 +122,9 @@ edu_escolar_load:
   last_run_at: '2026-04-26T20:55:19.955690+00:00'
   last_row_count: 6721
   extraction_mode: golden_load
+mercado_laboral_load:
+  last_incremental_value: mercado_laboral_run_20260503_124754.parquet
+  incremental_column: file_name
+  last_run_at: '2026-05-03T17:48:23.306573+00:00'
+  last_row_count: 26328
+  extraction_mode: golden_load
