@@ -1,5 +1,5 @@
 from __future__ import annotations
-
+import os
 import logging
 import sys
 from pathlib import Path
@@ -281,4 +281,96 @@ if __name__ == "__main__":
     )
     build_fact_table_golden(df, config)
     save_fact_golden(df, run_name, PROJECT_ROOT / config["source"]["golden_fact_dir"], config)
-                       
+
+## transformacion manual
+def transform_manual(
+    key: str,
+    LOG_DIR: Path,
+    CONFIG_PATH: Path
+):
+
+    log_name = f"{key}_transform.log"
+    setup_logging(LOG_DIR, log_name)
+    logging.info("Inicio transformación")
+
+    config = load_transform_config(
+        key,
+        CONFIG_PATH
+    )
+
+    fact_dir = (
+        PROJECT_ROOT
+        / config["source"]["silver_fact_dir"]
+    )
+
+    # =====================================================
+    # INPUT FILE DESDE VARIABLE DE ENTORNO
+    # =====================================================
+    file_path = os.environ.get("OBSAN_INPUT_FILE")
+    
+    #file_path = os.environ["OBSAN_INPUT_FILE"] = (
+    #r"C:\Users\laura\ESCUELA COLOMBIANA DE INGENIERIA JULIO GARAVITO\Proyecto OBSAN - General\Datos_OBSAN_web\OBSAN\observatorio-san\data\bronze\mortalidad_desnutricion\mortalidad_desnutricion_run_20260503_130451.xlsx"
+    #)
+
+    if not file_path:
+        raise ValueError(
+            "No se definió OBSAN_INPUT_FILE"
+        )
+
+    input_path = Path(file_path)
+
+    if not input_path.exists():
+        raise FileNotFoundError(
+            f"No existe el archivo: {input_path}"
+        )
+
+    logging.info(
+        "Archivo recibido: %s",
+        input_path
+    )
+
+    filename = input_path.stem
+    run_name = filename.split("_run_")[-1]
+    run_name = f"run_{run_name}"
+    logging.info(
+        "Run name: %s",
+        run_name
+    )
+
+
+    ext = input_path.suffix.lower()
+    if ext == ".xlsx":
+        df = pd.read_excel(input_path)
+    elif ext == ".csv":
+        df = pd.read_csv(input_path)
+    elif ext == ".parquet":
+        df = pd.read_parquet(input_path)
+    else:
+        raise ValueError(
+            f"Formato no soportado: {ext}"
+        )
+
+    df = clean_columns(df)
+    validate_required_columns(
+        df,
+        config["validation"]["required_columns"]
+    )
+    df = apply_filter(df, config)
+    df = normalize_types(df, config)
+    df = parse_dates(df, config)
+    df = transform_dates(df, config)
+    df = create_id_muni(df)
+    df = rename_columns(df, config)
+    df_fact = build_fact_table(df, config)
+    save_fact(
+        df_fact,
+        run_name,
+        fact_dir,
+        config
+    )
+
+    logging.info(
+        "Transformación finalizada correctamente"
+    )
+
+    return df_fact, config, run_name
