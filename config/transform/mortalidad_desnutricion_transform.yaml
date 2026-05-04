@@ -60,7 +60,7 @@ mortalidad_desnutricion_transform:
   # Columnas derivadas
   # -----------------------------------
   derived_columns:
-    id_muni:
+    id_mun:
       type: "concat"
       columns:
         - "COD_DPTO_O"
@@ -86,7 +86,7 @@ mortalidad_desnutricion_transform:
       - "date_event"
       - "year"
       - "age"
-      - "id_muni"
+      - "id_mun"
 
     metric_column: "id_consecutive"
 
@@ -98,7 +98,7 @@ mortalidad_desnutricion_transform:
       - "date_event"
       - "year"
       - "age"
-      - "id_muni"
+      - "id_mun"
       - "total_cases"
 
     file_prefix: "mortalidad_desnutricion"
@@ -111,7 +111,7 @@ mortalidad_desnutricion_transform:
     grain_golden:
       - "year"
       - "age"
-      - "id_muni"
+      - "id_mun"
 
     aggregation:
       total_cases: "count"

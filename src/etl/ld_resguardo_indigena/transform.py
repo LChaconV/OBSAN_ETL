@@ -1,9 +1,14 @@
+import os
+
 import pandas as pd
 from pathlib import Path
 import geopandas as gpd
 def run():
     # 1. Leer el archivo Excel
-    df = gpd.read_file(r"data\bronze\resguardo_indigena\resguardo_indigena.geojson")
+    file_path = os.environ.get("OBSAN_INPUT_FILE")
+    if not file_path:
+        raise ValueError("No se definió OBSAN_INPUT_FILE")
+    df = gpd.read_file(file_path)
     # 2. Seleccionar y renombrar la columna
     df = df[["PUEBLO","MUNICIPIO","geometry"]].rename(columns={
         "PUEBLO": "indigenous",
