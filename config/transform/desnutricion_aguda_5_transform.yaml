@@ -61,7 +61,7 @@ desnutricion_aguda_5_transform:
   # Columnas derivadas
   # -----------------------------------
   derived_columns:
-    id_muni:
+    id_mun:
       type: "concat"
       columns:
         - "COD_DPTO_O"
@@ -90,7 +90,7 @@ desnutricion_aguda_5_transform:
       - "date_event"
       - "year"
       - "age"
-      - "id_muni"
+      - "id_mun"
 
     metric_column: "id_consecutive"
 
@@ -103,7 +103,7 @@ desnutricion_aguda_5_transform:
       - "date_event"
       - "year"
       - "age"
-      - "id_muni"
+      - "id_mun"
       - "total_cases"
 
     file_prefix: "desnutricion_aguda_5"
@@ -115,7 +115,7 @@ desnutricion_aguda_5_transform:
     grain_golden:
       - "year"
       - "age"
-      - "id_muni"
+      - "id_mun"
       - "confirmed"
       - "condition_end"
 

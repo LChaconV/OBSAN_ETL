@@ -8,7 +8,7 @@ import pandas as pd
 
 from src.etl.utils.logging_utils import setup_logging
 from src.etl.utils.config_utils import load_yaml
-from src.etl.utils.sivigila_transform_utils import silver_transform, build_fact_table_golden, save_fact_golden
+from src.etl.utils.sivigila_transform_utils import silver_transform, build_fact_table_golden, save_fact_golden, transform_manual
 # ============================================================
 # RUTAS
 # ============================================================
@@ -20,7 +20,7 @@ def run() -> None:
 
     CONFIG_PATH = PROJECT_ROOT / "config" / "transform" / "desnutricion_aguda_5_transform.yaml"
     LOG_DIR = PROJECT_ROOT / "logs"
-    df, config,run_name = silver_transform("desnutricion_aguda_5_transform", LOG_DIR, CONFIG_PATH)
+    df, config,run_name = transform_manual("desnutricion_aguda_5_transform", LOG_DIR, CONFIG_PATH)
     build_fact_table_golden(df, config)
     save_fact_golden(df, run_name, PROJECT_ROOT / config["source"]["golden_fact_dir"], config)
 

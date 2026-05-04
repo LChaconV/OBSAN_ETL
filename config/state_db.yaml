@@ -130,3 +130,9 @@ mercado_laboral_load:
   last_run_at: '2026-05-03T17:48:23.306573+00:00'
   last_row_count: 26328
   extraction_mode: golden_load
+desnutricion_aguda_5:
+  last_incremental_value: desnutricion_aguda_5_run_20260504_112715.csv
+  incremental_column: run_filename
+  last_run_at: '2026-05-04T16:27:33.291795+00:00'
+  last_row_count: 11339
+  extraction_mode: db_load_gold_run
