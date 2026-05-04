@@ -77,7 +77,7 @@ def run() -> None:
         logging.info("Procesando archivo mas reciente: %s", latest_file.name)
         
         # 4. Lectura con tipado para evitar pérdida de ceros en códigos DANE
-        df_source = pd.read_csv(latest_file, dtype={'id_muni': str})
+        df_source = pd.read_csv(latest_file, dtype={'id_mun': str})
         df_source['date_event'] = pd.to_datetime(df_source['date_event'])
         
         # Identificación de años para limpieza selectiva (Idempotencia)
@@ -90,7 +90,7 @@ def run() -> None:
                     date_event DATE,
                     year INTEGER,
                     age INTEGER,
-                    id_muni VARCHAR(10),
+                    id_mun VARCHAR(10),
                     total_cases INTEGER
                 );
             """))

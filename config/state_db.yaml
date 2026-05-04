@@ -1,7 +1,9 @@
 mortalidad_desnutricion:
-  last_loaded_value: null
-  row_count_db: 0
-  last_load_timestamp: null
+  last_incremental_value: mortalidad_desnutricion_run_20260504_102023.csv
+  incremental_column: run_filename
+  last_run_at: '2026-05-04T15:20:25.535516+00:00'
+  last_row_count: 222
+  extraction_mode: db_load_gold_run
 subregion:
   last_incremental_value: '9900'
   incremental_column: id_subregion
