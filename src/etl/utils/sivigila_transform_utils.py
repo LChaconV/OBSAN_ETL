@@ -223,6 +223,14 @@ def save_fact_golden(df: pd.DataFrame, run_name: str, fact_dir: Path, config: di
     df.to_csv(path, index=False)
     logging.info("Archivo guardado en: %s", path)
 
+def save_fact_golden_parquet(df: pd.DataFrame, run_name: str, fact_dir: Path, config: dict):
+    fact_dir.mkdir(parents=True, exist_ok=True)
+
+    prefix = config["fact_table_golden"]["file_prefix"]
+    path = fact_dir / f"{prefix}_{run_name}.parquet"
+
+    df.to_parquet(path, index=False)
+    logging.info("Archivo guardado en: %s", path)
 # ============================================================
 # MAIN
 # ============================================================
@@ -306,11 +314,11 @@ def transform_manual(
     # =====================================================
     # INPUT FILE DESDE VARIABLE DE ENTORNO
     # =====================================================
-    file_path = os.environ.get("OBSAN_INPUT_FILE")
+    #file_path = os.environ.get("OBSAN_INPUT_FILE")
     
-    #file_path = os.environ["OBSAN_INPUT_FILE"] = (
-    #r"C:\Users\laura\ESCUELA COLOMBIANA DE INGENIERIA JULIO GARAVITO\Proyecto OBSAN - General\Datos_OBSAN_web\OBSAN\observatorio-san\data\bronze\mortalidad_desnutricion\mortalidad_desnutricion_run_20260503_130451.xlsx"
-    #)
+    file_path = os.environ["OBSAN_INPUT_FILE"] = (
+    r"C:\Users\laura\ESCUELA COLOMBIANA DE INGENIERIA JULIO GARAVITO\Proyecto OBSAN - General\Datos_OBSAN_web\OBSAN\observatorio-san\data\bronze\bajo_peso_nacer\Datos_2019_110.xls"
+    )
 
     if not file_path:
         raise ValueError(
@@ -339,7 +347,7 @@ def transform_manual(
 
 
     ext = input_path.suffix.lower()
-    if ext == ".xlsx":
+    if ext in [".xlsx", ".xls"]:
         df = pd.read_excel(input_path)
     elif ext == ".csv":
         df = pd.read_csv(input_path)
@@ -361,6 +369,21 @@ def transform_manual(
     df = transform_dates(df, config)
     df = create_id_muni(df)
     df = rename_columns(df, config)
+    df["id_mun"] = df["id_mun"].astype(str)
+    df["id_country"] = df["id_country"].astype(str)
+
+    df = df[
+            ~(
+                df["id_mun"].str.endswith("000") |
+                (df["id_mun"] == "01862") |
+                (df["id_mun"] == "01533")|
+                (df["id_mun"]== "01076") |
+                (df["id_mun"]== "27086") |
+                (df["id_mun"].str[-3:] == df["id_country"])
+            )
+        ]
+    
+
     df_fact = build_fact_table(df, config)
     save_fact(
         df_fact,
