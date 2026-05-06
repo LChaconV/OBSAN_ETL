@@ -15,15 +15,19 @@ perfil_antioquia:
 
 mortalidad_desnutricion:
   name: "Mortalidad por Desnutrición"
-  base_url: ""
+  base_url: "https://portalsivigila.ins.gov.co/Paginas/Buscador.aspx"
 
   path_gold: "data/golden/mortalidad_desnutricion"
 
 desnutricion_aguda_5:
   name: "Desnutrición Aguda en Menores de 5 Años"
-  base_url: ""
+  base_url: "https://portalsivigila.ins.gov.co/Paginas/Buscador.aspx"
 
   path_gold: "data/golden/desnutricion_aguda_5"
+
+bajo_peso_nacer:
+  name: "Bajo Peso al Nacer"
+  base_url: "https://portalsivigila.ins.gov.co/Paginas/Buscador.aspx"
 
 
 subregiones:
@@ -450,3 +454,6 @@ edu_escolar:
   storage:
     bronze_dir: "data/bronze/edu_escolar"
     file_prefix: "edu_escolar"
+
+pme:
+  url: "https://www.dane.gov.co/index.php/estadisticas-por-tema/pobreza-y-condiciones-de-vida/pobreza-monetaria"

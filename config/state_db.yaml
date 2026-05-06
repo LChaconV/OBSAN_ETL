@@ -1,8 +1,8 @@
 mortalidad_desnutricion:
-  last_incremental_value: mortalidad_desnutricion_run_20260504_102023.csv
+  last_incremental_value: mortalidad_desnutricion_run_20260505_163431.csv
   incremental_column: run_filename
-  last_run_at: '2026-05-04T15:20:25.535516+00:00'
-  last_row_count: 222
+  last_run_at: '2026-05-05T21:34:34.198666+00:00'
+  last_row_count: 285
   extraction_mode: db_load_gold_run
 subregion:
   last_incremental_value: '9900'
@@ -83,10 +83,10 @@ resguardo_indigena_load:
   last_row_count: 959
   extraction_mode: golden_load
 mercados_campesinos_load:
-  last_incremental_value: mercados_campesinos_run_20260417_202413.parquet
+  last_incremental_value: mercados_campesinos_run_20260504_115631.parquet
   incremental_column: file_name
-  last_run_at: '2026-04-23T16:32:56.579313+00:00'
-  last_row_count: 90
+  last_run_at: '2026-05-04T16:56:33.250785+00:00'
+  last_row_count: 45
   extraction_mode: golden_load
 produc_petroleo_load:
   last_incremental_value: produc_petroleo_run_20260429_211557.parquet
@@ -136,3 +136,9 @@ desnutricion_aguda_5:
   last_run_at: '2026-05-04T16:27:33.291795+00:00'
   last_row_count: 11339
   extraction_mode: db_load_gold_run
+bajo_peso_nacer_load:
+  last_incremental_value: bajo_peso_nacer_run_Datos_2019_110.parquet
+  incremental_column: file_name
+  last_run_at: '2026-05-06T16:31:42.665862+00:00'
+  last_row_count: 5742
+  extraction_mode: golden_load
