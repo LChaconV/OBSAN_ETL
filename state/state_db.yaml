@@ -22,3 +22,41 @@ subregion:
   last_run_at: '2026-04-01T00:57:26.777812+00:00'
   last_row_count: 141
   extraction_mode: db_load_geo_parquet
+terraclimate_load:
+  loaded_files:
+    terraclimate_ppt_annual_2024.parquet:
+      variable: ppt
+      year: 2024
+      row_count: 1123
+      loaded_at: '2026-05-11T17:48:38.405626+00:00'
+      status: loaded
+    terraclimate_ppt_annual_2025.parquet:
+      variable: ppt
+      year: 2025
+      row_count: 1123
+      loaded_at: '2026-05-11T17:48:38.577158+00:00'
+      status: loaded
+    terraclimate_tmax_annual_2024.parquet:
+      variable: tmax
+      year: 2024
+      row_count: 1123
+      loaded_at: '2026-05-11T17:48:38.771390+00:00'
+      status: loaded
+    terraclimate_tmax_annual_2025.parquet:
+      variable: tmax
+      year: 2025
+      row_count: 1123
+      loaded_at: '2026-05-11T17:48:38.943921+00:00'
+      status: loaded
+    terraclimate_tmin_annual_2024.parquet:
+      variable: tmin
+      year: 2024
+      row_count: 1123
+      loaded_at: '2026-05-11T17:48:39.111762+00:00'
+      status: loaded
+    terraclimate_tmin_annual_2025.parquet:
+      variable: tmin
+      year: 2025
+      row_count: 1123
+      loaded_at: '2026-05-11T17:48:39.305982+00:00'
+      status: loaded
