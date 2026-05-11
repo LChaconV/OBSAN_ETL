@@ -1,0 +1,33 @@
+terraclimate_transform:
+  source:
+    bronze_dir: "data/bronze/terraclimate"
+    municipalities_path: "data/silver/divipola/divipola.parquet"
+
+  output:
+    silver_dir: "data/silver/terraclimate"
+    golden_dir: "data/golden/terraclimate"
+    file_prefix: "terraclimate"
+    error_dir: "logs/terraclimate/errors"
+
+  variables:
+    ppt:
+      monthly_stat: "mean"
+      annual_agg: "sum"
+
+    tmax:
+      monthly_stat: "mean"
+      annual_agg: "mean"
+
+    tmin:
+      monthly_stat: "mean"
+      annual_agg: "mean"
+
+  years:
+    start_year: 2024
+
+  columns:
+    municipality_id: "id_mun"
+    geometry: "geometry"
+
+  temporary:
+    raster_dir: "data/tmp/terraclimate"

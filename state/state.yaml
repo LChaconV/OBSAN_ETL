@@ -52,3 +52,37 @@ edu_escolar:
   last_run_at: '2026-04-26T01:45:21.628434+00:00'
   last_row_count: 14706296
   extraction_mode: incremental
+terraclimate:
+  variables:
+    ppt:
+      last_incremental_value: 2025
+      last_file: TerraClimate_ppt_2025.nc
+      last_path: data\bronze\terraclimate\ppt\TerraClimate_ppt_2025.nc
+      last_downloaded_at: '2026-05-10T00:22:16.291503+00:00'
+      status: downloaded
+    tmax:
+      last_incremental_value: 2025
+      last_file: TerraClimate_tmax_2025.nc
+      last_path: data\bronze\terraclimate\tmax\TerraClimate_tmax_2025.nc
+      last_downloaded_at: '2026-05-10T00:26:20.953819+00:00'
+      status: downloaded
+    tmin:
+      last_incremental_value: 2025
+      last_file: TerraClimate_tmin_2025.nc
+      last_path: data\bronze\terraclimate\tmin\TerraClimate_tmin_2025.nc
+      last_downloaded_at: '2026-05-10T00:38:42.969164+00:00'
+      status: downloaded
+terraclimate_transform:
+  variables:
+    ppt:
+      last_transformed_value: 2025
+      last_transformed_at: '2026-05-11T14:54:54.684187+00:00'
+      status: transformed
+    tmax:
+      last_transformed_value: 2025
+      last_transformed_at: '2026-05-11T14:56:09.697977+00:00'
+      status: transformed
+    tmin:
+      last_transformed_value: 2025
+      last_transformed_at: '2026-05-11T14:57:34.836369+00:00'
+      status: transformed

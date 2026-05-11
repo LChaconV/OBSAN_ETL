@@ -457,3 +457,23 @@ edu_escolar:
 
 pme:
   url: "https://www.dane.gov.co/index.php/estadisticas-por-tema/pobreza-y-condiciones-de-vida/pobreza-monetaria"
+
+terraclimate:
+  name: "TerraClimate"
+  base_url_pattern: "https://climate.northwestknowledge.net/TERRACLIMATE-DATA/TerraClimate_{variable}_{year}.nc"
+
+  variables:
+    - "ppt"
+    - "tmax"
+    - "tmin"
+
+  years:
+    start_year: 2024
+    end_year: 2024
+
+  storage:
+    bronze_dir: "data/bronze/terraclimate"
+
+  request:
+    timeout_seconds: 300
+    max_retries: 5
