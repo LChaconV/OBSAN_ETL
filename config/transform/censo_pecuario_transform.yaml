@@ -1,0 +1,155 @@
+censo_pecuario_transform:
+  aves:
+    source:
+      bronze_dir: "data/bronze/censo_pecuario/aviar"
+      silver_fact_dir: "data/silver/censo_pecuario/aviar"
+      golden_fact_dir: "data/golden/censo_pecuario/aviar"
+
+    validation:
+      required_columns:
+        - "CODIGO MUNICIPIO"
+        - "TOTAL AVES CAPACIDAD OCUPADA MAS AVES TRASPATIO"
+        - "TOTAL PREDIOS AVICOLAS MAS PREDIOS TRASPATIO"
+    fact_table:
+      rename_columns:
+        "CODIGO MUNICIPIO": "id_mun"
+        "TOTAL AVES CAPACIDAD OCUPADA MAS AVES TRASPATIO": "total_animals"
+        "TOTAL PREDIOS AVICOLAS MAS PREDIOS TRASPATIO": "total_farms"
+      grain:
+        - "id_mun"
+        - "year"
+      metric_columns:
+        - "total_animals"
+        - "total_farms"
+
+  bovino:
+    source:
+      bronze_dir: "data/bronze/censo_pecuario/bovino"
+      silver_fact_dir: "data/silver/censo_pecuario/bovino"
+      golden_fact_dir: "data/golden/censo_pecuario/bovino"
+
+    validation:
+      required_columns:
+        - "CODIGO MUNICIPIO"
+        - "TOTAL BOVINOS"
+        - "TOTAL FINCAS CON BOVINOS"
+    fact_table:
+      rename_columns:
+        "CODIGO MUNICIPIO": "id_mun"
+        "TOTAL BOVINOS": "total_animals"
+        "TOTAL FINCAS CON BOVINOS": "total_farms"
+      grain:
+        - "id_mun"
+        - "year"
+      metric_columns:
+        - "total_animals"
+        - "total_farms"
+
+  bufalino:
+    source:
+      bronze_dir: "data/bronze/censo_pecuario/bufalino"
+      silver_fact_dir: "data/silver/censo_pecuario/bufalino"
+      golden_fact_dir: "data/golden/censo_pecuario/bufalino"
+
+    validation:
+      required_columns:
+        - "CODIGO MUNICIPIO"
+        - "TOTAL BUFALOS"
+        - "TOTAL FINCAS CON BUFALOS"
+    fact_table:
+      rename_columns:
+        "CODIGO MUNICIPIO": "id_mun"
+        "TOTAL BUFALOS": "total_animals"
+        "TOTAL FINCAS CON BUFALOS": "total_farms"
+      grain:
+        - "id_mun"
+        - "year"
+      metric_columns:
+        - "total_animals"
+        - "total_farms"
+
+  caprino:
+    source:
+      bronze_dir: "data/bronze/censo_pecuario/caprino"
+      silver_fact_dir: "data/silver/censo_pecuario/caprino"
+      golden_fact_dir: "data/golden/censo_pecuario/caprino"
+
+    validation:
+      required_columns:
+        - "COD"
+        - "TOTAL CAPRINOS"
+
+    fact_table:
+      rename_columns:
+        "COD": "id_mun"
+        "TOTAL CAPRINOS": "total_animals"
+      grain:
+        - "id_mun"
+        - "year"
+      metric_columns:
+        - "total_animals"
+
+  ovino:
+    source:
+      bronze_dir: "data/bronze/censo_pecuario/ovino"
+      silver_fact_dir: "data/silver/censo_pecuario/ovino"
+      golden_fact_dir: "data/golden/censo_pecuario/ovino"
+
+    validation:
+      required_columns:
+        - "COD"
+        - "TOTAL OVINOS"
+    fact_table:
+      rename_columns:
+        "COD": "id_mun"
+        "TOTAL OVINOS": "total_animals"
+      grain:
+        - "id_mun"
+        - "year"
+      metric_columns:
+        - "total_animals"
+
+  equino:
+    source:
+      bronze_dir: "data/bronze/censo_pecuario/equino"
+      silver_fact_dir: "data/silver/censo_pecuario/equino"
+      golden_fact_dir: "data/golden/censo_pecuario/equino"
+
+    validation:
+      required_columns:
+        - "CODIGO MUNICIPIO"
+        - "TOTAL EQUINOS"
+
+    fact_table:
+      rename_columns:
+        "CODIGO MUNICIPIO": "id_mun"
+        "TOTAL EQUINOS": "total_animals"
+      grain:
+        - "id_mun"
+        - "year"
+      metric_columns:
+        - "total_animals"
+
+  porcino:
+    source:
+      bronze_dir: "data/bronze/censo_pecuario/porcino"
+      silver_fact_dir: "data/silver/censo_pecuario/porcino"
+      golden_fact_dir: "data/golden/censo_pecuario/porcino"
+
+    validation:
+      required_columns:
+        - "CODIGO MUNICIPIO"
+        - "TOTAL CERDOS"
+        - "TOTAL PREDIOS PORCICOLAS"
+      
+    fact_table:
+      rename_columns:
+        "CODIGO MUNICIPIO": "id_mun"
+        "TOTAL CERDOS": "total_animals"
+        "TOTAL PREDIOS PORCICOLAS": "total_farms"
+      grain:
+        - "id_mun"
+        - "year"
+      metric_columns:
+        - "total_animals"
+        - "total_farms"
