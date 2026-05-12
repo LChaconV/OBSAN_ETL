@@ -314,10 +314,10 @@ def transform_manual(
     # =====================================================
     # INPUT FILE DESDE VARIABLE DE ENTORNO
     # =====================================================
-    #file_path = os.environ.get("OBSAN_INPUT_FILE")
+    file_path = os.environ.get("OBSAN_INPUT_FILE")
     
-    file_path = os.environ["OBSAN_INPUT_FILE"] = (
-    r"C:\Users\laura\ESCUELA COLOMBIANA DE INGENIERIA JULIO GARAVITO\Proyecto OBSAN - General\Datos_OBSAN_web\OBSAN\observatorio-san\data\bronze\mortalidad_desnutricion\run_2026_03_28\Datos_2018_112.xls")
+    #file_path = os.environ["OBSAN_INPUT_FILE"] = (
+    #r"C:\Users\laura\ESCUELA COLOMBIANA DE INGENIERIA JULIO GARAVITO\Proyecto OBSAN - General\Datos_OBSAN_web\OBSAN\observatorio-san\data\bronze\mortalidad_desnutricion\run_2026_03_28\Datos_2018_112.xls")
 
     if not file_path:
         raise ValueError(
