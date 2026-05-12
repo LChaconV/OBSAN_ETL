@@ -78,7 +78,7 @@ def run() -> None:
         
         # 4. Lectura con tipado para evitar pérdida de ceros en códigos DANE
         df_source = pd.read_csv(latest_file, dtype={'id_mun': str})
-        df_source['date_event'] = pd.to_datetime(df_source['date_event'])
+       
         
         # Identificación de años para limpieza selectiva (Idempotencia)
         years_to_update = df_source['year'].unique().tolist()
@@ -87,7 +87,7 @@ def run() -> None:
             # 5. Asegurar Infraestructura de la Tabla de Hechos
             conn.execute(text("""
                 CREATE TABLE IF NOT EXISTS mortality_malnutrition (
-                    date_event DATE,
+                
                     year INTEGER,
                     age INTEGER,
                     id_mun VARCHAR(10),

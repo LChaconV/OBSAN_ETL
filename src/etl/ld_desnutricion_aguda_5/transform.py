@@ -21,8 +21,8 @@ def run() -> None:
     CONFIG_PATH = PROJECT_ROOT / "config" / "transform" / "desnutricion_aguda_5_transform.yaml"
     LOG_DIR = PROJECT_ROOT / "logs"
     df, config,run_name = transform_manual("desnutricion_aguda_5_transform", LOG_DIR, CONFIG_PATH)
-    build_fact_table_golden(df, config)
-    save_fact_golden(df, run_name, PROJECT_ROOT / config["source"]["golden_fact_dir"], config)
+    df_golden= build_fact_table_golden(df, config)
+    save_fact_golden(df_golden, run_name, PROJECT_ROOT / config["source"]["golden_fact_dir"], config)
 
 if __name__ == "__main__":
     try:

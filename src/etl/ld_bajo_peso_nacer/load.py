@@ -16,8 +16,6 @@ CREATE TABLE IF NOT EXISTS low_birth_weight (
 
     id_low_birth_weight SERIAL PRIMARY KEY,
 
-    date_event DATE,
-
     year INTEGER,
 
     total_cases INTEGER,
@@ -66,7 +64,8 @@ def run(**kwargs):
 
         update_columns=[
             "total_cases",
-            "date_event"
+            "year"
+            #"date_event"
         ],
 
         state_field_name="last_incremental_value",

@@ -34,8 +34,8 @@ def run() -> None:
             CONFIG_PATH
         )
          
-    build_fact_table_golden(df, config)
-    save_fact_golden(df, run_name, PROJECT_ROOT / config["source"]["golden_fact_dir"], config)
+    df_golden= build_fact_table_golden(df, config)
+    save_fact_golden(df_golden, run_name, PROJECT_ROOT / config["source"]["golden_fact_dir"], config)
 
 if __name__ == "__main__":
     try:

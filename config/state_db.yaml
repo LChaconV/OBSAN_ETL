@@ -1,8 +1,8 @@
 mortalidad_desnutricion:
-  last_incremental_value: mortalidad_desnutricion_run_20260505_163431.csv
+  last_incremental_value: mortalidad_desnutricion_run_Datos_2018_112.csv
   incremental_column: run_filename
-  last_run_at: '2026-05-05T21:34:34.198666+00:00'
-  last_row_count: 285
+  last_run_at: '2026-05-12T15:19:29.806917+00:00'
+  last_row_count: 168
   extraction_mode: db_load_gold_run
 subregion:
   last_incremental_value: '9900'
@@ -131,14 +131,14 @@ mercado_laboral_load:
   last_row_count: 26328
   extraction_mode: golden_load
 desnutricion_aguda_5:
-  last_incremental_value: desnutricion_aguda_5_run_20260511_131415.csv
+  last_incremental_value: desnutricion_aguda_5_run_20260511_173434.csv
   incremental_column: run_filename
-  last_run_at: '2026-05-11T18:14:21.961076+00:00'
-  last_row_count: 10207
+  last_run_at: '2026-05-11T22:34:43.610891+00:00'
+  last_row_count: 3922
   extraction_mode: db_load_gold_run
 bajo_peso_nacer_load:
   last_incremental_value: bajo_peso_nacer_run_Datos_2019_110.parquet
   incremental_column: file_name
-  last_run_at: '2026-05-06T16:31:42.665862+00:00'
+  last_run_at: '2026-05-12T15:12:49.047957+00:00'
   last_row_count: 5742
   extraction_mode: golden_load

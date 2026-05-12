@@ -74,7 +74,7 @@ def run() -> None:
         
         # 4. Lectura con preservación de tipos (DANE codes como string)
         df_source = pd.read_csv(latest_file, dtype={'id_mun': str})
-        df_source['date_event'] = pd.to_datetime(df_source['date_event'])
+        #df_source['date_event'] = pd.to_datetime(df_source['date_event'])
         
         # Deducción dinámica de años para la limpieza
         years_to_clean = df_source['year'].unique().tolist()
@@ -85,7 +85,7 @@ def run() -> None:
                 CREATE TABLE IF NOT EXISTS acute_malnutrition_5 (
                     confirmed INTEGER,
                     condition_end VARCHAR(100),
-                    date_event DATE,
+                  
                     year INTEGER,
                     age INTEGER,
                     id_mun VARCHAR(10),
