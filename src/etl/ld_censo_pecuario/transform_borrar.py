@@ -25,6 +25,10 @@ def load_transform_config(key: str) -> dict:
 
     if key not in config:
         raise KeyError(f"No existe la clave '{key}' en censo_pecuario_transform.yaml")
+
+   
+        
+
     return config[key]
 
 
@@ -130,7 +134,7 @@ def transform_censo_pecuario(
     )
     if "total_farms" not in df_gold.columns:
         logging.warning("Columna 'total_farms' no encontrada. Asignando valores nulos.")
-        df_gold["total_farms"] = 0
+        df_gold["total_farms"] = None 
 
     return df_gold.sort_values(group_columns).reset_index(drop=True)
 

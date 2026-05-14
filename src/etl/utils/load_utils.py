@@ -65,11 +65,13 @@ def load_parquet_to_postgres(
     log_file_name: str,
     create_table_sql: str,
     create_index_sql: str | None = None,
-    load_mode: str = "append",   # "append" | "upsert"
+    load_mode: str = "append",
     conflict_columns: Sequence[str] | None = None,
     update_columns: Sequence[str] | None = None,
     state_field_name: str = "last_incremental_value",
+    input_file_path: Path | str | None = None,
 ) -> None:
+    
     setup_logging(LOG_DIR, log_file_name)
     logging.info("Iniciando carga para tabla %s", table_name)
 
@@ -77,14 +79,28 @@ def load_parquet_to_postgres(
         engine = get_engine()
         config = load_yaml(transform_config_path)[config_key]
 
-        source_dir = PROJECT_ROOT / config["source"]["golden_fact_dir"]
-        file_prefix = config["fact_table"]["file_prefix"]
         temp_table = f"temp_{table_name}"
 
-        latest_file = get_latest_parquet_file(source_dir, file_prefix)
-        if not latest_file:
-            logging.warning("No se encontraron archivos en la ruta: %s", source_dir)
-            return
+        if input_file_path:
+            latest_file = Path(input_file_path)
+
+            if not latest_file.is_absolute():
+                latest_file = PROJECT_ROOT / latest_file
+
+            if not latest_file.exists():
+                raise FileNotFoundError(f"No existe el archivo recibido para carga: {latest_file}")
+
+            logging.info("Archivo recibido para carga: %s", latest_file)
+
+        else:
+            source_dir = PROJECT_ROOT / config["source"]["golden_fact_dir"]
+            file_prefix = config["fact_table"]["file_prefix"]
+
+            latest_file = get_latest_parquet_file(source_dir, file_prefix)
+
+            if not latest_file:
+                logging.warning("No se encontraron archivos en la ruta: %s", source_dir)
+                return
 
         db_state = load_state(state_key, STATE_DB_PATH)
         if db_state.get(state_field_name) == latest_file.name:

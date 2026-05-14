@@ -142,3 +142,9 @@ bajo_peso_nacer_load:
   last_run_at: '2026-05-12T15:12:49.047957+00:00'
   last_row_count: 5742
   extraction_mode: golden_load
+censo_load:
+  last_incremental_value: censo_equino_2023.parquet
+  incremental_column: file_name
+  last_run_at: '2026-05-14T21:10:12.006662+00:00'
+  last_row_count: 1122
+  extraction_mode: golden_load
