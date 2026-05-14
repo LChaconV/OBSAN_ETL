@@ -57,20 +57,20 @@ def get_runtime_params() -> tuple[Path, int, str]:
     return file_path, int(year), animal_type.strip().lower()
 
 
-def find_header_row_excel(file_path: Path, required_columns: list[str], max_rows: int = 30) -> int:
+def find_header_row_excel(file_path: Path, required_columns: list, max_rows: int = 30) -> int:
     preview = pd.read_excel(file_path, header=None, nrows=max_rows)
-
-    required_norm = {str(col).strip().upper() for col in required_columns}
+    normalized = normalize_required_columns(required_columns)
 
     for idx, row in preview.iterrows():
-        row_values = {str(value).strip().upper() for value in row.dropna().tolist()}
-        matches = required_norm.intersection(row_values)
-
-        if len(matches) == len(required_norm):
+        row_cols_upper = {str(v).strip().upper(): str(v) for v in row.dropna()}
+        if all(
+            find_matching_column(group, row_cols_upper) is not None
+            for group in normalized
+        ):
             return idx
 
     raise ValueError(
-        f"No se encontró una fila de encabezado que contenga las columnas requeridas: {required_columns}"
+        f"No se encontró encabezado con las columnas requeridas: {required_columns}"
     )
 
 
@@ -93,11 +93,16 @@ def read_input_file(file_path, required_columns: list[str]) -> pd.DataFrame:
 
 
 def validate_required_columns(df: pd.DataFrame, config: dict) -> None:
-    required_columns = config["validation"]["required_columns"]
-    missing = [col for col in required_columns if col not in df.columns]
+    normalized = normalize_required_columns(config["validation"]["required_columns"])
+    df_cols_upper = {col.strip().upper(): col for col in df.columns}
+
+    missing = [
+        group for group in normalized
+        if find_matching_column(group, df_cols_upper) is None
+    ]
 
     if missing:
-        raise ValueError(f"Faltan columnas requeridas: {missing}")
+        raise ValueError(f"Faltan columnas requeridas (ningún alias encontrado): {missing}")
 
 
 def transform_censo_pecuario(
@@ -107,6 +112,10 @@ def transform_censo_pecuario(
     animal_type: str,
 ) -> pd.DataFrame:
     fact_cfg = config["fact_table"]
+    alias_rename = resolve_column_aliases(df, config["validation"]["required_columns"])
+    if alias_rename:
+        logging.info("Aliases resueltos: %s", alias_rename)
+        df = df.rename(columns=alias_rename)
 
     rename_columns = fact_cfg["rename_columns"]
     grain = fact_cfg["grain"]
@@ -145,6 +154,48 @@ def save_golden(df: pd.DataFrame, config: dict, year: int, animal_type: str) -> 
     logging.info("Archivo golden guardado en: %s", output_path)
 
     return output_path
+def normalize_required_columns(required_columns: list) -> list[list[str]]:
+    """Normaliza cada entrada a lista de aliases. Un string queda como lista de uno."""
+    return [
+        col if isinstance(col, list) else [col]
+        for col in required_columns
+    ]
+
+def resolve_column_aliases(df: pd.DataFrame, required_columns: list) -> dict:
+    """
+    Devuelve un rename dict {col_real_en_df -> nombre_canonico}
+    para columnas que llegaron con un alias distinto al canónico.
+    El nombre canónico es el primer elemento de cada grupo.
+    """
+    normalized = normalize_required_columns(required_columns)
+    rename = {}
+    df_cols_upper = {col.strip().upper(): col for col in df.columns}
+
+    for group in normalized:
+        canonical = group[0]
+        match = find_matching_column(group, df_cols_upper)
+        if match and match != canonical:
+            rename[match] = canonical
+
+    return rename
+
+def find_matching_column(aliases: list[str], df_cols_upper: dict[str, str]) -> str | None:
+    """
+    Busca en df_cols_upper la primera columna que coincida con algún alias.
+    Estrategia: exacto primero, luego startswith, luego contains.
+    Devuelve el nombre real de la columna en el df, o None si no hay match.
+    """
+    for strategy in ("exact", "startswith", "contains"):
+        for alias in aliases:
+            alias_up = alias.strip().upper()
+            for col_up, col_real in df_cols_upper.items():
+                if strategy == "exact"      and col_up == alias_up:
+                    return col_real
+                if strategy == "startswith" and col_up.startswith(alias_up):
+                    return col_real
+                if strategy == "contains"   and alias_up in col_up:
+                    return col_real
+    return None
 
 def run() -> None:
     file_path, year, animal_type = get_runtime_params()

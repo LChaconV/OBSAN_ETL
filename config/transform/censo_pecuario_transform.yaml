@@ -25,7 +25,7 @@ bovino:
     bronze_dir: data/bronze/censo_pecuario/bovino
     silver_fact_dir: data/silver/censo_pecuario/bovino
     golden_fact_dir: data/golden/censo_pecuario/bovino
-    last_file_transformed: censo_bovino_2018.parquet
+    last_file_transformed: censo_bovino_2025.parquet
   validation:
     required_columns:
     - CODIGO MUNICIPIO
@@ -47,6 +47,7 @@ bufalino:
     bronze_dir: data/bronze/censo_pecuario/bufalino
     silver_fact_dir: data/silver/censo_pecuario/bufalino
     golden_fact_dir: data/golden/censo_pecuario/bufalino
+    last_file_transformed: censo_bufalino_2024.parquet
   validation:
     required_columns:
     - CODIGO MUNICIPIO
@@ -68,9 +69,11 @@ caprino:
     bronze_dir: data/bronze/censo_pecuario/caprino
     silver_fact_dir: data/silver/censo_pecuario/caprino
     golden_fact_dir: data/golden/censo_pecuario/caprino
+    last_file_transformed: censo_caprino_2025.parquet
   validation:
     required_columns:
-    - COD
+    - - COD
+      - CODIGO MUNICIPIO
     - TOTAL CAPRINOS
   fact_table:
     rename_columns:
@@ -89,7 +92,8 @@ ovino:
     last_file_transformed: censo_ovino_2025.parquet
   validation:
     required_columns:
-    - COD
+    - - COD
+      - CODIGO MUNICIPIO
     - TOTAL OVINOS
   fact_table:
     rename_columns:
@@ -105,7 +109,7 @@ equino:
     bronze_dir: data/bronze/censo_pecuario/equino
     silver_fact_dir: data/silver/censo_pecuario/equino
     golden_fact_dir: data/golden/censo_pecuario/equino
-    last_file_transformed: censo_equino_2023.parquet
+    last_file_transformed: censo_equino_2025.parquet
   validation:
     required_columns:
     - CODIGO MUNICIPIO
@@ -124,6 +128,7 @@ porcino:
     bronze_dir: data/bronze/censo_pecuario/porcino
     silver_fact_dir: data/silver/censo_pecuario/porcino
     golden_fact_dir: data/golden/censo_pecuario/porcino
+    last_file_transformed: censo_porcino_2024.parquet
   validation:
     required_columns:
     - CODIGO MUNICIPIO
