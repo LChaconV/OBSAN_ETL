@@ -18,3 +18,4 @@ visualizaciones/
 logs/
 *.ipynb
 .env
+config/db.yaml

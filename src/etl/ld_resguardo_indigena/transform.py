@@ -1,8 +1,20 @@
 import os
-
+import topojson as tp
 import pandas as pd
 from pathlib import Path
 import geopandas as gpd
+def simplify_mun_geometry(gdf):
+    try:
+
+        topo = tp.Topology(gdf, prequantize=False)
+    
+        gdf_topo = topo.toposimplify(6000).to_gdf()
+        
+        return gdf_topo
+    
+    except Exception as e:
+        print(f"Error procesando topología: {e}")
+        return None
 def run():
     # 1. Leer el archivo Excel
     file_path = os.environ.get("OBSAN_INPUT_FILE")
