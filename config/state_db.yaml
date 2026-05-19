@@ -19,7 +19,7 @@ perfil_antioquia:
 divipola:
   last_incremental_value: '99773'
   incremental_column: id_mun
-  last_run_at: '2026-04-09T16:34:17.028016+00:00'
+  last_run_at: '2026-05-19T21:24:20.662228+00:00'
   last_row_count: 1123
   extraction_mode: db_load
 victimas_golden_load:

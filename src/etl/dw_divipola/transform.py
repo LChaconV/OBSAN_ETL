@@ -123,6 +123,7 @@ def run() -> None:
     file = config["silver"]["divipola_file"]
 
     path = base / file
+    path.parent.mkdir(parents=True, exist_ok=True)
     gdf.to_parquet(path)
     print(gdf.head())
 

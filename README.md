@@ -1,14 +1,38 @@
-# OBSAN - Pipeline ETL
+# OBSAN - Código unificado (ETL + Streamlit)
 
-Este proyecto implementa un pipeline ETL para el Observatorio de Seguridad Alimentaria. El flujo general es:
+Este repositorio ahora concentra toda la base de código en una sola unidad: **proceso ETL** y **aplicación web Streamlit**.
+
+## División funcional del código
+
+- **Web (Streamlit):** `apps/streamlit/`
+- **ETL y orquestación:** `src/etl/`, `src/runner.py`, `src/scheduler.py`
+- **Configuración ETL:** `config/`
+- **SQL de apoyo:** `sql/`
+- **Datos de entrada (bronze):** `data/bronze/` (creado en ejecución)
+
+## Estructura principal (analizada con `erd`)
 
 ```text
-Extract → Bronze → Transform → Silver/Golden → Load → PostgreSQL
+etl/
+├── apps/
+│   └── streamlit/
+│       ├── app.py
+│       ├── components/
+│       ├── config/
+│       ├── core/
+│       ├── pages/
+│       └── upload/
+├── src/
+│   ├── runner.py
+│   ├── scheduler.py
+│   └── etl/
+├── config/
+├── sql/
+├── pyproject.toml
+└── uv.lock
 ```
 
-## Entorno (uv, sin pip)
-
-Instalación y sincronización de dependencias:
+## Entorno (solo uv)
 
 ```bash
 uv sync
@@ -20,60 +44,53 @@ Si usas fish:
 source .venv/bin/activate.fish
 ```
 
-Ejecución sugerida (agnóstica de plataforma):
+## Ejecución de la app web (Streamlit)
+
+Desde la raíz de `etl/`:
+
+```bash
+uv run streamlit run apps/streamlit/app.py
+```
+
+## Ejecución ETL
+
+Ejecutar una fuente puntual:
 
 ```bash
 uv run -m src.runner "nombre_fuente"
 ```
 
-## Base de datos
+Ejecutar scheduler:
 
-Configurar conexión en:
+```bash
+uv run -m src.scheduler
+```
+
+## Lógica del proceso ETL
+
+Flujo de alto nivel:
+
 ```text
-config/db.yaml
-```
-Con la siguiente estructura:
-
-```yaml
-postgresql:
-  user: ""       # Usuario de PostgreSQL. Ejemplo: "postgres"
-  
-  pass: ""       # Contraseña del usuario de PostgreSQL
-  
-  host: ""       # Dirección del servidor PostgreSQL. Ejemplo: "localhost"
-  
-  port:          # Puerto de PostgreSQL. Normalmente: 5432
-  
-  database: ""   # Nombre de la base de datos del proyecto. Ejemplo: "observatorio"
-
-# Parámetros opcionales de rendimiento
-pooling:
-  min_size: 1    # Número mínimo de conexiones mantenidas en el pool
-  max_size: 5    # Número máximo de conexiones simultáneas
+Extract → Bronze → Transform → Silver/Golden → Load → PostgreSQL
 ```
 
-# Guía de Configuración y Carga de Archivos OBSAN Web
+1. **Extract:** descarga/lectura de fuentes (API, archivos, geodatos).
+2. **Bronze:** persistencia de insumos crudos en `data/bronze/`.
+3. **Transform:** estandarización, limpieza, reglas y enriquecimiento.
+4. **Load:** carga en PostgreSQL/PostGIS (dimensiones, hechos y tablas analíticas).
 
-Tras completar la configuración inicial de la base de datos, proceda con los siguientes pasos para clonar el repositorio y cargar la información geoespacial requerida.
+La app web usa el módulo `apps/streamlit/upload/` para recibir archivos y disparar pipelines ETL registrados en `pipeline_runner.py`.
 
-## 1. Clonación del Repositorio
+## Configuración de base de datos (variables de entorno)
 
-Descargue el código fuente del proyecto ejecutando el siguiente comando en su terminal o descargándolo directamente desde el enlace:
+La capa ETL y la app Streamlit leen la conexión PostgreSQL/PostGIS desde `etl/.env`.
 
-* **Repositorio:** [OBSAN_Web en GitHub](https://github.com/LChaconV/OBSAN_Web.git)
+Variables requeridas:
 
----
-
-## 2. Instrucciones para la Carga de Archivos
-
-1. Acceda a la interfaz de la aplicación web.
-2. En la **barra lateral izquierda**, busque y seleccione la opción **"Carga de Archivos"**.
-3. Cargue los archivos correspondientes a las variables detalladas a continuación:
-
-### Variable 1: División municipal de Colombia
-* **Descripción:** Archivo geográfico de la división por municipios.
-* **Enlace de descarga:** [Descargar Archivo 1 (SharePoint)](https://pruebacorreoescuelaingeduco.sharepoint.com/:u:/s/ProyectoOBSAN/IQCfLTsb3GruTbeFRmpQA9iPAZkXWVYt9IKp8k8ef330YjQ?e=uo1At5)
-
-### Variable 2: División departamental de Colombia
-* **Descripción:** Archivo geográfico de la división por departamentos.
-* **Enlace de descarga:** [Descargar Archivo 2 (SharePoint)](https://pruebacorreoescuelaingeduco.sharepoint.com/:u:/s/ProyectoOBSAN/IQBkbzU5gX6mT6dnRh_2uy1AAaGqmXfjOgBf1s8GETGloAg?e=WUSqs3)
+```dotenv
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=postgres
+DB_USER=postgres
+DB_PASSWORD=tu_password
+```

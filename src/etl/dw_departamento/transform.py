@@ -72,6 +72,7 @@ def run():
     file = config["silver"]["departamentos_file"]
 
     path = base / file
+    path.parent.mkdir(parents=True, exist_ok=True)
     gdf.to_parquet(path)
     print(gdf)
 

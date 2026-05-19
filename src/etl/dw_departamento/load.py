@@ -21,7 +21,6 @@ PROJECT_ROOT = Path(__file__).resolve().parents[3]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.append(str(PROJECT_ROOT))
 
-DB_CONFIG_PATH = PROJECT_ROOT / "config" / "db.yaml"
 SOURCES_CONFIG_PATH = PROJECT_ROOT / "config" / "transform" / "departamentos_transform.yaml"
 STATE_DB_PATH = PROJECT_ROOT / "config" / "state_db.yaml"
 LOG_DIR = PROJECT_ROOT / "logs"
