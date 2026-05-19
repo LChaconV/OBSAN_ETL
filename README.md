@@ -46,7 +46,7 @@ source .venv/bin/activate.fish
 
 ## Ejecución de la app web (Streamlit)
 
-Desde la raíz de `etl/`:
+Desde la raíz:
 
 ```bash
 uv run streamlit run apps/streamlit/app.py
@@ -83,7 +83,7 @@ La app web usa el módulo `apps/streamlit/upload/` para recibir archivos y dispa
 
 ## Configuración de base de datos (variables de entorno)
 
-La capa ETL y la app Streamlit leen la conexión PostgreSQL/PostGIS desde `etl/.env`.
+La capa ETL y la app Streamlit leen la conexión PostgreSQL/PostGIS desde `.env`.
 
 Variables requeridas:
 
