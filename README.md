@@ -5,6 +5,27 @@ Este proyecto implementa un pipeline ETL para el Observatorio de Seguridad Alime
 ```text
 Extract → Bronze → Transform → Silver/Golden → Load → PostgreSQL
 ```
+
+## Entorno (uv, sin pip)
+
+Instalación y sincronización de dependencias:
+
+```bash
+uv sync
+```
+
+Si usas fish:
+
+```fish
+source .venv/bin/activate.fish
+```
+
+Ejecución sugerida (agnóstica de plataforma):
+
+```bash
+uv run -m src.runner "nombre_fuente"
+```
+
 ## Base de datos
 
 Configurar conexión en:
@@ -56,4 +77,3 @@ Descargue el código fuente del proyecto ejecutando el siguiente comando en su t
 ### Variable 2: División departamental de Colombia
 * **Descripción:** Archivo geográfico de la división por departamentos.
 * **Enlace de descarga:** [Descargar Archivo 2 (SharePoint)](https://pruebacorreoescuelaingeduco.sharepoint.com/:u:/s/ProyectoOBSAN/IQBkbzU5gX6mT6dnRh_2uy1AAaGqmXfjOgBf1s8GETGloAg?e=WUSqs3)
-
