@@ -2,6 +2,7 @@ irca_transform:
   source:
     bronze_dir: "data/bronze/irca"
     silver_fact_dir: "data/silver/irca"
+    golden_fact_dir: "data/golden/irca"
 
   run:
     process_latest_run_only: true

@@ -83,6 +83,7 @@ def run() -> None:
 
     bronze_dir = PROJECT_ROOT / config["source"]["bronze_dir"]
     fact_dir = PROJECT_ROOT / config["source"]["silver_fact_dir"]
+    fact_dir_golden = PROJECT_ROOT / config["source"]["golden_fact_dir"]
 
     run_dir = get_latest_bronze_run(bronze_dir)
     run_name = extract_run_name(run_dir)
@@ -97,7 +98,15 @@ def run() -> None:
 
     irca_fact = build_irca_fact(df, config)
 
+     # Golden
+    df_golden= irca_fact.copy()
+
+
+    df_golden = df_golden[df_golden["id_mun"] != "#TODOS"].copy()
+
     save_fact_table(irca_fact, run_name, fact_dir, config, "irca")
+    save_fact_table(df_golden, run_name, fact_dir_golden, config, "irca")
+    
     log_summary(df, irca_fact)
 
     logging.info("Transformación finalizada correctamente")

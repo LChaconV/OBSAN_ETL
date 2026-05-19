@@ -148,3 +148,9 @@ censo_load:
   last_run_at: '2026-05-14T22:19:10.919641+00:00'
   last_row_count: 1122
   extraction_mode: golden_load
+irca_load:
+  last_incremental_value: irca_run_20260519_000021.parquet
+  incremental_column: file_name
+  last_run_at: '2026-05-19T00:20:14.879711+00:00'
+  last_row_count: 18591
+  extraction_mode: golden_load

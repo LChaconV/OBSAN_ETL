@@ -86,3 +86,9 @@ terraclimate_transform:
       last_transformed_value: 2025
       last_transformed_at: '2026-05-11T14:57:34.836369+00:00'
       status: transformed
+irca:
+  last_incremental_value: '2025-06-10T20:01:06.489000+00:00'
+  incremental_column: :updated_at
+  last_run_at: '2026-05-19T00:00:22.177823+00:00'
+  last_row_count: 19160
+  extraction_mode: incremental
