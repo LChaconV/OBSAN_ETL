@@ -109,7 +109,7 @@ equino:
     bronze_dir: data/bronze/censo_pecuario/equino
     silver_fact_dir: data/silver/censo_pecuario/equino
     golden_fact_dir: data/golden/censo_pecuario/equino
-    last_file_transformed: censo_equino_2025.parquet
+    last_file_transformed: censo_equino_2023.parquet
   validation:
     required_columns:
     - CODIGO MUNICIPIO

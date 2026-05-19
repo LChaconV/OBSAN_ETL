@@ -137,10 +137,10 @@ desnutricion_aguda_5:
   last_row_count: 3922
   extraction_mode: db_load_gold_run
 bajo_peso_nacer_load:
-  last_incremental_value: bajo_peso_nacer_run_Datos_2019_110.parquet
+  last_incremental_value: bajo_peso_nacer_run_20260519_095057.parquet
   incremental_column: file_name
-  last_run_at: '2026-05-12T15:12:49.047957+00:00'
-  last_row_count: 5742
+  last_run_at: '2026-05-19T14:51:04.909752+00:00'
+  last_row_count: 6686
   extraction_mode: golden_load
 censo_load:
   last_incremental_value: censo_aves_2025.parquet

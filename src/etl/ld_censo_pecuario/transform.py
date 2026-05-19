@@ -9,7 +9,7 @@ import pandas as pd
 
 from src.etl.utils.logging_utils import setup_logging
 from src.etl.utils.config_utils import load_yaml, save_yaml
-
+from src.etl.utils.transform_utils import ensure_five_digits
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 
@@ -29,16 +29,12 @@ def load_transform_config(key: str) -> dict:
 
 
 def get_runtime_params() -> tuple[Path, int, str]:
-    #input_file= Path(r"C:\Users\laura\ESCUELA COLOMBIANA DE INGENIERIA JULIO GARAVITO\Proyecto OBSAN - General\Datos_OBSAN_web\OBSAN\observatorio-san\data\bronze\censo_pecuario\run_2026_03_01\- CENSO-BOVINO-2025_14-5-25.xlsx")
-    #year="2025"
-    #animal_type="bovino" 
-
-
+    #input_file= Path(r"C:\Users\laura\ESCUELA COLOMBIANA DE INGENIERIA JULIO GARAVITO\Proyecto OBSAN - General\Datos_OBSAN_web\OBSAN\observatorio-san\data\bronze\censo_pecuario\run_2026_04_27\CENSOS-EQUINOS-2023-Final.xls")
+    #ear="2025"
+    #animal_type="equino" 
     input_file = os.environ.get("OBSAN_INPUT_FILE")
     year = os.environ.get("OBSAN_YEAR")
     animal_type = os.environ.get("OBSAN_ANIMAL_TYPE")
-
-
 
     if not input_file:
         raise ValueError("Falta la variable de entorno OBSAN_INPUT_FILE")
@@ -122,6 +118,7 @@ def transform_censo_pecuario(
     metric_columns = fact_cfg["metric_columns"]
 
     df = df.rename(columns=rename_columns)
+    df= ensure_five_digits(df, "id_mun")
 
     df["year"] = year
     df["type"] = animal_type
@@ -147,7 +144,7 @@ def transform_censo_pecuario(
 def save_golden(df: pd.DataFrame, config: dict, year: int, animal_type: str) -> Path:
     golden_dir = PROJECT_ROOT / config["source"]["golden_fact_dir"]
     golden_dir.mkdir(parents=True, exist_ok=True)
-
+    df["id_mun"] = df["id_mun"].astype(str).str.strip()
     output_path = golden_dir / f"censo_{animal_type}_{year}.parquet"
     df.to_parquet(output_path, index=False)
 
@@ -213,20 +210,26 @@ def run() -> None:
     required_columns = config["validation"]["required_columns"]
 
     df = read_input_file(file_path, required_columns)
+    print (df.head())
 
     logging.info("Filas leídas: %s", len(df))
     logging.info("Columnas leídas: %s", df.columns.tolist())
 
     validate_required_columns(df, config)
-
+    print (df.head())
     df_gold = transform_censo_pecuario(
         df=df,
         config=config,
         year=year,
         animal_type=animal_type,
     )
+    print("golden")
+    print (df_gold.head())
 
     logging.info("Filas finales golden: %s", len(df_gold))
+
+    for i in df_gold:
+        print (i)
 
     save_golden(
         df=df_gold,

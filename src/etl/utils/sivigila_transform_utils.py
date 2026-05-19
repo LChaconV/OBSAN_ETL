@@ -378,6 +378,9 @@ def transform_manual(
                 (df["id_mun"] == "01533")|
                 (df["id_mun"]== "01076") |
                 (df["id_mun"]== "27086") |
+                (df["id_mun"] == "01239")|
+                (df["id_mun"] == "01249")|
+                (df["id_mun"] == "01050")|
                 (df["id_mun"].str[-3:] == df["id_country"])
             )
         ]

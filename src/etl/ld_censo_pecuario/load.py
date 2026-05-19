@@ -17,7 +17,12 @@ CREATE TABLE IF NOT EXISTS census_livestock (
     year INTEGER,
     type VARCHAR(50),
     total_animals NUMERIC,
-    total_farms NUMERIC
+    total_farms NUMERIC,
+
+    CONSTRAINT fk_divipola
+        FOREIGN KEY (id_mun)
+        REFERENCES dim_divipola(id_mun)
+
 );
 """
 
