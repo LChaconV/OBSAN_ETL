@@ -119,6 +119,7 @@ def transform_censo_pecuario(
 
     df = df.rename(columns=rename_columns)
     df= ensure_five_digits(df, "id_mun")
+    df= df.dropna(subset=["id_mun"])
 
     df["year"] = year
     df["type"] = animal_type
@@ -216,15 +217,14 @@ def run() -> None:
     logging.info("Columnas leídas: %s", df.columns.tolist())
 
     validate_required_columns(df, config)
-    print (df.head())
+    
     df_gold = transform_censo_pecuario(
         df=df,
         config=config,
         year=year,
         animal_type=animal_type,
     )
-    print("golden")
-    print (df_gold.head())
+
 
     logging.info("Filas finales golden: %s", len(df_gold))
 
