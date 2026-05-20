@@ -17,7 +17,6 @@ BEGIN
         SELECT
             a.confirmed,
             a.condition_end,
-            a.date_event,
             a.year,
             a.age,
             a.id_mun,
@@ -48,7 +47,6 @@ BEGIN
         CREATE OR REPLACE VIEW v_low_birth_weight_pc AS
         SELECT
             l.id_low_birth_weight,
-            l.date_event,
             l.year,
             l.id_mun,
             l.total_cases,
@@ -77,7 +75,6 @@ BEGIN
     ) THEN
         CREATE OR REPLACE VIEW v_mortality_malnutrition_pc AS
         SELECT
-            m.date_event,
             m.year,
             m.age,
             m.id_mun,
