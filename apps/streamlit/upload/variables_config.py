@@ -81,6 +81,19 @@ UPLOAD_VARIABLES: dict = {
         "pipeline": "perfil_antioquia",
     },
 
+    "poblacion": {
+        "label":       "Proyección poblacional de Colombia",
+        "description": "Población de Colombia ",
+        "allowed_types": ["csv","xlsx","xls"],
+        "storage_folder": "poblacin",
+        "format_hint": (
+            "El archivo debe contener Código Entidad, Año, Dato Numérico, Unidad de Medida"
+           
+        ),
+        "required_columns": ["Código Entidad", "Año", "Dato Numérico", "Unidad de Medida"],
+        "pipeline": "poblacion",
+    },
+
     "resguardo_indigena": {
         "label":       "Resguardo indígena",
         "description": "Geometrías de resguardos indígenas en Colombia",

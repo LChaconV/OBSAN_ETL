@@ -59,9 +59,9 @@ red_vial:
   last_row_count: 313
   extraction_mode: db_load
 poblacion_load:
-  last_incremental_value: poblacion_run_20260325_193724.parquet
+  last_incremental_value: poblacion_run_20260520_155038.parquet
   incremental_column: file_name
-  last_run_at: '2026-04-21T13:50:12.029704+00:00'
+  last_run_at: '2026-05-20T20:52:51.183103+00:00'
   last_row_count: 25346
   extraction_mode: golden_load
 mun_pdet_load:

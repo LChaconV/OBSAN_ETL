@@ -4,7 +4,7 @@ import pandas as pd
 import logging
 import unicodedata
 import re
-
+import os
 def load_transform_config(key: str, CONFIG_PATH: Path) -> dict:
     config = load_yaml(CONFIG_PATH)
 
@@ -221,7 +221,43 @@ def save_fact_table(
 
     logging.info("Archivo silver %s guardado en: %s", table_name, output_path)
 
-# ============================================================
-# RESUMEN
-# ============================================================
+def file_from_web():
+    file_path = os.environ.get("OBSAN_INPUT_FILE")
+    
+    #file_path = os.environ["OBSAN_INPUT_FILE"] = (
+    #r"C:\Users\laura\ESCUELA COLOMBIANA DE INGENIERIA JULIO GARAVITO\Proyecto OBSAN - General\Datos_OBSAN_web\OBSAN\observatorio-san\data\bronze\mortalidad_desnutricion\run_2026_03_28\Datos_2018_112.xls")
 
+    if not file_path:
+        raise ValueError(
+            "No se definió OBSAN_INPUT_FILE"
+        )
+
+    input_path = Path(file_path)
+
+    if not input_path.exists():
+        raise FileNotFoundError(
+            f"No existe el archivo: {input_path}"
+        )
+
+    filename = input_path.stem
+    run_name = filename.split("_run_")[-1]
+    run_name = f"run_{run_name}"
+    logging.info(
+        "Run name: %s",
+        run_name
+    )
+
+
+    ext = input_path.suffix.lower()
+    if ext in [".xlsx", ".xls"]:
+        df = pd.read_excel(input_path)
+    elif ext == ".csv":
+        df = pd.read_csv(input_path)
+    elif ext == ".parquet":
+        df = pd.read_parquet(input_path)
+    else:
+        raise ValueError(
+            f"Formato no soportado: {ext}"
+        )
+    
+    return df, run_name

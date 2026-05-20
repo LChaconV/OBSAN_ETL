@@ -8,7 +8,7 @@ import pandas as pd
 
 from src.etl.utils.logging_utils import setup_logging
 from src.etl.utils.config_utils import load_yaml
-from src.etl.utils.transform_utils import load_transform_config, get_latest_bronze_run,load_latest_bronze_run,extract_run_name,load_latest_silver_run,ensure_two_digits,round_columns,clean_columns,validate_required_columns,normalize_types,deduplicate_by_id,save_fact_table
+from src.etl.utils.transform_utils import file_from_web, load_transform_config, get_latest_bronze_run,load_latest_bronze_run,extract_run_name,load_latest_silver_run,ensure_two_digits,round_columns,clean_columns,validate_required_columns,normalize_types,deduplicate_by_id,save_fact_table
 
 # ============================================================
 # RUTAS DEL PROYECTO
@@ -88,7 +88,8 @@ def run() -> None:
     #run_dir = get_latest_bronze_run(bronze_dir)
     #run_name = extract_run_name(run_dir)
 
-    df,run_name = load_latest_silver_run(silver_dir,".xlsx")
+    #df,run_name = load_latest_silver_run(silver_dir,".xlsx")
+    df, run_name = file_from_web()
     df = df[df["Unidad de Medida"] != "Porcentaje (el valor está multiplicado por 100)"]
     df = df[df["Código Entidad"] != 1001]
     df = df[df["Código Entidad"] != 13000]

@@ -37,6 +37,7 @@ PIPELINE_REGISTRY: dict = {
     "bajo_peso_nacer": "ld_bajo_peso_nacer",
     "mercados_campesinos": "ld_mercados_campesinos",
     "censo_pecuario": "ld_censo_pecuario",
+    "poblacion":"ld_poblacion",
     # Agrega más siguiendo el patrón:
     # "id_pipeline": "nombre_carpeta_en_etl",
 }
