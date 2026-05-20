@@ -41,6 +41,7 @@ def build_table(df: pd.DataFrame, config: dict) -> pd.DataFrame:
     )
     
     table_fact = clean_text_data(table_fact )
+    table_fact = table_fact[table_fact['royalties_cop'] != 0]
 
     table_fact = table_fact.sort_values(
         ["year", "month", "id_mun", "mineral_resource"]

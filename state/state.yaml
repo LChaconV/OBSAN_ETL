@@ -19,26 +19,26 @@ erradicacion_cultivos:
 produc_petroleo:
   last_incremental_value: '2026-03-02T20:47:31.649000+00:00'
   incremental_column: :updated_at
-  last_run_at: '2026-04-29T21:16:00.619508+00:00'
+  last_run_at: '2026-05-20T21:16:21.630466+00:00'
   last_row_count: 51924
   extraction_mode: incremental
 produc_gas:
   last_incremental_value: '2026-03-02T20:54:28.965000+00:00'
   incremental_column: :updated_at
-  last_run_at: '2026-04-30T20:57:06.047346+00:00'
-  last_row_count: 0
+  last_run_at: '2026-05-20T21:26:04.775362+00:00'
+  last_row_count: 69074
   extraction_mode: incremental
 regalias:
   last_incremental_value: '2025-10-07T15:02:50.125000+00:00'
   incremental_column: :updated_at
-  last_run_at: '2026-04-30T20:08:20.414956+00:00'
+  last_run_at: '2026-05-20T21:52:25.773078+00:00'
   last_row_count: 203572
   extraction_mode: incremental
 minerales:
-  last_incremental_value: '2026-04-07T15:06:36.910000+00:00'
+  last_incremental_value: '2026-05-10T22:31:39.256000+00:00'
   incremental_column: :updated_at
-  last_run_at: '2026-04-29T20:37:53.094427+00:00'
-  last_row_count: 70773
+  last_run_at: '2026-05-20T21:42:22.655406+00:00'
+  last_row_count: 71569
   extraction_mode: incremental
 edu_superior:
   last_incremental_value: '2025-10-29T13:56:36.483000+00:00'

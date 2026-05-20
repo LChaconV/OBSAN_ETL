@@ -89,28 +89,28 @@ mercados_campesinos_load:
   last_row_count: 45
   extraction_mode: golden_load
 produc_petroleo_load:
-  last_incremental_value: produc_petroleo_run_20260429_211557.parquet
+  last_incremental_value: produc_petroleo_run_20260520_211616.parquet
   incremental_column: file_name
-  last_run_at: '2026-04-30T21:38:23.814980+00:00'
-  last_row_count: 4638
+  last_run_at: '2026-05-20T21:16:22.720145+00:00'
+  last_row_count: 1102
   extraction_mode: golden_load
 produc_gas_load:
-  last_incremental_value: produc_gas_run_20260430_204826.parquet
+  last_incremental_value: produc_gas_run_20260520_212601.parquet
   incremental_column: file_name
-  last_run_at: '2026-04-30T21:32:53.514031+00:00'
-  last_row_count: 4902
+  last_run_at: '2026-05-20T21:26:06.026977+00:00'
+  last_row_count: 1282
   extraction_mode: golden_load
 regalias_load:
-  last_incremental_value: regalias_run_20260430_200536.parquet
+  last_incremental_value: regalias_run_20260520_215207.parquet
   incremental_column: file_name
-  last_run_at: '2026-04-30T20:08:24.281993+00:00'
-  last_row_count: 6173
+  last_run_at: '2026-05-20T21:52:28.587092+00:00'
+  last_row_count: 3443
   extraction_mode: golden_load
 minerales_load:
-  last_incremental_value: minerales_run_20260429_203718.parquet
+  last_incremental_value: minerales_run_20260520_214217.parquet
   incremental_column: file_name
-  last_run_at: '2026-04-29T20:37:56.411797+00:00'
-  last_row_count: 22845
+  last_run_at: '2026-05-20T21:42:25.987530+00:00'
+  last_row_count: 540
   extraction_mode: golden_load
 edu_superior_load:
   last_incremental_value: edu_superior_run_20260429_183230.parquet
