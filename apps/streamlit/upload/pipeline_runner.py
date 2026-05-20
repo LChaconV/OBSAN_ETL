@@ -29,6 +29,7 @@ PIPELINE_REGISTRY: dict = {
     "departamento": "dw_departamento",
     "mun_pdet": "dw_mun_pdet",
     "subregion_antioquia": "dw_subregiones_antioquia",
+    "perfil_antioquia": "ld_perfil_antioquia",
     "resguardo_indigena": "ld_resguardo_indigena",
     "mercado_laboral": "ld_mercado_laboral",
     "mortalidad_desnutricion": "ld_mortalidad_desnutricion",

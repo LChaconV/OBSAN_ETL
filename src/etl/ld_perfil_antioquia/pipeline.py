@@ -1,10 +1,10 @@
-from . import  transform, load
+from . import  load
 
 def run(**kwargs):
 
-    print("Iniciando transformación...")
-    transform.run()
-    print("Transformación completada")
+    #print("Iniciando transformación...")
+    #transform.run()
+    #print("Transformación completada")
 
     print("Iniciando carga...")
     load.run()

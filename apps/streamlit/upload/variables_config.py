@@ -68,6 +68,19 @@ UPLOAD_VARIABLES: dict = {
         "pipeline": "subregion_antioquia",
     },
 
+    "Perfil_antioquia": {
+        "label":       "Perfil alimentario Antioquia",
+        "description": "Perfil alimentario Antioquia",
+        "allowed_types": ["csv","xlsx","xls"],
+        "storage_folder": "perfil_antioquia",
+        "format_hint": (
+            "El archivo debe contener los resultados del perfil alimentario por subregiones"
+           
+        ),
+        "required_columns": [],
+        "pipeline": "perfil_antioquia",
+    },
+
     "resguardo_indigena": {
         "label":       "Resguardo indígena",
         "description": "Geometrías de resguardos indígenas en Colombia",

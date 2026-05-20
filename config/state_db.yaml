@@ -1,7 +1,7 @@
 mortalidad_desnutricion:
-  last_incremental_value: mortalidad_desnutricion_run_Datos_2018_112.csv
+  last_incremental_value: mortalidad_desnutricion_run_20260520_124201.csv
   incremental_column: run_filename
-  last_run_at: '2026-05-12T15:19:29.806917+00:00'
+  last_run_at: '2026-05-20T17:42:03.961291+00:00'
   last_row_count: 168
   extraction_mode: db_load_gold_run
 subregion:
@@ -11,9 +11,9 @@ subregion:
   last_row_count: 141
   extraction_mode: db_load_geo_parquet
 perfil_antioquia:
-  last_incremental_value: perfil_antioquia_run_2026_03_28.csv
+  last_incremental_value: Perfil_antioquia_run_20260520_125653.csv
   incremental_column: run_filename
-  last_run_at: '2026-04-05T16:20:17.002504+00:00'
+  last_run_at: '2026-05-20T17:56:55.410719+00:00'
   last_row_count: 18
   extraction_mode: db_load_gold_run
 divipola:
@@ -83,9 +83,9 @@ resguardo_indigena_load:
   last_row_count: 959
   extraction_mode: golden_load
 mercados_campesinos_load:
-  last_incremental_value: mercados_campesinos_run_20260504_115631.parquet
+  last_incremental_value: mercados_campesinos_run_20260520_123705.parquet
   incremental_column: file_name
-  last_run_at: '2026-05-04T16:56:33.250785+00:00'
+  last_run_at: '2026-05-20T17:37:08.971246+00:00'
   last_row_count: 45
   extraction_mode: golden_load
 produc_petroleo_load:
@@ -125,16 +125,16 @@ edu_escolar_load:
   last_row_count: 6721
   extraction_mode: golden_load
 mercado_laboral_load:
-  last_incremental_value: mercado_laboral_run_20260506_114305.parquet
+  last_incremental_value: mercado_laboral_run_20260520_123119.parquet
   incremental_column: file_name
-  last_run_at: '2026-05-06T16:43:33.377393+00:00'
+  last_run_at: '2026-05-20T17:31:47.043648+00:00'
   last_row_count: 26328
   extraction_mode: golden_load
 desnutricion_aguda_5:
-  last_incremental_value: desnutricion_aguda_5_run_20260511_173434.csv
+  last_incremental_value: desnutricion_aguda_5_run_20260520_122924.csv
   incremental_column: run_filename
-  last_run_at: '2026-05-11T22:34:43.610891+00:00'
-  last_row_count: 3922
+  last_run_at: '2026-05-20T17:29:43.311939+00:00'
+  last_row_count: 4420
   extraction_mode: db_load_gold_run
 bajo_peso_nacer_load:
   last_incremental_value: bajo_peso_nacer_run_20260519_095057.parquet

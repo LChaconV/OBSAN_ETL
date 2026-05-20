@@ -1,5 +1,5 @@
 from __future__ import annotations
-
+import os
 import logging
 import sys
 from pathlib import Path
@@ -50,7 +50,13 @@ def run() -> None:
         gold_rel_path = sources_config["perfil_antioquia"]["path_gold"]
         gold_dir = PROJECT_ROOT / gold_rel_path
         
-        latest_file = get_latest_run_file(gold_dir)
+        #latest_file = get_latest_run_file(gold_dir)
+        file_path = os.environ.get("OBSAN_INPUT_FILE")
+        if not file_path:
+            raise ValueError("No se definió OBSAN_INPUT_FILE")
+
+        latest_file = Path(file_path)
+
         if not latest_file:
             logging.warning("No se detectaron archivos de corrida en %s", gold_dir)
             return
