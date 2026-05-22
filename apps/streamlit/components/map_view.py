@@ -144,21 +144,6 @@ def render_map():
         key              = "main_map",
     )
 
-    if map_data and map_data.get("last_object_clicked"):
-        click = map_data["last_object_clicked"]
-        prev  = st.session_state.get("clicked_coords")
-        new   = (click["lat"], click["lng"])
-        if prev != new:
-            st.session_state.clicked_coords = new
-            st.session_state.selected_data  = None
-            st.rerun()
-
-    # ── Capturar clic sobre feature (Panel B) ─────────────────
-    if map_data and map_data.get("last_object_clicked_tooltip"):
-        tooltip = map_data["last_object_clicked_tooltip"]
-        # El tooltip viene como string HTML — buscamos id_mun en properties
-        # La forma más robusta es usar last_object_clicked para las coords
-        # y hacer la consulta espacial para identificar el municipio
 
     if map_data and map_data.get("last_object_clicked"):
         click = map_data["last_object_clicked"]

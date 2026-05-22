@@ -64,7 +64,6 @@ defaults = {
     "clicked_muni_name":         None,
     "panel_b_data":              None,
     "panel_b_key":               None,
-    "panel_hidden":              False,   # ← nuevo
 }
 for k, v in defaults.items():
     if k not in st.session_state:
@@ -73,46 +72,20 @@ for k, v in defaults.items():
 with st.sidebar:
     render_sidebar()
 
-# Determinar qué panel mostrar
 has_panel_a = st.session_state.get("clicked_coords") is not None
 has_panel_b = st.session_state.get("clicked_muni_coords") is not None
-has_panel   = has_panel_b or has_panel_a
-is_hidden   = st.session_state.get("panel_hidden", False)
 
-# Botón para mostrar panel cuando está oculto
-if has_panel and is_hidden:
-    st.markdown(
-        """
-        <style>
-        div[data-testid="stButton"] > button[kind="secondary"]#show_panel_btn {
-            position: fixed;
-            top: 100px;        
-            right: 12px;
-            z-index: 9999;
-            background: white;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-            padding: 6px 14px;
-            font-size: 13px;
-        }
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
-    if st.button("📋 Mostrar información", key="show_panel_btn"):
-        st.session_state.panel_hidden = False
-        st.rerun()
-
-# Layout
-if has_panel and not is_hidden:
+if has_panel_b:
     col_map, col_panel = st.columns([3, 1])
     with col_map:
         render_map()
     with col_panel:
-        if has_panel_b:
-            render_detail_panel()
-        elif has_panel_a:
-            render_info_panel()
+        render_detail_panel()
+elif has_panel_a:
+    col_map, col_panel = st.columns([3, 1])
+    with col_map:
+        render_map()
+    with col_panel:
+        render_info_panel()
 else:
     render_map()
