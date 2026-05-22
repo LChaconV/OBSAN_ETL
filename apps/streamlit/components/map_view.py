@@ -179,16 +179,16 @@ def render_map():
 
 
     if map_data and map_data.get("last_object_clicked"):
-        click = map_data["last_object_clicked"]
+        click = map_data.get("last_object_clicked")
         lat   = click.get("lat")
         lng   = click.get("lng")
 
         if lat and lng:
-            new_coords   = (lat, lng)
-            on_subregion = _is_on_subregion(lat, lng)
-
-            if on_subregion:
-                # Siempre Panel A — independiente de categorías activas
+            new_coords = (lat, lng)
+            cat_id     = st.session_state.get("active_exclusive_category")
+            print(f"cat_id: {cat_id}")
+            # Panel A — sin categoría exclusiva o categoría es seguridad alimentaria
+            if not cat_id or cat_id == "seguridad_alimentaria":
                 if st.session_state.get("clicked_coords") != new_coords:
                     st.session_state.clicked_coords      = new_coords
                     st.session_state.selected_data       = None
@@ -198,8 +198,9 @@ def render_map():
                     st.session_state.panel_b_data        = None
                     st.session_state.panel_b_key         = None
                     st.rerun()
+
+            # Panel B — hay categoría exclusiva diferente a seguridad alimentaria
             else:
-                # Panel B — clic fuera de subregión
                 if st.session_state.get("clicked_muni_coords") != new_coords:
                     muni = _get_muni_at_point(lat, lng)
                     if muni:
@@ -211,7 +212,6 @@ def render_map():
                         st.session_state.clicked_coords      = None
                         st.session_state.selected_data       = None
                         st.rerun()
-
 
 # ─────────────────────────────────────────────────────────────
 #  LEYENDA UNIFICADA
