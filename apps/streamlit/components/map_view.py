@@ -25,6 +25,20 @@ def _get_muni_at_point(lat: float, lng: float) -> dict | None:
     """, (lng, lat))
     return rows[0] if rows else None
 
+def _is_on_subregion(lat: float, lng: float) -> bool:
+    """Retorna True si el punto cae dentro de una subregión."""
+    from core.db import query_rows
+    rows = query_rows("""
+        SELECT id_subregion
+        FROM subregion
+        WHERE ST_Contains(
+            geometry,
+            ST_SetSRID(ST_Point(%s, %s), 4326)
+        )
+        LIMIT 1
+    """, (lng, lat))
+    return len(rows) > 0
+
 def render_map():
     center  = MAP_CONFIG["center"]
     zoom    = MAP_CONFIG["zoom"]
@@ -151,30 +165,33 @@ def render_map():
         lng   = click.get("lng")
 
         if lat and lng:
-            # Determinar si es clic en subregión (Panel A) o municipio (Panel B)
-            # Se distingue por la categoría activa
-            cat_id = st.session_state.get("active_exclusive_category")
+            new_coords   = (lat, lng)
+            on_subregion = _is_on_subregion(lat, lng)
 
-            if cat_id and cat_id != "seguridad_alimentaria":
-                # Panel B — identificar municipio por coordenadas
-                prev = st.session_state.get("clicked_muni_coords")
-                new  = (lat, lng)
-                if prev != new:
+            if on_subregion:
+                # Siempre Panel A — independiente de categorías activas
+                if st.session_state.get("clicked_coords") != new_coords:
+                    st.session_state.clicked_coords      = new_coords
+                    st.session_state.selected_data       = None
+                    st.session_state.selected_data_key   = None
+                    st.session_state.clicked_muni_coords = None
+                    st.session_state.clicked_muni_id     = None
+                    st.session_state.panel_b_data        = None
+                    st.session_state.panel_b_key         = None
+                    st.rerun()
+            else:
+                # Panel B — clic fuera de subregión
+                if st.session_state.get("clicked_muni_coords") != new_coords:
                     muni = _get_muni_at_point(lat, lng)
                     if muni:
-                        st.session_state.clicked_muni_coords = new
+                        st.session_state.clicked_muni_coords = new_coords
                         st.session_state.clicked_muni_id     = muni.get("id_mun")
                         st.session_state.clicked_muni_name   = muni.get("name_mun")
                         st.session_state.panel_b_data        = None
+                        st.session_state.panel_b_key         = None
+                        st.session_state.clicked_coords      = None
+                        st.session_state.selected_data       = None
                         st.rerun()
-            else:
-                # Panel A — subregión (comportamiento actual)
-                prev = st.session_state.get("clicked_coords")
-                new  = (lat, lng)
-                if prev != new:
-                    st.session_state.clicked_coords = new
-                    st.session_state.selected_data  = None
-                    st.rerun()
 
 
 # ─────────────────────────────────────────────────────────────
