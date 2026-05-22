@@ -122,6 +122,8 @@ def _close_panel_a():
     st.session_state.selected_data     = None
     st.session_state.selected_data_key = None
 
+def _hide_panel_a():
+    st.session_state.panel_hidden = True
 
 def render_info_panel():
     """Panel A — indicadores de perfil_antioquia para la subregión clickeada."""
@@ -246,9 +248,9 @@ def render_info_panel():
     # ── Botón cerrar ─────────────────────────────────────────
     st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
     st.button(
-        "✖ Cerrar panel",
-        key      = "close_panel_a",
-        on_click = _close_panel_a,
+        "⟵ Ocultar",
+        key      = "hide_panel_a",
+        on_click = _hide_panel_a,
         use_container_width = True,
     )
 
@@ -264,13 +266,15 @@ def _close_panel_b():
     st.session_state.panel_b_data        = None
     st.session_state.panel_b_key         = None
 
+def _hide_panel_b():
+    st.session_state.panel_hidden = True
 
 def _close_button_b():
     st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
     st.button(
-        "✖ Cerrar",
-        key      = "close_panel_b",
-        on_click = _close_panel_b,
+        "⟵ Ocultar",
+        key      = "hide_panel_b",
+        on_click = _hide_panel_b,
         use_container_width = True,
     )
 

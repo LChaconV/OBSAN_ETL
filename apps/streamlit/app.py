@@ -20,8 +20,25 @@ st.markdown("""
 <style>
     #MainMenu { visibility: hidden; }
     footer     { visibility: hidden; }
-    .block-container { padding-top: 0.8rem; padding-bottom: 0; }
+    .block-container {
+        padding-top:    0.5rem !important;
+        padding-bottom: 0rem   !important;
+        padding-left:   0.5rem !important;
+        padding-right:  0.5rem !important;
+    }
+    iframe {
+        display: block;
+    }
 
+    /* Sidebar */
+    [data-testid="stSidebar"] { background-color: #e8e8ea; !important;}
+    [data-testid="stSidebar"] *          { color: #000000 !important; }
+    [data-testid="stSidebar"] h1,
+    [data-testid="stSidebar"] h2,
+    [data-testid="stSidebar"] h3         { color: #000000 !important; }
+    [data-testid="stSidebar"] label      { color: #c9d1d9 !important; }
+    [data-testid="stSidebar"] .stCaption { color: #8b949e !important; }
+    
 
     /* Panel derecho: scroll si el contenido es largo */
     [data-testid="column"]:last-child {
@@ -35,46 +52,48 @@ st.markdown("""
 
 # ── Estado inicial ────────────────────────────────────────────
 defaults = {
-    "active_layers":               ["food_insecurity"],
-    "selected_year":               None,
-    "clicked_coords":              None,
-    "selected_data":               None,
-    "selected_data_key":           None,
-    "dept_filter":                 (),
-    "active_exclusive_category":   None,   
-    "clicked_muni_coords":         None,    
-    "clicked_muni_data_key":       None,   
+    "active_layers":             ["food_insecurity"],
+    "selected_year":             None,
+    "clicked_coords":            None,
+    "selected_data":             None,
+    "selected_data_key":         None,
+    "dept_filter":               (),
+    "active_exclusive_category": None,
+    "clicked_muni_coords":       None,
+    "clicked_muni_id":           None,
+    "clicked_muni_name":         None,
+    "panel_b_data":              None,
+    "panel_b_key":               None,
+    "panel_hidden":              False,   # ← nuevo
 }
 for k, v in defaults.items():
     if k not in st.session_state:
         st.session_state[k] = v
 
-st.markdown(
-    
-    "##Observatorio de Seguridad Alimentaria"
-    "<span style='font-size:14px;color:#888;'>Vista subregional</span>",
-    unsafe_allow_html=True,
-)
-
 with st.sidebar:
     render_sidebar()
 
+# Determinar qué panel mostrar
 has_panel_a = st.session_state.get("clicked_coords") is not None
 has_panel_b = st.session_state.get("clicked_muni_coords") is not None
+has_panel   = has_panel_b or has_panel_a
+is_hidden   = st.session_state.get("panel_hidden", False)
 
-if has_panel_b:
-    col_map, col_b = st.columns([3, 1])
+# Botón para mostrar panel cuando está oculto
+if has_panel and is_hidden:
+    if st.button("📋 Mostrar panel", key="show_panel_btn"):
+        st.session_state.panel_hidden = False
+        st.rerun()
+
+# Layout
+if has_panel and not is_hidden:
+    col_map, col_panel = st.columns([3, 1])
     with col_map:
         render_map()
-    with col_b:
-        render_detail_panel()
-
-elif has_panel_a:
-    col_map, col_a = st.columns([3, 1])
-    with col_map:
-        render_map()
-    with col_a:
-        render_info_panel()
-
+    with col_panel:
+        if has_panel_b:
+            render_detail_panel()
+        elif has_panel_a:
+            render_info_panel()
 else:
     render_map()

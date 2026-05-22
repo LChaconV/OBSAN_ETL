@@ -30,9 +30,20 @@ def render_sidebar():
 
 
 def _render_header():
-    st.markdown("### 🌽 Observatorio")
-    st.markdown("**Seguridad Alimentaria de Antioquia**")
-
+    st.markdown(
+        """
+        <div style="padding:8px 0 12px 0;">
+            <div style="font-size:22px;font-weight:800;
+                        color:#ffffff;line-height:1.2;">
+                🌽 Observatorio
+            </div>
+            <div style="font-size:15px;color:#8b949e;margin-top:4px;">
+                Seguridad Alimentaria · Antioquia
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
     if "db_status" not in st.session_state:
         ok, msg = test_connection()
         st.session_state.db_status = (ok, msg)
