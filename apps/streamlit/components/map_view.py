@@ -11,6 +11,20 @@ from config.layers_config import LAYER_TREE, MAP_CONFIG
 from core.layer import (ChoroplethLayer, PolygonLayer, PointLayer, BubbleLayer,
                         BarChartLayer, BeneficiaryLayer, LineLayer, VictimLayer,
                         HatchLayer, IconScaleLayer)
+def _get_muni_at_point(lat: float, lng: float) -> dict | None:
+    """Identifica el municipio en un punto dado."""
+    from core.db import query_rows
+    rows = query_rows("""
+        SELECT id_mun, name_mun
+        FROM dim_divipola
+        WHERE ST_Contains(
+            geometry,
+            ST_SetSRID(ST_Point(%s, %s), 4326)
+        )
+        LIMIT 1
+    """, (lng, lat))
+    return rows[0] if rows else None
+
 def render_map():
     center  = MAP_CONFIG["center"]
     zoom    = MAP_CONFIG["zoom"]
@@ -138,6 +152,44 @@ def render_map():
             st.session_state.clicked_coords = new
             st.session_state.selected_data  = None
             st.rerun()
+
+    # ── Capturar clic sobre feature (Panel B) ─────────────────
+    if map_data and map_data.get("last_object_clicked_tooltip"):
+        tooltip = map_data["last_object_clicked_tooltip"]
+        # El tooltip viene como string HTML — buscamos id_mun en properties
+        # La forma más robusta es usar last_object_clicked para las coords
+        # y hacer la consulta espacial para identificar el municipio
+
+    if map_data and map_data.get("last_object_clicked"):
+        click = map_data["last_object_clicked"]
+        lat   = click.get("lat")
+        lng   = click.get("lng")
+
+        if lat and lng:
+            # Determinar si es clic en subregión (Panel A) o municipio (Panel B)
+            # Se distingue por la categoría activa
+            cat_id = st.session_state.get("active_exclusive_category")
+
+            if cat_id and cat_id != "seguridad_alimentaria":
+                # Panel B — identificar municipio por coordenadas
+                prev = st.session_state.get("clicked_muni_coords")
+                new  = (lat, lng)
+                if prev != new:
+                    muni = _get_muni_at_point(lat, lng)
+                    if muni:
+                        st.session_state.clicked_muni_coords = new
+                        st.session_state.clicked_muni_id     = muni.get("id_mun")
+                        st.session_state.clicked_muni_name   = muni.get("name_mun")
+                        st.session_state.panel_b_data        = None
+                        st.rerun()
+            else:
+                # Panel A — subregión (comportamiento actual)
+                prev = st.session_state.get("clicked_coords")
+                new  = (lat, lng)
+                if prev != new:
+                    st.session_state.clicked_coords = new
+                    st.session_state.selected_data  = None
+                    st.rerun()
 
 
 # ─────────────────────────────────────────────────────────────
@@ -394,7 +446,38 @@ def _build_unified_legend(items: list) -> str:
         <span class="leg-arrow">▲</span>
     </label>
     """
+# ─────────────────────────────────────────────────────────────
+#  FILTRO POR PERCENTIL
+# ─────────────────────────────────────────────────────────────
 
+def _apply_percentile_filter(geojson: dict, threshold: float) -> dict:
+    """
+    Filtra features dejando solo los que tienen valor >= percentil indicado.
+    threshold=50 → top 50% de municipios por valor.
+    """
+    if threshold is None:
+        return geojson
+
+    features = geojson.get("features", [])
+    values   = [
+        f["properties"].get("valor")
+        for f in features
+        if f["properties"].get("valor") is not None
+    ]
+
+    if not values:
+        return geojson
+
+    import numpy as np
+    cutoff = np.percentile(values, threshold)
+
+    filtered = [
+        f for f in features
+        if f["properties"].get("valor") is not None
+        and f["properties"]["valor"] >= cutoff
+    ]
+
+    return {"type": "FeatureCollection", "features": filtered}
 
 # ─────────────────────────────────────────────────────────────
 #  RENDERIZADO DE CAPAS
@@ -446,7 +529,8 @@ def _add_choropleth_layer(m, layer, year) -> dict | None:
 
 
 def _add_bubble_layer(m, layer, year, dept_ids=()) -> dict | None:
-    geojson = layer.get_geojson(year=year, dept_ids=dept_ids)
+    geojson  = layer.get_geojson(year=year, dept_ids=dept_ids)
+    geojson  = _apply_percentile_filter(geojson, layer.percentile_threshold)
     features = geojson.get("features", [])
     if not features:
         st.warning(f"Sin datos para **{layer.label}**" + (f" ({year})" if year else "") + ".")
@@ -503,7 +587,8 @@ def _add_bar_chart_layer(m: folium.Map, layer: BarChartLayer, year: int, dept_id
     Renderiza mini barras comparativas sobre cada departamento
     usando DivIcon con HTML/CSS puro.
     """
-    geojson = layer.get_geojson(year=year, dept_ids=dept_ids)
+    geojson  = layer.get_geojson(year=year, dept_ids=dept_ids)
+    geojson  = _apply_percentile_filter(geojson, layer.percentile_threshold)
     features = geojson.get("features", [])
 
     if not features:
@@ -625,7 +710,8 @@ def _add_beneficiary_layers(m: folium.Map, layers: list, year: int, dept_ids=())
 
     for layer in layers:
         try:
-            geojson = layer.get_geojson(year=year, dept_ids=dept_ids)
+            geojson  = layer.get_geojson(year=year, dept_ids=dept_ids)
+            geojson  = _apply_percentile_filter(geojson, layer.percentile_threshold)
             features = geojson.get("features", [])
             for feat in features:
                 props   = feat["properties"]
@@ -773,7 +859,8 @@ def _add_victim_layer(m: folium.Map, layer: VictimLayer, year: int, dept_ids=())
     Renderiza un icono por municipio con víctimas.
     El tooltip muestra una tabla HTML con el conteo por tipo de evento.
     """
-    geojson = layer.get_geojson(year=year, dept_ids=dept_ids)
+    geojson  = layer.get_geojson(year=year, dept_ids=dept_ids)
+    geojson  = _apply_percentile_filter(geojson, layer.percentile_threshold)
     features = geojson.get("features", [])
 
     if not features:

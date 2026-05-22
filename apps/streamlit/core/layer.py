@@ -27,7 +27,9 @@ class GeoLayer(ABC):
     opacity: float = 0.5
     description: str = ""
     z_index: int = 10 
-    filterable_by_dept: bool = True 
+    filterable_by_dept: bool = True
+    category: str  = ""
+    percentile_threshold: float = None
 
     @abstractmethod
     def get_geojson(self, **kwargs) -> dict:

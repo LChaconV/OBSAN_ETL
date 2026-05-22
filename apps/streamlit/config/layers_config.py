@@ -28,6 +28,7 @@ municipios = PolygonLayer(
     opacity     = 0,       
     weight      = 0.3,  
     z_index     = 1,
+    category = "contexto"
 )
 departamentos = PolygonLayer(
     id          = "departamentos",
@@ -41,6 +42,7 @@ departamentos = PolygonLayer(
     weight      = 0.3,  
     z_index     = 1,
     color_categorical = True,
+    category = "contexto"
 )
 
 municipios_pdet = HatchLayer(
@@ -57,6 +59,7 @@ municipios_pdet = HatchLayer(
     border_color = "#9f1239",
     border_weight= 1.2,
     z_index      = 3,
+    category = "contexto"
 )
 
 resguardos_indigenas = HatchLayer(
@@ -74,6 +77,7 @@ resguardos_indigenas = HatchLayer(
     border_color     = "#15803d",
     border_weight    = 1.2,
     z_index          = 3,
+    category = "contexto"
 )
 
 red_vial = LineLayer(
@@ -89,6 +93,7 @@ red_vial = LineLayer(
     dash_array  = "",          # "" = sólida, "5 5" = punteada
     z_index     = 8,
     filterable_by_dept = False, 
+    category = "contexto"
 )
 
 
@@ -109,7 +114,8 @@ desnutricion_aguda_5 = BubbleLayer(
     color_high  = "#7a0177",   # morado      → muchos casos
     radius_min  = 4,
     radius_max  = 20,
-    offset      = (0.0, -0.05)
+    offset      = (0.0, -0.05),
+    category = "salud",
 )
 
 mortalidad_malnutricion = BubbleLayer(
@@ -129,7 +135,8 @@ mortalidad_malnutricion = BubbleLayer(
     color_high  = "#b30000",   # rojo oscuro    → muchos casos
     radius_min  = 4,
     radius_max  = 20,
-    offset      = (0.0,  0.05)
+    offset      = (0.0,  0.05),
+    category = "salud",
 )
 
 
@@ -157,6 +164,7 @@ inseguridad_alimentaria = ChoroplethLayer(
     opacity      = 0.80,
 
     filterable_by_dept = False, 
+    category = "seguridad_alimentaria",
 )
 
 pobreza_monetaria_jefe_hogar = BarChartLayer(
@@ -175,6 +183,7 @@ pobreza_monetaria_jefe_hogar = BarChartLayer(
     bar_width   = 12,
     bar_max_height = 40,
     z_index     = 5,
+    category = "socioeconomico",
 )
 
 pobreza_monetaria_por_genero = BarChartLayer(
@@ -208,6 +217,7 @@ iraca = BeneficiaryLayer(
     program_name = "IRACA",
     extra_tooltip_cols = ("status", "type"),
     z_index      = 20,   # encima de todo
+    category = "conflicto",
 )
 
 victimas = VictimLayer(
@@ -222,6 +232,7 @@ victimas = VictimLayer(
     count_col   = "victim_count",
     year_col    = "year",
     z_index     = 15,
+    category = "conflicto",
 )
 
 
@@ -246,6 +257,7 @@ produccion_petroleo = IconScaleLayer(
     has_own_geometry = True,
     z_index     = 10,
     offset = (0.0, 0.05),
+    category = "ambiente",
 )
 
 produccion_gas = IconScaleLayer(
@@ -269,6 +281,7 @@ produccion_gas = IconScaleLayer(
     has_own_geometry = True,
     z_index     = 10,
     offset = (0.0, -0.05),
+    category = "ambiente",
 )
 
 regalias = IconScaleLayer(
@@ -292,6 +305,7 @@ regalias = IconScaleLayer(
     has_own_geometry = True,
     z_index     = 10,
     offset = (0.0, 0),
+    category = "ambiente",
 )
 regalias_minerales = IconScaleLayer(
     id          = "regalias_minerals",
@@ -314,6 +328,7 @@ regalias_minerales = IconScaleLayer(
     has_own_geometry = False,
     z_index     = 10,
     offset = (0.0, 0),
+    category = "ambiente",
 )
 
 # ─────────────────────────────────────────────────────────────
@@ -391,7 +406,47 @@ LAYER_TREE = LayerGroup(
     ]
 )
 
+# ─────────────────────────────────────────────────────────────
+#  DEFINICIÓN DE CATEGORÍAS
+# ─────────────────────────────────────────────────────────────
 
+CATEGORIES = {
+    "seguridad_alimentaria": {
+        "label": "Seguridad Alimentaria",
+        "icon":  "🍽️",
+        "exclusive": False,   # puede coexistir con cualquier categoría
+    },
+    "salud": {
+        "label": "Salud",
+        "icon":  "🏥",
+        "exclusive": True,
+    },
+    "socioeconomico": {
+        "label": "Condiciones Socioeconómicas",
+        "icon":  "📊",
+        "exclusive": True,
+    },
+    "ambiente": {
+        "label": "Ambiente y Territorio",
+        "icon":  "🌿",
+        "exclusive": True,
+    },
+    "agropecuario": {
+        "label": "Sector Agropecuario",
+        "icon":  "🌾",
+        "exclusive": True,
+    },
+    "conflicto": {
+        "label": "Conflicto y Vulnerabilidad",
+        "icon":  "🕊️",
+        "exclusive": True,
+    },
+    "contexto": {
+        "label": "Contexto Geográfico",
+        "icon":  "🗺️",
+        "exclusive": False,   # siempre activable
+    },
+}
 # ─────────────────────────────────────────────────────────────
 #  CONFIGURACIÓN DEL MAPA
 # ─────────────────────────────────────────────────────────────

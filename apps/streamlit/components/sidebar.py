@@ -1,13 +1,18 @@
 """
 components/sidebar.py — Panel lateral del Observatorio
-Incluye: filtro de año, selector de capas, mapa base, estado de conexión.
+Categorías exclusivas: solo una activa a la vez (excepto
+seguridad_alimentaria y contexto que son siempre activables).
 """
 
 import streamlit as st
-from config.layers_config import LAYER_TREE, MAP_CONFIG
+from config.layers_config import LAYER_TREE, MAP_CONFIG, CATEGORIES
 from core.layer import GeoLayer, ChoroplethLayer, BubbleLayer
 from core.layer_group import LayerGroup
 from core.db import test_connection, query_rows
+
+
+# ─── Categorías que no bloquean a las demás ──────────────────
+NON_EXCLUSIVE = {"seguridad_alimentaria", "contexto"}
 
 
 def render_sidebar():
@@ -15,24 +20,17 @@ def render_sidebar():
     st.markdown("---")
     _render_year_filter()
     st.markdown("---")
-    _render_dept_filter()       
+    _render_dept_filter()
     st.markdown("---")
-    _render_layer_search()
-    st.markdown("---")
-    _render_layer_tree(LAYER_TREE)
-    st.markdown("---")
-    _render_layer_order()
+    _render_categories()
     st.markdown("---")
     _render_basemap_selector()
     st.markdown("---")
-    #_render_footer()
+    _render_footer()
 
-
-# ─────────────────────────────────────────────────────────────
 
 def _render_header():
-    """Logo y estado de la conexión."""
-    st.markdown("### Observatorio")
+    st.markdown("### 🌽 Observatorio")
     st.markdown("**Seguridad Alimentaria de Antioquia**")
 
     if "db_status" not in st.session_state:
@@ -40,46 +38,37 @@ def _render_header():
         st.session_state.db_status = (ok, msg)
 
     ok, msg = st.session_state.db_status
-    if ok:
-        st.success(f"✅ Base de datos conectada", icon=None)
-    else:
-        st.error(f"❌ Sin conexión: {msg}")
+    st.markdown("🟢" if ok else "🔴",
+                help=f"{'Conectado' if ok else 'Sin conexión'} — {msg}")
 
 
 def _render_year_filter():
-    """
-    Selector de año. Consulta los años disponibles en la BD
-    y los muestra como un slider o selectbox.
-    """
     st.markdown("**📅 Año**")
 
     if "available_years" not in st.session_state:
-        rows = query_rows("SELECT DISTINCT year FROM perfil_antioquia ORDER BY year DESC")
+        rows = query_rows(
+            "SELECT DISTINCT year FROM perfil_antioquia ORDER BY year DESC"
+        )
         st.session_state.available_years = [r["year"] for r in rows] if rows else []
 
     years = st.session_state.available_years
-
     if not years:
-        st.warning("No se encontraron años en la base de datos.")
+        st.warning("No se encontraron años.")
         st.session_state.selected_year = None
         return
 
     selected = st.selectbox(
-        label            = "Selecciona el año",
+        label            = "Año",
         options          = years,
         index            = 0,
         label_visibility = "collapsed",
     )
-
     if st.session_state.get("selected_year") != selected:
         st.session_state.selected_year = selected
         st.cache_data.clear()
 
+
 def _render_dept_filter():
-    """
-    Multiselect de departamentos. Consulta los disponibles en dim_divipola.
-    Las capas con filterable_by_dept=True aplican el filtro automáticamente.
-    """
     st.markdown("**🏛️ Departamento**")
 
     if "available_depts" not in st.session_state:
@@ -91,152 +80,97 @@ def _render_dept_filter():
         """)
         st.session_state.available_depts = rows or []
 
-    depts = st.session_state.available_depts
-    if not depts:
-        st.caption("No se encontraron departamentos.")
-        st.session_state.dept_filter = ()
-        return
+    depts   = st.session_state.available_depts
+    options = {d["id_dept"]: d["name_dept"] for d in depts}
 
-    options = {}
-    for dept in depts:
-        raw_id = dept.get("id_dept")
-        if raw_id is None:
-            continue
-
-        dept_id = str(raw_id).strip()
-        if not dept_id:
-            continue
-
-        raw_name = dept.get("name_dept")
-        dept_name = str(raw_name).strip() if raw_name is not None else ""
-        if not dept_name:
-            dept_name = f"Depto {dept_id}"
-
-        options[dept_id] = dept_name
-
-    if not options:
-        st.caption("No se encontraron departamentos válidos.")
-        st.session_state.dept_filter = ()
-        return
-
-    selected    = st.multiselect(
-        label            = "Filtrar por departamento",
+    selected = st.multiselect(
+        label            = "Departamento",
         options          = list(options.keys()),
         format_func      = lambda k: options[k],
         default          = [],
         label_visibility = "collapsed",
         placeholder      = "Todos los departamentos",
     )
-
     new_filter = tuple(selected)
     if st.session_state.get("dept_filter") != new_filter:
         st.session_state.dept_filter = new_filter
         st.cache_data.clear()
 
-def _render_layer_search():
+
+def _render_categories():
     """
-    Buscador de capas. Filtra todas las GeoLayer del árbol por nombre
-    y permite activarlas directamente desde los resultados.
+    Renderiza cada categoría como un expander con checkboxes.
+    Aplica la lógica de exclusividad: si el usuario activa una capa
+    de una categoría exclusiva, desactiva la categoría exclusiva anterior.
     """
-    st.markdown("**🔍 Buscar capa**")
+    st.markdown("**🗂️ Capas**")
 
-    query = st.text_input(
-        label       = "Buscar capa",
-        placeholder = "Escribe el nombre de una capa...",
-        label_visibility = "collapsed",
-        key         = "layer_search_query",
-    )
+    all_layers = LAYER_TREE.all_layers()
 
-    if not query:
-        return
+    # Agrupar capas por categoría
+    layers_by_cat: dict[str, list] = {}
+    for layer in all_layers:
+        cat = layer.category or "contexto"
+        if cat not in layers_by_cat:
+            layers_by_cat[cat] = []
+        layers_by_cat[cat].append(layer)
 
-    # Buscar en todas las capas del árbol (insensible a mayúsculas)
-    todas = LAYER_TREE.all_layers()
-    q     = query.strip().lower()
-    resultados = [l for l in todas if q in l.label.lower()]
+    # Categoría exclusiva actualmente activa
+    active_exclusive = st.session_state.get("active_exclusive_category", None)
 
-    if not resultados:
-        st.caption("Sin resultados.")
-        return
+    for cat_id, cat_cfg in CATEGORIES.items():
+        layers_in_cat = layers_by_cat.get(cat_id, [])
+        if not layers_in_cat:
+            continue
 
-    st.caption(f"{len(resultados)} capa(s) encontrada(s)")
+        # Contar capas activas en esta categoría
+        active_in_cat = sum(
+            1 for l in layers_in_cat
+            if l.id in st.session_state.get("active_layers", [])
+        )
 
-    for layer in resultados:
-        is_active = layer.id in st.session_state.get("active_layers", [])
+        label = f"{cat_cfg['icon']} {cat_cfg['label']}"
+        if active_in_cat > 0:
+            label += f" ({active_in_cat})"
 
-        col_color, col_check = st.columns([1, 9])
+        # Categorías exclusivas bloqueadas aparecen deshabilitadas
+        is_blocked = (
+            cat_cfg["exclusive"]
+            and active_exclusive is not None
+            and active_exclusive != cat_id
+        )
 
-        with col_color:
-            if isinstance(layer, ChoroplethLayer):
-                st.markdown(
-                    f'<div style="width:14px;height:38px;'
-                    f'background:linear-gradient(to bottom,{layer.color_high},{layer.color_low});'
-                    f'border-radius:3px;margin-top:4px;"></div>',
-                    unsafe_allow_html=True,
+        with st.expander(label, expanded=(active_in_cat > 0)):
+            if is_blocked:
+                st.caption(
+                    f"⚠️ Desactiva **{CATEGORIES[active_exclusive]['label']}** "
+                    f"para activar esta categoría."
                 )
-            else:
-                st.markdown(
-                    f'<div style="width:14px;height:14px;'
-                    f'background:{layer.color};'
-                    f'border-radius:3px;margin-top:10px;"></div>',
-                    unsafe_allow_html=True,
-                )
+                continue
 
-        with col_check:
-            checked = st.checkbox(
-                label = layer.label,
-                value = is_active,
-                key   = f"search_chk_{layer.id}",
-                help  = layer.description or None,
-            )
-
-        if checked and layer.id not in st.session_state.active_layers:
-            st.session_state.active_layers.append(layer.id)
-            st.session_state[f"chk_{layer.id}"] = True
-            st.rerun()
-        elif not checked and layer.id in st.session_state.active_layers:
-            st.session_state.active_layers.remove(layer.id)
-            st.session_state[f"chk_{layer.id}"] = False
-            st.rerun()
+            for layer in layers_in_cat:
+                _render_layer_checkbox(layer, cat_id, cat_cfg)
 
 
-def _render_layer_tree(node, depth: int = 0):
-    """Renderiza el árbol de capas recursivamente."""
-    if isinstance(node, LayerGroup) and node.id == "root":
-        st.markdown("**🗂️ Capas**")
-        for item in node.items:
-            _render_layer_tree(item, depth=0)
-    elif isinstance(node, LayerGroup):
-        with st.expander(f"{node.icon} {node.label}", expanded=node.expanded):
-            for item in node.items:
-                _render_layer_tree(item, depth + 1)
-    elif isinstance(node, GeoLayer):
-        _render_layer_checkbox(node)
-
-
-def _render_layer_checkbox(layer: GeoLayer):
-    """Checkbox para activar/desactivar una capa."""
+def _render_layer_checkbox(layer: GeoLayer, cat_id: str, cat_cfg: dict):
+    """Checkbox de una capa con lógica de exclusividad."""
     is_active = layer.id in st.session_state.get("active_layers", [])
 
+    # Swatch de color
     col_color, col_check = st.columns([1, 9])
-
     with col_color:
-        if isinstance(layer, (ChoroplethLayer, BubbleLayer)):
+        if hasattr(layer, "color_high"):
             st.markdown(
-                f'<div style="'
-                f'  width:14px; height:38px; '
-                f'  background: linear-gradient(to bottom, {layer.color_high}, {layer.color_low}); '
-                f'  border-radius:3px; margin-top:4px;'
-                f'"></div>',
+                f'<div style="width:14px;height:38px;'
+                f'background:linear-gradient(to bottom,{layer.color_high},{layer.color_low});'
+                f'border-radius:3px;margin-top:4px;"></div>',
                 unsafe_allow_html=True,
             )
         else:
             st.markdown(
-                f'<div style="'
-                f'  width:14px; height:14px; '
-                f'  background:{layer.color}; '
-                f'  border-radius:3px; margin-top:10px;'
-                f'"></div>',
+                f'<div style="width:14px;height:14px;'
+                f'background:{layer.color};'
+                f'border-radius:3px;margin-top:10px;"></div>',
                 unsafe_allow_html=True,
             )
 
@@ -248,57 +182,69 @@ def _render_layer_checkbox(layer: GeoLayer):
             help  = layer.description or None,
         )
 
-    if checked and layer.id not in st.session_state.active_layers:
-        st.session_state.active_layers.append(layer.id)
-        st.session_state[f"search_chk_{layer.id}"] = True
-        st.rerun()
-    elif not checked and layer.id in st.session_state.active_layers:
-        st.session_state.active_layers.remove(layer.id)
-        st.session_state[f"search_chk_{layer.id}"] = False
-        st.rerun()
+    if checked and not is_active:
+        _activate_layer(layer.id, cat_id, cat_cfg)
+
+    elif not checked and is_active:
+        _deactivate_layer(layer.id, cat_id)
 
 
-def _render_layer_order():
+def _activate_layer(layer_id: str, cat_id: str, cat_cfg: dict):
     """
-    Controla el orden de renderizado de las capas activas en el mapa.
-    Solo aparece cuando hay 2 o más capas activas.
-    La primera capa de la lista se dibuja encima en el mapa.
+    Activa una capa. Si la categoría es exclusiva y hay otra
+    categoría exclusiva activa, la desactiva primero y notifica.
     """
-    active = st.session_state.get("active_layers", [])
+    active_exclusive = st.session_state.get("active_exclusive_category")
+    active_layers    = st.session_state.get("active_layers", [])
 
-    if len(active) < 2:
-        return
+    if cat_cfg["exclusive"] and active_exclusive and active_exclusive != cat_id:
+        # Desactivar todas las capas de la categoría anterior
+        all_layers = LAYER_TREE.all_layers()
+        prev_layers = [
+            l.id for l in all_layers
+            if l.category == active_exclusive
+        ]
+        active_layers = [l for l in active_layers if l not in prev_layers]
 
-    st.markdown("**🔢 Orden de capas**")
-    st.caption("La primera capa se dibuja encima")
+        # Notificar al usuario
+        prev_label = CATEGORIES[active_exclusive]["label"]
+        new_label  = CATEGORIES[cat_id]["label"]
+        st.toast(
+            f"📂 Categoría cambiada: **{prev_label}** → **{new_label}**",
+            icon="🔄",
+        )
 
-    for i, layer_id in enumerate(active):
-        layer  = LAYER_TREE.find_layer(layer_id)
-        label  = layer.label if layer else layer_id
+    # Activar la nueva capa
+    if layer_id not in active_layers:
+        active_layers.append(layer_id)
 
-        col_label, col_up, col_down = st.columns([6, 1, 1])
+    st.session_state.active_layers = active_layers
 
-        with col_label:
-            st.markdown(
-                f'<div style="font-size:12px;padding:6px 0;">'
-                f'{"⬆ " if i == 0 else ""}{label}'
-                f'</div>',
-                unsafe_allow_html=True,
-            )
+    if cat_cfg["exclusive"]:
+        st.session_state.active_exclusive_category = cat_id
 
-        with col_up:
-            if i > 0:
-                if st.button("↑", key=f"up_{layer_id}", use_container_width=True):
-                    active[i], active[i - 1] = active[i - 1], active[i]
-                    st.session_state.active_layers = active
-                    st.rerun()
+    st.rerun()
 
-        with col_down:
-            if i < len(active) - 1:
-                if st.button("↓", key=f"down_{layer_id}", use_container_width=True):
-                    active[i], active[i + 1] = active[i + 1], active[i]
-                    st.session_state.active_layers = active
-                    st.rerun()
+
+def _deactivate_layer(layer_id: str, cat_id: str):
+    """
+    Desactiva una capa. Si era la última de su categoría exclusiva,
+    limpia la categoría activa.
+    """
+    active_layers = st.session_state.get("active_layers", [])
+    active_layers = [l for l in active_layers if l != layer_id]
+    st.session_state.active_layers = active_layers
+
+    # Si no quedan capas activas de esta categoría, liberar exclusividad
+    all_layers      = LAYER_TREE.all_layers()
+    remaining       = [
+        l for l in all_layers
+        if l.category == cat_id and l.id in active_layers
+    ]
+    if not remaining and cat_id == st.session_state.get("active_exclusive_category"):
+        st.session_state.active_exclusive_category = None
+
+    st.rerun()
 
 
 def _render_basemap_selector():
@@ -312,13 +258,13 @@ def _render_basemap_selector():
     )
     st.session_state.basemap = selected
 
-"""
+
 def _render_footer():
     n     = len(st.session_state.get("active_layers", []))
     total = len(LAYER_TREE.all_layers())
     st.caption(f"{n} de {total} capas activas")
     if n > 0:
         if st.button("🗑️ Limpiar capas", use_container_width=True):
-            st.session_state.active_layers = []
+            st.session_state.active_layers              = []
+            st.session_state.active_exclusive_category  = None
             st.rerun()
-"""
