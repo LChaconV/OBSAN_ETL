@@ -149,13 +149,32 @@ def render_map():
         m.get_root().html.add_child(
             folium.Element(_build_unified_legend(legend_items))
         )
+    # ── Panel A flotante ──────────────────────────────────────
+    coords_a = st.session_state.get("clicked_coords")
+    if coords_a:
+        cache_key = f"panel_a_{coords_a}_{year}"
+        if st.session_state.get("selected_data_key") != cache_key:
+            from core.db import get_subregion_at_point
+            panel_data = get_subregion_at_point(coords_a[0], coords_a[1], year)
+            st.session_state.selected_data     = panel_data
+            st.session_state.selected_data_key = cache_key
+        else:
+            panel_data = st.session_state.get("selected_data")
+
+        if panel_data:
+            m.get_root().html.add_child(
+                folium.Element(_build_panel_a_html(panel_data, year))
+            )
+
+    # Key dinámico para forzar rerenderizado cuando cambia el panel
+    map_key = f"main_map_{st.session_state.get('selected_data_key', 'default')}"
 
     map_data = st_folium(
         m,
         width            = "100%",
         height           = 600,
         returned_objects = ["last_object_clicked"],
-        key              = "main_map",
+        key              = map_key,   # ← cambia con cada nuevo panel
     )
 
 
@@ -1122,6 +1141,148 @@ def _add_icon_scale_layer(
         "val_max":    f"{val_max:,.1f}",
         "unit":       layer.value_unit,
     }
+
+def _build_panel_a_html(data: dict, year: int) -> str:
+    nombre = data.get("name_subregion", "—")
+    year_v = data.get("year", year)
+
+    def pct_bar(label, value, color, bold=False):
+        if value is None:
+            return ""
+        pct    = min(float(value), 100)
+        weight = "700" if bold else "500"
+        return f"""
+        <div style="margin-bottom:6px;">
+            <div style="display:flex;justify-content:space-between;
+                        font-size:11px;font-weight:{weight};margin-bottom:2px;">
+                <span>{label}</span>
+                <span style="color:{color};">{pct:.1f}%</span>
+            </div>
+            <div style="background:#f0f0f0;border-radius:3px;height:5px;">
+                <div style="width:{pct}%;background:{color};
+                            border-radius:3px;height:5px;"></div>
+            </div>
+        </div>"""
+
+    def row(label, value, color="#555", indent=False):
+        if value is None:
+            return ""
+        pad = "padding-left:10px;" if indent else ""
+        return f"""
+        <div style="display:flex;justify-content:space-between;
+                    font-size:11px;padding:1px 0;{pad}">
+            <span style="color:#555;">{label}</span>
+            <span style="color:{color};font-weight:600;">{float(value):.1f}%</span>
+        </div>"""
+
+    def section(title):
+        return f"""<div style="font-size:11px;font-weight:700;color:#333;
+                               margin:8px 0 4px 0;">{title}</div>"""
+
+    content = f"""
+        <div style="font-size:11px;color:#8b949e;text-transform:uppercase;
+                    letter-spacing:1px;margin-bottom:2px;">Subregión</div>
+        <div style="font-size:15px;font-weight:700;margin-bottom:2px;">{nombre}</div>
+        <div style="font-size:11px;color:#58a6ff;margin-bottom:8px;">Año {year_v}</div>
+        <hr style="margin:6px 0;border-color:#eee;">
+
+        {section("🍽️ Seguridad Alimentaria")}
+        {pct_bar("Inseguridad alimentaria", data.get("pct_u18_food_insecurity"), "#cb181d", bold=True)}
+        {row("↳ Leve",     data.get("pct_u18_food_insecurity_mild"),     indent=True)}
+        {row("↳ Moderada", data.get("pct_u18_food_insecurity_moderate"), indent=True)}
+        {row("↳ Severa",   data.get("pct_u18_food_insecurity_severe"),   "#cb181d", indent=True)}
+        {pct_bar("Seguridad alimentaria", data.get("pct_u18_food_security"), "#2ca25f")}
+
+        <hr style="margin:6px 0;border-color:#eee;">
+        {section("👶 Nutrición &lt;5 años")}
+        {row("Desnutrición aguda severa",   data.get("pct_u5_wasting_severe"),   "#cb181d")}
+        {row("Desnutrición aguda moderada", data.get("pct_u5_wasting_moderate"), "#fd8d3c")}
+        {row("Bajo peso",                   data.get("pct_u5_underweight"),      "#fd8d3c")}
+        {row("Retraso en talla",            data.get("pct_u5_stunting"),         "#fd8d3c")}
+        {row("Sobrepeso",                   data.get("pct_u5_overweight"),       "#6baed6")}
+        {row("Obesidad",                    data.get("pct_u5_obesity"),          "#6baed6")}
+
+        <hr style="margin:6px 0;border-color:#eee;">
+        {section("🧒 Nutrición 5-18 años")}
+        {row("Retraso en talla",  data.get("pct_5_18_stunting"),   "#fd8d3c")}
+        {row("IMC normal",        data.get("pct_5_18_bmi_normal"), "#2ca25f")}
+        {row("Sobrepeso",         data.get("pct_5_18_overweight"), "#6baed6")}
+        {row("Obesidad",          data.get("pct_5_18_obesity"),    "#6baed6")}
+    """
+
+    return f"""
+    <style>
+        #panel-a-cb  {{ display: none; }}
+        #panel-a-box {{
+            position:   fixed;
+            top:        80px;
+            right:      12px;
+            z-index:    1002;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+            font-family: sans-serif;
+            width:      240px;
+            max-height: 75vh;
+            overflow-y: auto;
+            padding:    14px;
+            display:    block;
+        }}
+        #panel-a-cb:checked ~ #panel-a-box {{
+            display: none;
+        }}
+        #panel-a-toggle {{
+            position:  fixed;
+            top:       80px;
+            right:     12px;
+            z-index:   1003;
+            display:   none;
+        }}
+        #panel-a-cb:checked ~ #panel-a-toggle {{
+            display: block;
+        }}
+        #panel-a-toggle label {{
+            background:    white;
+            border:        1px solid #ddd;
+            border-radius: 6px;
+            padding:       4px 10px;
+            font-size:     11px;
+            font-weight:   700;
+            color:         #333;
+            cursor:        pointer;
+            box-shadow:    0 2px 6px rgba(0,0,0,0.15);
+        }}
+    </style>
+
+    <input type="checkbox" id="panel-a-cb">
+
+    <div id="panel-a-box">
+        <div style="display:flex;justify-content:space-between;
+                    align-items:center;margin-bottom:8px;">
+            <span style="font-size:10px;color:#aaa;font-weight:700;">
+                Seguridad Alimentaria
+            </span>
+            <label for="panel-a-cb" style="
+                cursor:pointer;font-size:11px;color:#666;
+                background:#f5f5f5;border:1px solid #ddd;
+                border-radius:4px;padding:2px 8px;">
+                ✕ Ocultar
+            </label>
+        </div>
+        {content}
+    </div>
+
+    <div id="panel-a-toggle">
+        <label for="panel-a-cb" style="
+            background:white;border:1px solid #ddd;
+            border-radius:6px;padding:4px 10px;
+            font-size:11px;font-weight:700;color:#333;
+            cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.15);">
+            📋 Seguridad Alimentaria
+        </label>
+    </div>
+    """
+
 def _add_basemap(m, name):
     url = MAP_CONFIG["basemaps"].get(name, "OpenStreetMap")
     if url == "OpenStreetMap":

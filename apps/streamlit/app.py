@@ -72,7 +72,7 @@ for k, v in defaults.items():
 with st.sidebar:
     render_sidebar()
 
-has_panel_a = st.session_state.get("clicked_coords") is not None
+
 has_panel_b = st.session_state.get("clicked_muni_coords") is not None
 
 if has_panel_b:
@@ -81,11 +81,6 @@ if has_panel_b:
         render_map()
     with col_panel:
         render_detail_panel()
-elif has_panel_a:
-    col_map, col_panel = st.columns([3, 1])
-    with col_map:
-        render_map()
-    with col_panel:
-        render_info_panel()
+
 else:
     render_map()
