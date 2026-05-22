@@ -21,7 +21,7 @@ st.markdown("""
     #MainMenu { visibility: hidden; }
     footer     { visibility: hidden; }
     .block-container {
-        padding-top:    0.5rem !important;
+        padding-top:    2.0rem !important;
         padding-bottom: 0rem   !important;
         padding-left:   0.5rem !important;
         padding-right:  0.5rem !important;
@@ -81,7 +81,26 @@ is_hidden   = st.session_state.get("panel_hidden", False)
 
 # Botón para mostrar panel cuando está oculto
 if has_panel and is_hidden:
-    if st.button("📋 Mostrar panel", key="show_panel_btn"):
+    st.markdown(
+        """
+        <style>
+        div[data-testid="stButton"] > button[kind="secondary"]#show_panel_btn {
+            position: fixed;
+            top: 100px;        
+            right: 12px;
+            z-index: 9999;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            padding: 6px 14px;
+            font-size: 13px;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+    if st.button("📋 Mostrar información", key="show_panel_btn"):
         st.session_state.panel_hidden = False
         st.rerun()
 
