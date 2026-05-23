@@ -30,7 +30,8 @@ class GeoLayer(ABC):
     filterable_by_dept: bool = True
     category: str  = ""
     percentile_threshold: float = None
-
+    source_name:          str  = ""  
+    source_url:           str  = ""   
     @abstractmethod
     def get_geojson(self, **kwargs) -> dict:
         pass

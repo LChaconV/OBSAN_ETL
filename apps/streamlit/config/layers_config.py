@@ -28,7 +28,9 @@ municipios = PolygonLayer(
     opacity     = 0,       
     weight      = 0.3,  
     z_index     = 1,
-    category = "contexto"
+    category = "contexto",
+    source_name = "Colombia en Mapas",
+    source_url  = "https://www.colombiaenmapas.gov.co/",
 )
 departamentos = PolygonLayer(
     id          = "departamentos",
@@ -42,7 +44,9 @@ departamentos = PolygonLayer(
     weight      = 0.3,  
     z_index     = 1,
     color_categorical = True,
-    category = "contexto"
+    category = "contexto",
+    source_name = "Colombia en Mapas",
+    source_url  = "https://www.colombiaenmapas.gov.co/",
 )
 
 municipios_pdet = HatchLayer(
@@ -59,7 +63,9 @@ municipios_pdet = HatchLayer(
     border_color = "#9f1239",
     border_weight= 1.2,
     z_index      = 3,
-    category = "contexto"
+    category = "contexto",
+    source_name = "Agencia de Renovación del Territorio",
+    source_url  = "https://centralpdet.renovacionterritorio.gov.co/"
 )
 
 resguardos_indigenas = HatchLayer(
@@ -77,7 +83,9 @@ resguardos_indigenas = HatchLayer(
     border_color     = "#15803d",
     border_weight    = 1.2,
     z_index          = 3,
-    category = "contexto"
+    category = "contexto",
+    source_name = "Datos Abiertos",
+    source_url  = "https://www.datos.gov.co",
 )
 
 red_vial = LineLayer(
@@ -116,6 +124,8 @@ desnutricion_aguda_5 = BubbleLayer(
     radius_max  = 20,
     offset      = (0.0, -0.05),
     category = "salud",
+    source_name = "SIVIGILA",
+    source_url  = "https://portalsivigila.ins.gov.co/Paginas/Buscador.aspx",
 )
 
 mortalidad_malnutricion = BubbleLayer(
@@ -137,6 +147,8 @@ mortalidad_malnutricion = BubbleLayer(
     radius_max  = 20,
     offset      = (0.0,  0.05),
     category = "salud",
+    source_name = "SIVIGILA",
+    source_url  = "https://portalsivigila.ins.gov.co/Paginas/Buscador.aspx",
 )
 
 
@@ -165,6 +177,8 @@ inseguridad_alimentaria = ChoroplethLayer(
 
     filterable_by_dept = False, 
     category = "seguridad_alimentaria",
+    source_name = "Universidad de Antioquia",
+    source_url  = "Encuesta"
 )
 
 pobreza_monetaria_jefe_hogar = BarChartLayer(
@@ -218,6 +232,8 @@ iraca = BeneficiaryLayer(
     extra_tooltip_cols = ("status", "type"),
     z_index      = 20,   # encima de todo
     category = "conflicto",
+    source_name = "Datos Abiertos",
+    source_url  = "https://www.datos.gov.co",
 )
 
 victimas = VictimLayer(
@@ -233,6 +249,8 @@ victimas = VictimLayer(
     year_col    = "year",
     z_index     = 15,
     category = "conflicto",
+    source_name = "Datos Abiertos",
+    source_url  = "https://www.datos.gov.co",
 )
 
 
@@ -258,6 +276,8 @@ produccion_petroleo = IconScaleLayer(
     z_index     = 10,
     offset = (0.0, 0.05),
     category = "ambiente",
+    source_name = "Datos Abiertos",
+    source_url  = "https://www.datos.gov.co",
 )
 
 produccion_gas = IconScaleLayer(
@@ -282,6 +302,8 @@ produccion_gas = IconScaleLayer(
     z_index     = 10,
     offset = (0.0, -0.05),
     category = "ambiente",
+    source_name = "Datos Abiertos",
+    source_url  = "https://www.datos.gov.co",
 )
 
 regalias = IconScaleLayer(
@@ -306,6 +328,8 @@ regalias = IconScaleLayer(
     z_index     = 10,
     offset = (0.0, 0),
     category = "ambiente",
+    source_name = "Datos Abiertos",
+    source_url  = "https://www.datos.gov.co",
 )
 regalias_minerales = IconScaleLayer(
     id          = "regalias_minerals",
@@ -329,6 +353,8 @@ regalias_minerales = IconScaleLayer(
     z_index     = 10,
     offset = (0.0, 0),
     category = "ambiente",
+    source_name = "Datos Abiertos",
+    source_url  = "https://www.datos.gov.co",
 )
 
 # ─────────────────────────────────────────────────────────────

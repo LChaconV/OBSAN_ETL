@@ -186,11 +186,16 @@ def _render_layer_checkbox(layer: GeoLayer, cat_id: str, cat_cfg: dict):
             )
 
     with col_check:
+        help_text = layer.description or ""
+        if getattr(layer, "source_name", ""):
+            help_text += f"\n\n📊 Fuente: {layer.source_name}"
+        if getattr(layer, "source_url", ""):
+            help_text += f"\n🔗 {layer.source_url}"
         checked = st.checkbox(
             label = layer.label,
             value = is_active,
             key   = f"chk_{layer.id}",
-            help  = layer.description or None,
+            help  = help_text or None,
         )
 
     if checked and not is_active:
