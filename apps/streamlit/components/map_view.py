@@ -173,46 +173,52 @@ def render_map():
         m,
         width            = "100%",
         height           = 600,
-        returned_objects = ["last_object_clicked"],
-        key              = map_key,   # ← cambia con cada nuevo panel
+        returned_objects = ["last_object_clicked","last_object_clicked_tooltip"],
+        key              = map_key,  
+
     )
 
 
     if map_data and map_data.get("last_object_clicked"):
-        click = map_data.get("last_object_clicked")
-        lat   = click.get("lat")
-        lng   = click.get("lng")
+        click   = map_data.get("last_object_clicked")
+        tooltip = map_data.get("last_object_clicked_tooltip") or ""
+        lat     = click.get("lat")
+        lng     = click.get("lng")
+
+        print(f"tooltip: {tooltip}")        # ← aquí
+        print(f"clicked: {click}")  
 
         if lat and lng:
-            new_coords = (lat, lng)
-            cat_id     = st.session_state.get("active_exclusive_category")
-            print(f"cat_id: {cat_id}")
-            # Panel A — sin categoría exclusiva o categoría es seguridad alimentaria
-            if not cat_id or cat_id == "seguridad_alimentaria":
+            new_coords        = (lat, lng)
+            clicked_choropleth = "food_insecurity" in str(tooltip)
+
+            if clicked_choropleth:
+                # Clic explícito en la coroplética → Panel A
+                # Limpia categoría activa para no bloquear
                 if st.session_state.get("clicked_coords") != new_coords:
-                    st.session_state.clicked_coords      = new_coords
-                    st.session_state.selected_data       = None
-                    st.session_state.selected_data_key   = None
-                    st.session_state.clicked_muni_coords = None
-                    st.session_state.clicked_muni_id     = None
-                    st.session_state.panel_b_data        = None
-                    st.session_state.panel_b_key         = None
+                    st.session_state.clicked_coords              = new_coords
+                    st.session_state.selected_data               = None
+                    st.session_state.selected_data_key           = None
+                    st.session_state.clicked_muni_coords         = None
+                    st.session_state.clicked_muni_id             = None
+                    st.session_state.panel_b_data                = None
+                    st.session_state.panel_b_key                 = None
                     st.rerun()
-
-            # Panel B — hay categoría exclusiva diferente a seguridad alimentaria
             else:
-                if st.session_state.get("clicked_muni_coords") != new_coords:
-                    muni = _get_muni_at_point(lat, lng)
-                    if muni:
-                        st.session_state.clicked_muni_coords = new_coords
-                        st.session_state.clicked_muni_id     = muni.get("id_mun")
-                        st.session_state.clicked_muni_name   = muni.get("name_mun")
-                        st.session_state.panel_b_data        = None
-                        st.session_state.panel_b_key         = None
-                        st.session_state.clicked_coords      = None
-                        st.session_state.selected_data       = None
-                        st.rerun()
-
+                # Clic en otro elemento → Panel B
+                cat_id = st.session_state.get("active_exclusive_category")
+                if cat_id and cat_id != "seguridad_alimentaria":
+                    if st.session_state.get("clicked_muni_coords") != new_coords:
+                        muni = _get_muni_at_point(lat, lng)
+                        if muni:
+                            st.session_state.clicked_muni_coords = new_coords
+                            st.session_state.clicked_muni_id     = muni.get("id_mun")
+                            st.session_state.clicked_muni_name   = muni.get("name_mun")
+                            st.session_state.panel_b_data        = None
+                            st.session_state.panel_b_key         = None
+                            st.session_state.clicked_coords      = None
+                            st.session_state.selected_data       = None
+                            st.rerun()
 # ─────────────────────────────────────────────────────────────
 #  LEYENDA UNIFICADA
 # ─────────────────────────────────────────────────────────────
@@ -530,8 +536,8 @@ def _add_choropleth_layer(m, layer, year) -> dict | None:
         },
         highlight_function = lambda f: {"weight": 3, "color": "#fff", "fillOpacity": 0.95},
         tooltip            = folium.GeoJsonTooltip(
-            fields   = ["nombre", "valor"],
-            aliases  = ["Subregión:", "% inseguridad:"],
+            fields  = ["layer_id", "nombre", "valor"],
+            aliases  = ["","Subregión:", "% inseguridad:"],
             sticky   = True,
             style    = ("background:white;color:#333;font-family:sans-serif;"
                         "font-size:13px;padding:8px;border-radius:4px;"),

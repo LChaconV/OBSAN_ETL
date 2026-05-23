@@ -312,7 +312,7 @@ def render_detail_panel():
 
     if query_fn is None:
         st.caption("No hay datos disponibles para esta categoría.")
-        _close_button_b()
+        #_close_button_b()
         return
 
     # ── Consultar y cachear datos ─────────────────────────────
@@ -327,7 +327,7 @@ def render_detail_panel():
 
     if not data:
         st.caption("Sin datos disponibles para este municipio y año.")
-        _close_button_b()
+        #_close_button_b()
         return
 
     # ── Renderizar según categoría ────────────────────────────
@@ -342,7 +342,7 @@ def render_detail_panel():
     elif cat_id == "conflicto":
         _render_conflicto(data)
 
-    _close_button_b()
+    #_close_button_b()
 
 
 # ─────────────────────────────────────────────────────────────
