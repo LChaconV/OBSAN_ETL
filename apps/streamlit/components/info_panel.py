@@ -214,7 +214,7 @@ def render_info_panel():
     st.markdown("<hr style='margin:12px 0;border-color:#eee;'>", unsafe_allow_html=True)
 
     # ── Sección 2: Nutrición <5 años ─────────────────────────
-    _section_header("👶 Nutrición menores de 5 años")
+    _section_header("👶 Estado nutricional de menores de 5 años")
 
     _indicator_row("Desnutrición aguda severa",   data.get("pct_u5_wasting_severe"),    color=COLOR_INSECURITY)
     _indicator_row("Desnutrición aguda moderada", data.get("pct_u5_wasting_moderate"),  color=COLOR_WARN)
@@ -234,7 +234,7 @@ def render_info_panel():
     st.markdown("<hr style='margin:12px 0;border-color:#eee;'>", unsafe_allow_html=True)
 
     # ── Sección 3: Nutrición 5-18 años ───────────────────────
-    _section_header("🧒 Nutrición 5 a 18 años")
+    _section_header("🧒 Estado nutricional de 5 a 18 años")
 
     _indicator_row("Retraso en talla",     data.get("pct_5_18_stunting"),        color=COLOR_WARN)
     _indicator_row("Riesgo retraso talla", data.get("pct_5_18_stunting_risk"))
