@@ -167,8 +167,29 @@ def render_map():
             )
 
     # Key dinámico para forzar rerenderizado cuando cambia el panel
-    map_key = f"main_map_{st.session_state.get('selected_data_key', 'default')}"
+    map_key = f"main_map_{st.session_state.get('selected_data_key', '')}_{st.session_state.get('clicked_muni_id', '')}_{st.session_state.get('clicked_muni_coords', '')}"
+    # ── Panel B flotante ──────────────────────────────────────
+    muni_id  = st.session_state.get("clicked_muni_id")
+    cat_id   = st.session_state.get("active_exclusive_category")
+    print(f"Panel B — muni_id: {muni_id}, cat_id: {cat_id}")
+    print(f"panel_b_key: {st.session_state.get('panel_b_key')}")
+    print(f"panel_b_data: {st.session_state.get('panel_b_data')}")
+    if muni_id and cat_id:
+        cache_key_b = f"panel_b_{muni_id}_{cat_id}_{year}"
+        if st.session_state.get("panel_b_key") != cache_key_b:
+            from core.db import CATEGORY_QUERY_MAP
+            query_fn = CATEGORY_QUERY_MAP.get(cat_id)
+            if query_fn:
+                panel_data_b = query_fn(muni_id, year)
+                st.session_state.panel_b_data = panel_data_b
+                st.session_state.panel_b_key  = cache_key_b
+        else:
+            panel_data_b = st.session_state.get("panel_b_data")
 
+        if panel_data_b:
+            m.get_root().html.add_child(
+                folium.Element(_build_panel_b_html(panel_data_b, year, cat_id))
+            )
     map_data = st_folium(
         m,
         width            = "100%",
@@ -182,11 +203,10 @@ def render_map():
     if map_data and map_data.get("last_object_clicked"):
         click   = map_data.get("last_object_clicked")
         tooltip = map_data.get("last_object_clicked_tooltip") or ""
+        clicked_choropleth = "food_insecurity" in str(tooltip)
         lat     = click.get("lat")
         lng     = click.get("lng")
 
-        print(f"tooltip: {tooltip}")        # ← aquí
-        print(f"clicked: {click}")  
 
         if lat and lng:
             new_coords        = (lat, lng)
@@ -1288,7 +1308,188 @@ def _build_panel_a_html(data: dict, year: int) -> str:
         </label>
     </div>
     """
+def _build_panel_b_html(data: dict, year: int, cat_id: str) -> str:
+    from config.layers_config import CATEGORIES
+    cat_cfg   = CATEGORIES.get(cat_id, {})
+    muni_name = st.session_state.get("clicked_muni_name", "—")
 
+    def section(title):
+        return f"""<div style="font-size:11px;font-weight:700;color:#333;
+                               margin:8px 0 4px 0;">{title}</div>"""
+
+    def kv(label, value, unit=""):
+        if value is None:
+            return ""
+        try:
+            formatted = f"{float(value):,.1f}"
+        except Exception:
+            formatted = str(value)
+        val_str = f"{formatted} {unit}".strip() if unit else formatted
+        return f"""
+        <div style="display:flex;justify-content:space-between;
+                    font-size:11px;padding:1px 0;
+                    border-bottom:1px solid #f5f5f5;">
+            <span style="color:#555;">{label}</span>
+            <span style="font-weight:600;color:#222;">{val_str}</span>
+        </div>"""
+
+    content = f"""
+        <div style="font-size:11px;color:#8b949e;text-transform:uppercase;
+                    letter-spacing:1px;margin-bottom:2px;">Municipio</div>
+        <div style="font-size:15px;font-weight:700;margin-bottom:2px;">{muni_name}</div>
+        <div style="font-size:11px;color:#58a6ff;margin-bottom:8px;">
+            {cat_cfg.get('icon','')} {cat_cfg.get('label','')} · {year or ''}
+        </div>
+        <hr style="margin:6px 0;border-color:#eee;">
+    """
+
+    if cat_id == "salud":
+        content += section("🏥 Salud")
+        content += kv("Desnutrición aguda <5",   data.get("desnutricion_aguda"),      "casos")
+        content += kv("Mortalidad malnutrición", data.get("mortalidad_malnutricion"),  "casos")
+        content += kv("Bajo peso al nacer",      data.get("bajo_peso_nacer"),          "casos")
+
+    elif cat_id == "socioeconomico":
+        content += section("📊 Socioeconómico")
+        content += kv("Pobreza monetaria",  data.get("pobreza_monetaria"),  "%")
+        content += kv("Población empleada", data.get("poblacion_empleada"), "personas")
+        content += kv("Cobertura escolar",  data.get("cobertura_escolar"),  "estudiantes")
+        edu = data.get("educacion_superior", {})
+        if edu and any(v for v in edu.values() if v):
+            content += section("📚 Educación Superior")
+            content += kv("Técnico",         edu.get("prof_technician"), "")
+            content += kv("Tecnólogo",       edu.get("technologist"),    "")
+            content += kv("Universitario",   edu.get("university"),      "")
+            content += kv("Especialización", edu.get("specialization"),  "")
+            content += kv("Maestría",        edu.get("master"),          "")
+            content += kv("Doctorado",       edu.get("doctorate"),       "")
+
+    elif cat_id == "ambiente":
+        content += section("💧 Calidad del Agua")
+        content += kv("IRCA", data.get("irca", {}).get("irca_value"), "%")
+        content += section("🛢️ Hidrocarburos")
+        content += kv("Petróleo",  data.get("petroleo", {}).get("produccion"), "bls")
+        content += kv("Gas",       data.get("gas",      {}).get("produccion"), "")
+        content += kv("Regalías",  data.get("regalias", {}).get("total"),      "COP")
+        for mineral in data.get("minerales", []):
+            content += kv(mineral.get("mineral_resource", "—"), mineral.get("total"), "COP")
+        cultivos = data.get("cultivos", [])
+        if cultivos:
+            content += section("🌿 Cultivos ilícitos")
+            for c in cultivos:
+                content += kv(c.get("id_illicit_crop", "—"), c.get("total"), "ha")
+        clima = data.get("clima", [])
+        if clima:
+            content += section("🌦️ Clima")
+            for c in clima:
+                content += kv(
+                    f"{c.get('variable','')} ({c.get('annual_aggregation','')})",
+                    c.get("value"), ""
+                )
+
+    elif cat_id == "agropecuario":
+        pecuario = data.get("pecuario", [])
+        if pecuario:
+            content += section("🐄 Censo Pecuario")
+            for p in pecuario:
+                try:
+                    val = f"{float(p.get('total_animals', 0)):,.0f} animales"
+                except Exception:
+                    val = "—"
+                content += kv(p.get("type", "—"), val, "")
+        mercados = data.get("mercados", [])
+        if mercados:
+            content += section("🛒 Mercados Campesinos")
+            for m in mercados:
+                content += f"<div style='font-size:11px;padding:1px 0;'>📍 {m.get('name','—')}</div>"
+
+    elif cat_id == "conflicto":
+        victimas = data.get("victimas", [])
+        if victimas:
+            content += section("🕊️ Víctimas")
+            for v in victimas:
+                content += kv(v.get("event_name", "—"), v.get("total"), "personas")
+        iraca = data.get("iraca", [])
+        if iraca:
+            content += section("👥 IRACA")
+            for i in iraca:
+                content += kv(
+                    f"{i.get('type','—')} · {i.get('status','—')}",
+                    i.get("total"), "personas"
+                )
+
+    return f"""
+    <style>
+        #panel-b-cb  {{ display: none; }}
+        #panel-b-box {{
+            position:   fixed;
+            top:        80px;
+            right:      12px;
+            z-index:    1002;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+            font-family: sans-serif;
+            width:      240px;
+            max-height: 75vh;
+            overflow-y: auto;
+            padding:    14px;
+            display:    block;
+        }}
+        #panel-b-cb:checked ~ #panel-b-box {{
+            display: none;
+        }}
+        #panel-b-toggle {{
+            position: fixed;
+            top:      80px;
+            right:    12px;
+            z-index:  1003;
+            display:  none;
+        }}
+        #panel-b-cb:checked ~ #panel-b-toggle {{
+            display: block;
+        }}
+        #panel-b-toggle label {{
+            background:    white;
+            border:        1px solid #ddd;
+            border-radius: 6px;
+            padding:       4px 10px;
+            font-size:     11px;
+            font-weight:   700;
+            color:         #333;
+            cursor:        pointer;
+            box-shadow:    0 2px 6px rgba(0,0,0,0.15);
+        }}
+    </style>
+
+    <input type="checkbox" id="panel-b-cb">
+
+    <div id="panel-b-box">
+        <div style="display:flex;justify-content:space-between;
+                    align-items:center;margin-bottom:8px;">
+            <span style="font-size:10px;color:#aaa;font-weight:700;">
+                Detalle municipio
+            </span>
+            <label for="panel-b-cb" style="
+                cursor:pointer;font-size:11px;color:#666;
+                background:#f5f5f5;border:1px solid #ddd;
+                border-radius:4px;padding:2px 8px;">
+                ✕ Ocultar
+            </label>
+        </div>
+        {content}
+    </div>
+
+    <div id="panel-b-toggle">
+        <label for="panel-b-cb" style="
+            background:white;border:1px solid #ddd;
+            border-radius:6px;padding:4px 10px;
+            font-size:11px;font-weight:700;color:#333;
+            cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.15);">
+            📋 Detalle municipio
+        </label>
+    </div>
+    """
 def _add_basemap(m, name):
     url = MAP_CONFIG["basemaps"].get(name, "OpenStreetMap")
     if url == "OpenStreetMap":
