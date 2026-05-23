@@ -400,6 +400,47 @@ clima_ppt = ChoroplethLayer(
     border_visible = False,
 )
 
+clima_tmin = ChoroplethLayer(
+    id           = "clima_tmin",
+    label        = "Temperatura mínima",
+    geo_table    = "dim_divipola",
+    geo_id_col   = "id_mun",
+    geo_name_col = "name_mun",
+    geo_geom_col = "geometry",
+    data_table   = "terraclimate",
+    data_id_col  = "id_mun",
+    value_col    = "value",
+    value_label  = "Temperatura mínima (°C)",
+    year_col     = "year",
+    color_low    = "#f5e18b",
+    color_high   = "#a10303",
+    category     = "ambiente",
+    filter_sql   = "variable = 'tmin'",
+    source_name = "Terraclimate",
+    source_url  = "",
+    border_visible = False,
+)
+
+clima_tmax = ChoroplethLayer(
+    id           = "clima_tmax",
+    label        = "Temperatura máxima",
+    geo_table    = "dim_divipola",
+    geo_id_col   = "id_mun",
+    geo_name_col = "name_mun",
+    geo_geom_col = "geometry",
+    data_table   = "terraclimate",
+    data_id_col  = "id_mun",
+    value_col    = "value",
+    value_label  = "Temperatura máxima (°C)",
+    year_col     = "year",
+    color_low    = "#f5e18b",
+    color_high   = "#a10303",
+    category     = "ambiente",
+    filter_sql   = "variable = 'tmax'",
+    source_name = "Terraclimate",
+    source_url  = "",
+    border_visible = False,
+)
 # ─────────────────────────────────────────────────────────────
 #  ÁRBOL DE CAPAS
 # ─────────────────────────────────────────────────────────────
@@ -475,7 +516,7 @@ LAYER_TREE = LayerGroup(
             label    = "Clima",
             icon     = "☔",
             expanded = False,
-            items    = [clima_ppt],
+            items    = [clima_ppt, clima_tmin, clima_tmax],
             ),
 
     ]
