@@ -540,7 +540,8 @@ def _add_choropleth_layer(m, layer, year, dept_ids=()) -> dict | None:
     val_min, val_max = min(values), max(values)
 
     colormap = cm.LinearColormap(
-        colors=[layer.color_low, "#fc8d59", layer.color_high],
+        #colors=[layer.color_low, "#fc8d59", layer.color_high],
+        colors=[layer.color_low, layer.color_high],
         vmin=val_min, vmax=val_max,
     )
     base = layer.get_folium_style()

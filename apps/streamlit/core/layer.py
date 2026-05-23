@@ -93,7 +93,6 @@ class ChoroplethLayer(GeoLayer):
 
 
 @st.cache_data(ttl=300, show_spinner=False)
-@st.cache_data(ttl=300, show_spinner=False)
 def _fetch_choropleth_geojson(
     layer_id, layer_label, geo_table, geo_id_col, geo_name_col,
     geo_geom_col, data_table, data_id_col, value_col, value_label,
