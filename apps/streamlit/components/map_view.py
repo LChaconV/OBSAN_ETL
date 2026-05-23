@@ -83,7 +83,8 @@ def render_map():
         with st.spinner(f"Cargando {layer.label}..."):
             try:
                 if isinstance(layer, ChoroplethLayer):
-                    info = _add_choropleth_layer(m, layer, year)
+                    info = _add_choropleth_layer(m, layer, year,
+                                                 dept_ids=layer_dept_ids)
                     if info:
                         legend_items.append(info)
                 elif isinstance(layer, BubbleLayer):
@@ -527,8 +528,8 @@ def _apply_percentile_filter(geojson: dict, threshold: float) -> dict:
 #  RENDERIZADO DE CAPAS
 # ─────────────────────────────────────────────────────────────
 
-def _add_choropleth_layer(m, layer, year) -> dict | None:
-    geojson  = layer.get_geojson(year=year)
+def _add_choropleth_layer(m, layer, year, dept_ids=()) -> dict | None:
+    geojson = layer.get_geojson(year=year, dept_ids=dept_ids)
     features = geojson.get("features", [])
     if not features:
         st.warning(f"Sin datos para **{layer.label}**" + (f" ({year})" if year else "") + ".")

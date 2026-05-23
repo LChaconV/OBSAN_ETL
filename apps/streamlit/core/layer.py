@@ -68,7 +68,7 @@ class ChoroplethLayer(GeoLayer):
     year_col:     str = "year"
     filter_sql:   str = "" 
 
-    def get_geojson(self, year: int = None) -> dict:
+    def get_geojson(self, year: int = None, **kwargs) -> dict:
         return _fetch_choropleth_geojson(
             layer_id     = self.id,
             layer_label  = self.label,
@@ -83,7 +83,7 @@ class ChoroplethLayer(GeoLayer):
             year_col     = self.year_col,
             extra_cols   = tuple(self.extra_cols),
             year         = year,
-            dept_ids     = (),
+            dept_ids     = kwargs.get("dept_ids", ()),
             filter_sql   = self.filter_sql,
         )
 
@@ -104,7 +104,7 @@ def _fetch_choropleth_geojson(
     dept_filter = ""
     if dept_ids:
         ids_str     = ", ".join([f"'{d}'" for d in dept_ids])
-        dept_filter = f"AND g.id_dept IN ({ids_str})"
+        dept_filter = f"AND s.id_dept IN ({ids_str})"
     extra_filter = f"AND p.{filter_sql}" if filter_sql else ""  
 
     query = f"""
@@ -131,6 +131,7 @@ def _fetch_choropleth_geojson(
         GROUP BY s."{geo_id_col}", s."{geo_name_col}", s."{geo_geom_col}", p."{year_col}"
         ORDER BY AVG(p."{value_col}") DESC
     """
+    
     features = query_geojson(query)
     return {"type": "FeatureCollection", "features": features}
 
