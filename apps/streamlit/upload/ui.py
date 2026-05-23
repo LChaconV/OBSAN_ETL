@@ -176,10 +176,10 @@ def _process_file(uploaded, variable_id: str, config: dict, extra_values: dict =
             extra_env = {f"OBSAN_{k.upper()}": str(v) for k, v in extra_values.items()}
         )
     # Mostrar logs del pipeline
-    if pipeline_result.logs:
-        with st.expander("📋 Logs del pipeline", expanded=not pipeline_result.success):
-            for log_line in pipeline_result.logs:
-                st.caption(f"› {log_line}")
+    #if pipeline_result.logs:
+    #    with st.expander("📋 Logs del pipeline", expanded=not pipeline_result.success):
+    #        for log_line in pipeline_result.logs:
+    #            st.caption(f"› {log_line}")
 
     if pipeline_result.success:
         st.success(
@@ -188,7 +188,7 @@ def _process_file(uploaded, variable_id: str, config: dict, extra_values: dict =
         )
         st.balloons()
     else:
-        st.error(f"❌ Pipeline falló: {pipeline_result.message}")
+        st.error(f"❌ Error al cargar: {pipeline_result.message}")
 
 
 # ─────────────────────────────────────────────────────────────

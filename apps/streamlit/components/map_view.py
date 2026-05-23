@@ -135,7 +135,7 @@ def render_map():
                     if info:
                         legend_items.append(info)
             except Exception as e:
-                st.error(f"Error cargando **{layer.label}**: {e}")
+                st.warning(f"No se pudieron cargar los datos de **{layer.label}**.")
 
     # Beneficiarios con filtro
     if beneficiary_layers:
@@ -1217,7 +1217,7 @@ def _build_panel_a_html(data: dict, year: int) -> str:
         {pct_bar("Seguridad alimentaria", data.get("pct_u18_food_security"), "#2ca25f")}
 
         <hr style="margin:6px 0;border-color:#eee;">
-        {section("👶 Nutrición &lt;5 años")}
+        {section("👶 Estado nutricional &lt;5 años")}
         {row("Desnutrición aguda severa",   data.get("pct_u5_wasting_severe"),   "#cb181d")}
         {row("Desnutrición aguda moderada", data.get("pct_u5_wasting_moderate"), "#fd8d3c")}
         {row("Bajo peso",                   data.get("pct_u5_underweight"),      "#fd8d3c")}
@@ -1226,7 +1226,7 @@ def _build_panel_a_html(data: dict, year: int) -> str:
         {row("Obesidad",                    data.get("pct_u5_obesity"),          "#6baed6")}
 
         <hr style="margin:6px 0;border-color:#eee;">
-        {section("🧒 Nutrición 5-18 años")}
+        {section("🧒 Estado nutricional 5-18 años")}
         {row("Retraso en talla",  data.get("pct_5_18_stunting"),   "#fd8d3c")}
         {row("IMC normal",        data.get("pct_5_18_bmi_normal"), "#2ca25f")}
         {row("Sobrepeso",         data.get("pct_5_18_overweight"), "#6baed6")}
