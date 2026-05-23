@@ -128,7 +128,7 @@ def get_muni_socioeconomico(id_mun: str, year: int) -> dict:
              WHERE id_mun = %(id_mun)s AND year = %(year)s
             ) AS poblacion_empleada,
 
-            (SELECT SUM(total) FROM school_education
+            (SELECT SUM(total_cases_per_capita) FROM v_school_education_pc
              WHERE id_mun = %(id_mun)s AND year = %(year)s
             ) AS cobertura_escolar
     """, {"id_mun": id_mun, "year": year})

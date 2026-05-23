@@ -164,8 +164,8 @@ bajo_peso_al_nacer = BubbleLayer(
     value_label = "Tasa de bebés con bajo peso al nacer x 100.000 habitantes",
     agg_func    = "SUM",
     year_col    = "year",
-    color_low   = "#d4ffde",   # amarillo suave → pocos casos
-    color_high  = "#09470DCC",   # rojo oscuro    → muchos casos
+    color_low   = "#d4ffde",   
+    color_high  = "#09470DCC",   
     radius_min  = 4,
     radius_max  = 20,
     offset      = (0.0,  0.05),
@@ -396,7 +396,7 @@ clima_ppt = ChoroplethLayer(
     category     = "ambiente",
     filter_sql   = "variable = 'ppt'",
     source_name = "Terraclimate",
-    source_url  = "",
+    source_url  = "https://climate.northwestknowledge.net/TERRACLIMATE-DATA/",
     border_visible = False,
 )
 
@@ -417,7 +417,7 @@ clima_tmin = ChoroplethLayer(
     category     = "ambiente",
     filter_sql   = "variable = 'tmin'",
     source_name = "Terraclimate",
-    source_url  = "",
+    source_url  = "https://climate.northwestknowledge.net/TERRACLIMATE-DATA/",
     border_visible = False,
 )
 
@@ -438,8 +438,31 @@ clima_tmax = ChoroplethLayer(
     category     = "ambiente",
     filter_sql   = "variable = 'tmax'",
     source_name = "Terraclimate",
-    source_url  = "",
+    source_url  = "https://climate.northwestknowledge.net/TERRACLIMATE-DATA/",
     border_visible = False,
+)
+
+edu_escolar = BubbleLayer(
+    id          = "edu_escolar",
+    label       = "Educación escolar",
+    description = "Proporción de niños con acceso a educación escolar por municipio",
+    data_table  = "v_school_education_pc",
+    data_id_col = "id_mun",
+    geo_table   = "dim_divipola",
+    geo_id_col  = "id_mun",
+    geo_geom_col= "geometry",
+    value_col   = "total_cases_per_capita",
+    value_label = "Tasa de niños con acceso a educación escolarx 100 habitantes",
+    agg_func    = "SUM",
+    year_col    = "year",
+    color_low   = "#ffd4f9",   
+    color_high  = "#D1189A",   
+    radius_min  = 4,
+    radius_max  = 20,
+    offset      = (0.0,  0.05),
+    category    = "socioeconomico",
+    source_name = "Datos Abiertos",
+    source_url  = "https://www.datos.gov.co",
 )
 # ─────────────────────────────────────────────────────────────
 #  ÁRBOL DE CAPAS
@@ -519,6 +542,13 @@ LAYER_TREE = LayerGroup(
             items    = [clima_ppt, clima_tmin, clima_tmax],
             ),
 
+        LayerGroup(
+            id       = "educacion",
+            label    = "Educación",
+            icon     = "📚",
+            expanded = False,
+            items    = [edu_escolar],
+        ),
     ]
 )
 
