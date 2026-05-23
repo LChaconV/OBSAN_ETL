@@ -103,13 +103,13 @@ def get_muni_salud(id_mun: str, year: int) -> dict:
     """Todos los indicadores de salud de un municipio."""
     rows = query_rows("""
         SELECT
-            (SELECT SUM(total_cases) FROM acute_malnutrition_5
+            (SELECT SUM(total_cases_per_capita) FROM v_acute_malnutrition_5_pc
              WHERE id_mun = %(id_mun)s AND year = %(year)s) AS desnutricion_aguda,
 
-            (SELECT SUM(total_cases) FROM mortality_malnutrition
+            (SELECT SUM(total_cases_per_capita) FROM v_mortality_malnutrition_pc
              WHERE id_mun = %(id_mun)s AND year = %(year)s) AS mortalidad_malnutricion,
 
-            (SELECT SUM(total_cases) FROM low_birth_weight
+            (SELECT SUM(total_cases_per_capita) FROM v_low_birth_weight_pc
              WHERE id_mun = %(id_mun)s AND year = %(year)s) AS bajo_peso_nacer
     """, {"id_mun": id_mun, "year": year})
     return rows[0] if rows else {}
