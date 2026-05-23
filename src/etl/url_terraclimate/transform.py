@@ -136,10 +136,15 @@ def open_terraclimate_file(config: dict, variable: str, year: int) -> xr.DataArr
     if not file_path.exists():
         raise FileNotFoundError(f"No existe el NetCDF: {file_path}")
 
+    print("PROJECT_ROOT:", PROJECT_ROOT)
+    print("bronze_dir:", bronze_dir)
+    print("file_path:", file_path)
+    print("exists:", file_path.exists())
     ds = xr.open_dataset(
-        file_path,
-        mask_and_scale=True,
-        decode_times=True,
+    file_path,
+    engine="netcdf4",
+    mask_and_scale=True,
+    decode_times=True,
     )
 
     if variable not in ds.data_vars:
@@ -371,7 +376,7 @@ def save_error(error_records: list[dict], config: dict) -> None:
 # MAIN
 # ============================================================
 
-def main() -> None:
+def run() -> None:
     setup_logging(LOG_DIR, "terraclimate_transform.log")
     logging.info("Iniciando transformación incremental TerraClimate")
 
@@ -480,4 +485,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    run()

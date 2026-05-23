@@ -161,7 +161,7 @@ def upsert_dataframe(engine, df: pd.DataFrame, table_name: str) -> None:
     logging.info("UPSERT completado en tabla: %s", table_name)
 
 
-def main() -> None:
+def run() -> None:
     setup_logging(LOG_DIR, "terraclimate_load.log")
     logging.info("Iniciando carga TerraClimate golden a PostgreSQL")
 
@@ -205,4 +205,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    run()

@@ -379,6 +379,26 @@ regalias_minerales = IconScaleLayer(
     source_url  = "https://www.datos.gov.co",
 )
 
+clima_ppt = ChoroplethLayer(
+    id           = "clima_ppt",
+    label        = "Precipitación",
+    geo_table    = "dim_divipola",
+    geo_id_col   = "id_mun",
+    geo_name_col = "name_mun",
+    geo_geom_col = "geometry",
+    data_table   = "terraclimate",
+    data_id_col  = "id_mun",
+    value_col    = "value",
+    value_label  = "Precipitación (mm)",
+    year_col     = "year",
+    color_low    = "#f0f9ff",
+    color_high   = "#0369a1",
+    category     = "ambiente",
+    filter_sql   = "variable = 'ppt'",
+    source_name = "Terraclimate",
+    source_url  = "",
+)
+
 # ─────────────────────────────────────────────────────────────
 #  ÁRBOL DE CAPAS
 # ─────────────────────────────────────────────────────────────
@@ -449,9 +469,14 @@ LAYER_TREE = LayerGroup(
             expanded = False,
             items    = [produccion_petroleo,produccion_gas, regalias, regalias_minerales],
         ),
+        LayerGroup(
+            id       = "clima",
+            label    = "Clima",
+            icon     = "☔",
+            expanded = False,
+            items    = [clima_ppt],
+            ),
 
-        # Próximas capas se agregan aquí:
-        # LayerGroup(id="nutricion", label="Nutrición", icon="📊", items=[...]),
     ]
 )
 

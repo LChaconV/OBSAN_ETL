@@ -66,6 +66,7 @@ class ChoroplethLayer(GeoLayer):
     color_low:    str = "#fff5f0"
     color_high:   str = "#cb181d"
     year_col:     str = "year"
+    filter_sql:   str = "" 
 
     def get_geojson(self, year: int = None) -> dict:
         return _fetch_choropleth_geojson(
@@ -83,6 +84,7 @@ class ChoroplethLayer(GeoLayer):
             extra_cols   = tuple(self.extra_cols),
             year         = year,
             dept_ids     = (),
+            filter_sql   = self.filter_sql,
         )
 
     def get_folium_style(self) -> dict:
@@ -90,15 +92,21 @@ class ChoroplethLayer(GeoLayer):
 
 
 @st.cache_data(ttl=300, show_spinner=False)
+@st.cache_data(ttl=300, show_spinner=False)
 def _fetch_choropleth_geojson(
     layer_id, layer_label, geo_table, geo_id_col, geo_name_col,
     geo_geom_col, data_table, data_id_col, value_col, value_label,
-    year_col, extra_cols, year, dept_ids=()
+    year_col, extra_cols, year, dept_ids=(),
+    filter_sql="" 
 ) -> dict:
-    extra_json = ", ".join([
-        f"'{c}', p.\"{c}\"" for c in extra_cols if c != year_col
-    ])
+    extra_json  = ", ".join([f"'{c}', p.\"{c}\"" for c in extra_cols if c != year_col])
     year_filter = f"AND p.\"{year_col}\" = {year}" if year else ""
+    dept_filter = ""
+    if dept_ids:
+        ids_str     = ", ".join([f"'{d}'" for d in dept_ids])
+        dept_filter = f"AND g.id_dept IN ({ids_str})"
+    extra_filter = f"AND p.{filter_sql}" if filter_sql else ""  
+
     query = f"""
         SELECT json_build_object(
             'type',     'Feature',
@@ -108,22 +116,23 @@ def _fetch_choropleth_geojson(
                 'layer_label', '{layer_label}',
                 'id',          s."{geo_id_col}",
                 'nombre',      s."{geo_name_col}",
-                'valor',       p."{value_col}",
+                'valor',       AVG(p."{value_col}"),
                 'indicador',   '{value_label}',
                 '{year_col}',  p."{year_col}"
                 {', ' + extra_json if extra_json else ''}
             )
         ) AS feature
         FROM "{geo_table}" s
-        JOIN "{data_table}" p
-          ON s."{geo_id_col}" = p."{data_id_col}"
+        JOIN "{data_table}" p ON s."{geo_id_col}" = p."{data_id_col}"
         WHERE p."{value_col}" IS NOT NULL
         {year_filter}
-        ORDER BY p."{value_col}" DESC
+        {dept_filter}
+        {extra_filter}
+        GROUP BY s."{geo_id_col}", s."{geo_name_col}", s."{geo_geom_col}", p."{year_col}"
+        ORDER BY AVG(p."{value_col}") DESC
     """
     features = query_geojson(query)
     return {"type": "FeatureCollection", "features": features}
-
 
 # ─────────────────────────────────────────────────────────────
 #  CAPA DE POLÍGONOS SIMPLE
