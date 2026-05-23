@@ -552,9 +552,9 @@ def _add_choropleth_layer(m, layer, year) -> dict | None:
             "color":     "#555",
         },
         highlight_function = lambda f: {"weight": 3, "color": "#fff", "fillOpacity": 0.95},
-        tooltip            = folium.GeoJsonTooltip(
-            fields  = ["layer_id", "nombre", "valor"],
-            aliases  = ["","Subregión:", "% inseguridad:"],
+        tooltip = folium.GeoJsonTooltip(
+            fields   = ["nombre", "valor"],
+            aliases  = ["Municipio:", f"{layer.value_label}:"],
             sticky   = True,
             style    = ("background:white;color:#333;font-family:sans-serif;"
                         "font-size:13px;padding:8px;border-radius:4px;"),
