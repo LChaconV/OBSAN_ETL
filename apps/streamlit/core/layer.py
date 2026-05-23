@@ -167,7 +167,9 @@ def _fetch_polygon_geojson(
         ids_str = ", ".join([f"'{d}'" for d in dept_ids])
         where_parts.append(f"id_dept IN ({ids_str})")
     where = ("WHERE " + " AND ".join(where_parts)) if where_parts else ""
-
+    print(f"=== QUERY WHERE ===")
+    print(where)
+    print(f"dept_ids recibidos: {dept_ids}")
     query = f"""
         SELECT json_build_object(
             'type', 'Feature',
@@ -180,9 +182,10 @@ def _fetch_polygon_geojson(
         ) AS feature
         FROM "{table}"
         {where}
-        WHERE "{geom_col}" IS NOT NULL
+        {"AND" if where_parts else "WHERE"} "{geom_col}" IS NOT NULL
         LIMIT {max_features}
     """
+   
     features = query_geojson(query)
     return {"type": "FeatureCollection", "features": features}
 # ─────────────────────────────────────────────────────────────
