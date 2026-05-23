@@ -171,9 +171,6 @@ def render_map():
     # ── Panel B flotante ──────────────────────────────────────
     muni_id  = st.session_state.get("clicked_muni_id")
     cat_id   = st.session_state.get("active_exclusive_category")
-    print(f"Panel B — muni_id: {muni_id}, cat_id: {cat_id}")
-    print(f"panel_b_key: {st.session_state.get('panel_b_key')}")
-    print(f"panel_b_data: {st.session_state.get('panel_b_data')}")
     if muni_id and cat_id:
         cache_key_b = f"panel_b_{muni_id}_{cat_id}_{year}"
         if st.session_state.get("panel_b_key") != cache_key_b:
