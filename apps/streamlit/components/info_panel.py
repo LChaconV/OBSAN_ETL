@@ -269,14 +269,7 @@ def _close_panel_b():
 def _hide_panel_b():
     st.session_state.panel_hidden = True
 
-def _close_button_b():
-    st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
-    st.button(
-        "⟵ Ocultar",
-        key      = "hide_panel_b",
-        on_click = _hide_panel_b,
-        use_container_width = True,
-    )
+
 
 
 def render_detail_panel():
@@ -312,7 +305,6 @@ def render_detail_panel():
 
     if query_fn is None:
         st.caption("No hay datos disponibles para esta categoría.")
-        #_close_button_b()
         return
 
     # ── Consultar y cachear datos ─────────────────────────────
@@ -327,7 +319,6 @@ def render_detail_panel():
 
     if not data:
         st.caption("Sin datos disponibles para este municipio y año.")
-        #_close_button_b()
         return
 
     # ── Renderizar según categoría ────────────────────────────
@@ -342,7 +333,6 @@ def render_detail_panel():
     elif cat_id == "conflicto":
         _render_conflicto(data)
 
-    #_close_button_b()
 
 
 # ─────────────────────────────────────────────────────────────
