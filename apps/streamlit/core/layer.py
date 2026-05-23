@@ -67,6 +67,7 @@ class ChoroplethLayer(GeoLayer):
     color_high:   str = "#cb181d"
     year_col:     str = "year"
     filter_sql:   str = "" 
+    border_visible: bool = True
 
     def get_geojson(self, year: int = None, **kwargs) -> dict:
         return _fetch_choropleth_geojson(

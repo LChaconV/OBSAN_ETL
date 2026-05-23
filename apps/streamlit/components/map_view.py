@@ -529,13 +529,14 @@ def _apply_percentile_filter(geojson: dict, threshold: float) -> dict:
 # ─────────────────────────────────────────────────────────────
 
 def _add_choropleth_layer(m, layer, year, dept_ids=()) -> dict | None:
-    geojson = layer.get_geojson(year=year, dept_ids=dept_ids)
+    geojson  = layer.get_geojson(year=year, dept_ids=dept_ids)
     features = geojson.get("features", [])
     if not features:
         st.warning(f"Sin datos para **{layer.label}**" + (f" ({year})" if year else "") + ".")
         return None
 
-    values   = [f["properties"]["valor"] for f in features if f["properties"].get("valor") is not None]
+    values   = [f["properties"]["valor"] for f in features
+                if f["properties"].get("valor") is not None]
     val_min, val_max = min(values), max(values)
 
     colormap = cm.LinearColormap(
@@ -544,16 +545,21 @@ def _add_choropleth_layer(m, layer, year, dept_ids=()) -> dict | None:
     )
     base = layer.get_folium_style()
 
+    def style_fn(feature):
+        v = feature["properties"].get("valor")
+        return {
+            **base,
+            "fillColor": colormap(v) if v is not None else "#ccc",
+            "color":     "#555" if layer.border_visible else "transparent",
+            "weight":    0.5 if layer.border_visible else 0,
+        }
+
     folium.GeoJson(
         geojson,
         name               = layer.label,
-        style_function     = lambda f: {
-            **base,
-            "fillColor": colormap(f["properties"].get("valor")) if f["properties"].get("valor") else "#ccc",
-            "color":     "#555",
-        },
+        style_function     = style_fn,
         highlight_function = lambda f: {"weight": 3, "color": "#fff", "fillOpacity": 0.95},
-        tooltip = folium.GeoJsonTooltip(
+        tooltip            = folium.GeoJsonTooltip(
             fields   = ["nombre", "valor"],
             aliases  = ["Municipio:", f"{layer.value_label}:"],
             sticky   = True,
@@ -563,13 +569,13 @@ def _add_choropleth_layer(m, layer, year, dept_ids=()) -> dict | None:
     ).add_to(m)
 
     return {
-        "type":      "gradient",
-        "label":     layer.value_label,
-        "color_low": layer.color_low,
-        "color_high":layer.color_high,
-        "val_min":   f"{val_min:.1f}%",
-        "val_mid":   f"{(val_min+val_max)/2:.1f}%",
-        "val_max":   f"{val_max:.1f}%",
+        "type":       "gradient",
+        "label":      layer.value_label,
+        "color_low":  layer.color_low,
+        "color_high": layer.color_high,
+        "val_min":    f"{val_min:.1f}",
+        "val_mid":    f"{(val_min+val_max)/2:.1f}",
+        "val_max":    f"{val_max:.1f}",
     }
 
 

@@ -397,6 +397,7 @@ clima_ppt = ChoroplethLayer(
     filter_sql   = "variable = 'ppt'",
     source_name = "Terraclimate",
     source_url  = "",
+    border_visible = False,
 )
 
 # ─────────────────────────────────────────────────────────────
