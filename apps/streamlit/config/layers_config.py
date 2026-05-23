@@ -138,7 +138,7 @@ mortalidad_malnutricion = BubbleLayer(
     geo_id_col  = "id_mun",
     geo_geom_col= "geometry",
     value_col   = "total_cases_per_capita",
-    value_label = "Casos de mortalidad",
+    value_label = "Tasa de mortalidad x 100.000 habitantes",
     agg_func    = "SUM",
     year_col    = "year",
     color_low   = "#fef0d9",   # amarillo suave → pocos casos
@@ -151,6 +151,28 @@ mortalidad_malnutricion = BubbleLayer(
     source_url  = "https://portalsivigila.ins.gov.co/Paginas/Buscador.aspx",
 )
 
+bajo_peso_al_nacer = BubbleLayer(
+    id          = "bajo_peso_al_nacer",
+    label       = "Bajo peso al nacer",
+    description = "Proporción de bebés con bajo peso al nacer por municipio",
+    data_table  = "v_low_birth_weight_pc",
+    data_id_col = "id_mun",
+    geo_table   = "dim_divipola",
+    geo_id_col  = "id_mun",
+    geo_geom_col= "geometry",
+    value_col   = "total_cases_per_capita",
+    value_label = "Tasa de bebés con bajo peso al nacer x 100.000 habitantes",
+    agg_func    = "SUM",
+    year_col    = "year",
+    color_low   = "#d4ffde",   # amarillo suave → pocos casos
+    color_high  = "#09470DCC",   # rojo oscuro    → muchos casos
+    radius_min  = 4,
+    radius_max  = 20,
+    offset      = (0.0,  0.05),
+    category = "salud",
+    source_name = "SIVIGILA",
+    source_url  = "https://portalsivigila.ins.gov.co/Paginas/Buscador.aspx",
+)
 
 inseguridad_alimentaria = ChoroplethLayer(
     id           = "food_insecurity",
@@ -396,6 +418,7 @@ LAYER_TREE = LayerGroup(
             items    = [
                 desnutricion_aguda_5,
                 mortalidad_malnutricion,
+                bajo_peso_al_nacer,
             ],
         ),
         LayerGroup(
