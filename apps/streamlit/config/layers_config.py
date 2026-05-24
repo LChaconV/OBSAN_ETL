@@ -344,8 +344,8 @@ regalias = IconScaleLayer(
     year_col    = "year",
     icon        = "💰",
     icon_size   = 28,
-    color_low   = "#fef9c3",   # amarillo suave → poca producción
-    color_high  = "#78350f",   # café oscuro    → mucha producción
+    color_low   = "#fef9c3",   
+    color_high  = "#78350f",   
     has_own_geometry = True,
     z_index     = 10,
     offset = (0.0, 0),
@@ -464,6 +464,29 @@ edu_escolar = BubbleLayer(
     source_name = "Datos Abiertos",
     source_url  = "https://www.datos.gov.co",
 )
+
+edu_superior = BubbleLayer(
+    id          = "edu_superior",
+    label       = "Educación superior",
+    description = "Proporción de personas con acceso a educación superior por municipio",
+    data_table  = "v_higher_education_pc",
+    data_id_col = "id_mun",
+    geo_table   = "dim_divipola",
+    geo_id_col  = "id_mun",
+    geo_geom_col= "geometry",
+    value_col   = "total_cases_per_capita",
+    value_label = "Tasa de personas con acceso a educación superior x 100 habitantes",
+    agg_func    = "SUM",
+    year_col    = "year",
+    color_low   = "#ecf59f",   
+    color_high  = "#1CF340",   
+    radius_min  = 4,
+    radius_max  = 20,
+    offset      = (0.0,  0.05),
+    category    = "socioeconomico",
+    source_name = "Datos Abiertos",
+    source_url  = "https://www.datos.gov.co",
+)
 # ─────────────────────────────────────────────────────────────
 #  ÁRBOL DE CAPAS
 # ─────────────────────────────────────────────────────────────
@@ -547,7 +570,7 @@ LAYER_TREE = LayerGroup(
             label    = "Educación",
             icon     = "📚",
             expanded = False,
-            items    = [edu_escolar],
+            items    = [edu_escolar,edu_superior],
         ),
     ]
 )
