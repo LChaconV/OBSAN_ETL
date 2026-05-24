@@ -487,6 +487,102 @@ edu_superior = BubbleLayer(
     source_name = "Datos Abiertos",
     source_url  = "https://www.datos.gov.co",
 )
+# ── Producción agrícola — base compartida ─────────────────────
+_agro_base = dict(
+    data_table   = "agricultural_production",
+    geo_table    = "dim_divipola",
+    geo_id_col   = "id_mun",
+    geo_geom_col = "geometry",
+    value_col    = "yield",
+    value_label  = "Rendimiento agrícola",
+    agg_func     = "AVG",
+    year_col     = "year",
+
+    category     = "socioeconomico",
+    source_name  = "UPRA",
+    source_url   = "https://upra.gov.co/es-co/eva",
+    z_index      = 10,
+)
+
+agro_cereales = BubbleLayer(
+    id         = "agro_cereales",
+    label      = "Cereales",
+    color_low  = "#fef9c3",
+    color_high = "#854d0e",
+    row_filter = "type = 'cereales'",
+    offset     = (0.00,  0.00),
+    **_agro_base,
+)
+
+agro_condimentos = BubbleLayer(
+    id         = "agro_condimentos",
+    label      = "Condimentos y aromáticas",
+    color_low  = "#f0fdf4",
+    color_high = "#14532d",
+    row_filter = "type = 'cultivos para condimentos y bebidas medicinales y aromaticas'",
+    offset     = (0.04,  0.04),
+    **_agro_base,
+)
+
+agro_tropicales = BubbleLayer(
+    id         = "agro_tropicales",
+    label      = "Cultivos tropicales",
+    color_low  = "#fefce8",
+    color_high = "#713f12",
+    row_filter = "type = 'cultivos tropicales tradicionales'",
+    offset     = (-0.04,  0.04),
+    **_agro_base,
+)
+
+agro_frutales = BubbleLayer(
+    id         = "agro_frutales",
+    label      = "Frutales",
+    color_low  = "#fff1f2",
+    color_high = "#9f1239",
+    row_filter = "type = 'frutales'",
+    offset     = (0.04, -0.04),
+    **_agro_base,
+)
+
+agro_hortalizas = BubbleLayer(
+    id         = "agro_hortalizas",
+    label      = "Hortalizas",
+    color_low  = "#f0fdf4",
+    color_high = "#166534",
+    row_filter = "type = 'hortalizas'",
+    offset     = (-0.04, -0.04),
+    **_agro_base,
+)
+
+agro_leguminosas = BubbleLayer(
+    id         = "agro_leguminosas",
+    label      = "Leguminosas",
+    color_low  = "#fdf4ff",
+    color_high = "#581c87",
+    row_filter = "type = 'leguminosas'",
+    offset     = (0.00,  0.08),
+    **_agro_base,
+)
+
+agro_oleaginosas = BubbleLayer(
+    id         = "agro_oleaginosas",
+    label      = "Oleaginosas",
+    color_low  = "#fffbeb",
+    color_high = "#92400e",
+    row_filter = "type = 'oleaginosas'",
+    offset     = (0.00, -0.08),
+    **_agro_base,
+)
+
+agro_raices = BubbleLayer(
+    id         = "agro_raices",
+    label      = "Raíces y tubérculos",
+    color_low  = "#fff7ed",
+    color_high = "#7c2d12",
+    row_filter = "type = 'raices y tuberculos'",
+    offset     = (0.08,  0.00),
+    **_agro_base,
+)
 # ─────────────────────────────────────────────────────────────
 #  ÁRBOL DE CAPAS
 # ─────────────────────────────────────────────────────────────
@@ -572,6 +668,23 @@ LAYER_TREE = LayerGroup(
             expanded = False,
             items    = [edu_escolar,edu_superior],
         ),
+        LayerGroup(
+            id       = "produccion_agricola",
+            label    = "Producción agrícola",
+            icon     = "🌱",
+            expanded = False,
+            items    = [
+                agro_cereales,
+                agro_condimentos,
+                agro_tropicales,
+                agro_frutales,
+                agro_hortalizas,
+                agro_leguminosas,
+                agro_oleaginosas,
+                agro_raices,
+            ],
+        ),
+
     ]
 )
 

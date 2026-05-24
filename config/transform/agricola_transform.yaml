@@ -3,7 +3,7 @@ agricola_transform:
     bronze_dir: data/bronze/agricola
     silver_fact_dir: data/silver/agricola
     golden_fact_dir: data/golden/agricola
-    last_file_transformed: agricola_2020.parquet
+    last_file_transformed: agricola_2022.parquet
   validation:
     required_columns:
     - Código Dane municipio
