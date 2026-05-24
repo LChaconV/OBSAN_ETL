@@ -199,5 +199,17 @@ UPLOAD_VARIABLES: dict = {
                 },
             ],
         },
-    # ── Agrega más variables aquí siguiendo el mismo patrón ──
+    
+    "agricola": {
+        "label":       "Producción Agrícola",
+        "description": "Datos sobre producción agrícola por municipio",
+        "allowed_types": ["xlsx", "csv","xls"],
+        "storage_folder": "agricola",
+        "format_hint": (
+            "El archivo debe contener las columnas: **Código Dane municipio**, **Grupo cultivo**, **Año**, **Área sembrada**, **Área cosechada**, **Producción**"
+           
+        ),
+        "required_columns": [],
+        "pipeline": "agricola",
+    },
 }
