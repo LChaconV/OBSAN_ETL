@@ -243,29 +243,7 @@ class PointLayer(GeoLayer):
 
 @dataclass
 class BubbleLayer(GeoLayer):
-    """
-    Puntos cuyo tamaño Y color varían según el valor de una variable numérica.
-    Hace JOIN entre una tabla de datos y dim_divipola para obtener la geometría.
-
-    Uso en layers_config.py:
-        BubbleLayer(
-            id           = "mortalidad_malnutricion",
-            label        = "Mortalidad por malnutrición",
-            data_table   = "mortality_malnutrition",
-            data_id_col  = "id_mun",
-            geo_table    = "dim_divipola",
-            geo_id_col   = "id_mun",
-            geo_geom_col = "geometry",
-            value_col    = "total_cases",
-            value_label  = "Casos totales",
-            agg_func     = "SUM",       # SUM, AVG, MAX — cómo agregar si hay varios años
-            year_col     = "year",
-            color_low    = "#fef0d9",
-            color_high   = "#b30000",
-            radius_min   = 4,
-            radius_max   = 20,
-        )
-    """
+   
     data_table:   str = ""
     data_id_col:  str = "id_mun"
     geo_table:    str = "dim_divipola"
@@ -276,18 +254,12 @@ class BubbleLayer(GeoLayer):
     agg_func:     str = "SUM"
     year_col:     str = "year"
     extra_cols:   list = field(default_factory=list)
-
-    # Escala de color
     color_low:    str = "#feedd9"
     color_high:   str = "#b30000"
-
-    # Escala de tamaño en píxeles
     radius_min:   int = 4
     radius_max:   int = 20
-
-    # Desplazamiento del centroide en grados (lat, lng)
-    # Útil para separar visualmente capas que comparten la misma geometría
     offset:       tuple = (0.0, 0.0)
+    row_filter:   str = ""
 
     def get_geojson(self, year: int = None, **kwargs) -> dict:
         return _fetch_bubble_geojson(
@@ -305,6 +277,7 @@ class BubbleLayer(GeoLayer):
             extra_cols   = tuple(self.extra_cols),
             year         = year,
             dept_ids     = kwargs.get("dept_ids", ()),
+            row_filter   = self.row_filter,
         )
 
     def get_folium_style(self) -> dict:
@@ -320,7 +293,8 @@ def _fetch_bubble_geojson(
     layer_id, layer_label, data_table, data_id_col,
     geo_table, geo_id_col, geo_geom_col,
     value_col, value_label, agg_func, year_col,
-    extra_cols, year, dept_ids=()
+    extra_cols, year, dept_ids=(),
+    row_filter=""
 ) -> dict:
     extra_json  = ", ".join([f"'{c}', d.\"{c}\"" for c in extra_cols])
     year_filter = f"AND d.\"{year_col}\" = {year}" if year else ""
@@ -328,7 +302,7 @@ def _fetch_bubble_geojson(
     if dept_ids:
         ids_str     = ", ".join([f"'{d}'" for d in dept_ids])
         dept_filter = f"AND g.id_dept IN ({ids_str})"
-
+    row_filter_sql = f"AND d.{row_filter}" if row_filter else "" 
     query = f"""
         SELECT json_build_object(
             'type',     'Feature',
@@ -348,6 +322,7 @@ def _fetch_bubble_geojson(
         WHERE d."{value_col}" IS NOT NULL
         {year_filter}
         {dept_filter}
+        {row_filter_sql}
         GROUP BY g."{geo_id_col}", g.name_mun, g."{geo_geom_col}"
         ORDER BY {agg_func}(d."{value_col}") DESC
     """
