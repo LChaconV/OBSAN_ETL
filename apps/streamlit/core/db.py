@@ -281,6 +281,7 @@ CATEGORY_QUERY_MAP = {
     "ambiente":       get_muni_ambiente,
     "agropecuario":   get_muni_agropecuario,
     "conflicto":      get_muni_conflicto,
+    "agropecuario":   get_muni_agropecuario,
 }
 def test_connection() -> tuple[bool, str]:
     try:

@@ -498,7 +498,7 @@ _agro_base = dict(
     agg_func     = "AVG",
     year_col     = "year",
 
-    category     = "socioeconomico",
+    category     = "agropecuario",
     source_name  = "UPRA",
     source_url   = "https://upra.gov.co/es-co/eva",
     z_index      = 10,
