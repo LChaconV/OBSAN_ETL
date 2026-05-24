@@ -1,0 +1,31 @@
+agricola_transform:
+  source:
+    bronze_dir: data/bronze/agricola
+    silver_fact_dir: data/silver/agricola
+    golden_fact_dir: data/golden/agricola
+    last_file_transformed: agricola_2020.parquet
+  validation:
+    required_columns:
+    - Código Dane municipio
+    - Grupo cultivo
+    - Año
+    - Área sembrada
+    - Área cosechada
+    - Producción
+  fact_table:
+    rename_columns:
+      Código Dane municipio: id_mun
+      Grupo cultivo: type
+      Año: year
+      Área sembrada: area_sown
+      Área cosechada: area_harvested
+      Producción: production
+    grain:
+    - id_mun
+    - group_c
+    - year
+    metric_columns:
+    - total_animals
+    - area_sown
+    - area_harvested
+    - production
