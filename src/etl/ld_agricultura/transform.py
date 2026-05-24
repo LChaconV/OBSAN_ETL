@@ -7,6 +7,7 @@ from pathlib import Path
 import yaml
 import pandas as pd
 import numpy as np
+import unicodedata
 
 from src.etl.utils.logging_utils import setup_logging
 from src.etl.utils.config_utils import load_yaml, save_yaml
@@ -106,6 +107,16 @@ def transform_agricola(
 
     rename_columns = fact_cfg["rename_columns"]
     df = df.rename(columns=rename_columns)
+    df["type"] = (
+        df["type"]
+        .astype(str)
+        .apply(
+            lambda x: unicodedata.normalize("NFKD", x)
+            .encode("ascii", "ignore")
+            .decode("utf-8")
+            .lower()
+        )
+    )
     df = ensure_five_digits(df, "id_mun")
     df = df.dropna(subset=["id_mun"])
     df["id_mun"] = df["id_mun"].astype(str).str.strip()
