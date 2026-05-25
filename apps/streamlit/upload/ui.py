@@ -30,11 +30,22 @@ def render_upload_page():
         selected_id = st.session_state.get("upload_variable_select", "")
         if selected_id:
             config = UPLOAD_VARIABLES.get(selected_id, {})
+
+            # Imagen del formato
             image_path = config.get("format_image", "")
             if image_path and os.path.exists(image_path):
-                st.image(image_path, caption="Formato esperado", use_container_width=True)
+                st.image(image_path, caption="Formato esperado",
+                        use_container_width=True)
             else:
                 st.caption("No hay imagen de referencia para esta variable.")
+
+            # Enlace de descarga
+            download_url = config.get("download_url", "")
+            if download_url:
+                st.markdown(
+                    f"📥 [Descargar datos fuente]({download_url})",
+                    unsafe_allow_html=False,
+                )
         else:
             st.caption("Selecciona una variable para ver el formato esperado.")
 

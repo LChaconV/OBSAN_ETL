@@ -1,20 +1,3 @@
-"""
-upload/variables_config.py — Configuración de variables de carga
-════════════════════════════════════════════════════════════════
-Este es el único archivo que editas para agregar o modificar
-variables de carga. No necesitas tocar ningún otro módulo.
-
-Cada variable define:
-  - label:          Nombre visible en el selectbox
-  - description:    Descripción del contenido esperado
-  - allowed_types:  Extensiones permitidas
-  - storage_folder: Subcarpeta donde se guarda el archivo
-  - format_hint:    Mensaje informativo sobre el formato esperado
-  - required_columns: Columnas obligatorias (para Excel/CSV)
-  - pipeline:       ID del pipeline ETL a ejecutar
-════════════════════════════════════════════════════════════════
-"""
-
 
 UPLOAD_VARIABLES: dict = {
 
@@ -28,6 +11,8 @@ UPLOAD_VARIABLES: dict = {
         ),
         "required_columns": [],
         "pipeline": "divipola",
+        "format_image": "apps/streamlit/assets/formats/divipola.png",
+        "download_url": "https://www.colombiaenmapas.gov.co/?e=-93.57552216249368,-8.477621778898875,-48.927084662505536,14.748502806916624,4686&b=igac&l=20&u=0&t=29&servicio=20", 
     },
 
     "departamento": {
@@ -40,6 +25,8 @@ UPLOAD_VARIABLES: dict = {
         ),
         "required_columns": [],
         "pipeline": "departamento",
+        "format_image": "apps/streamlit/assets/formats/divipola.png",
+        "download_url": "https://www.colombiaenmapas.gov.co/?e=-93.57552216249368,-8.477621778898875,-48.927084662505536,14.748502806916624,4686&b=igac&l=20&u=0&t=29&servicio=20", 
     },
 
     "municipios_pdet": {
@@ -53,6 +40,8 @@ UPLOAD_VARIABLES: dict = {
         ),
         "required_columns": ["Código DANE Municipio"],
         "pipeline": "mun_pdet",
+        "format_image": "apps/streamlit/assets/formats/mun_pdet.png",
+        "download_url": "https://centralpdet.renovacionterritorio.gov.co/wp-content/uploads/2022/01/MunicipiosPDET.xlsx",
     },
 
     "subregiones": {
@@ -79,6 +68,7 @@ UPLOAD_VARIABLES: dict = {
         ),
         "required_columns": [],
         "pipeline": "perfil_antioquia",
+        "format_image": "apps/streamlit/assets/formats/perfil_antioquia.png",
     },
 
     "poblacion": {
@@ -92,6 +82,8 @@ UPLOAD_VARIABLES: dict = {
         ),
         "required_columns": ["Código Entidad", "Año", "Dato Numérico", "Unidad de Medida"],
         "pipeline": "poblacion",
+        "format_image": "apps/streamlit/assets/formats/poblacion.png",
+        "download_url": "https://terridata.dnp.gov.co/index-app.html#/descargas"
     },
 
     "resguardo_indigena": {
@@ -104,6 +96,8 @@ UPLOAD_VARIABLES: dict = {
         ),
         "required_columns": [],
         "pipeline": "resguardo_indigena",
+        "format_image": "apps/streamlit/assets/formats/resguardo_indigena.png",
+        "download_url": "https://www.datos.gov.co/dataset/Resguardo-Indigena-Formalizado/4hy9-7y2w/about_data"
     },
 
     "mercado_laboral": {
@@ -117,6 +111,8 @@ UPLOAD_VARIABLES: dict = {
         ),
         "required_columns": ["año"],
         "pipeline": "mercado_laboral",
+        "format_image": "apps/streamlit/assets/formats/mercado_laboral.png",
+        "download_url": "https://terridata.dnp.gov.co/index-app.html#/descargas"
     },
 
     "mortalidad_desnutricion": {
@@ -130,6 +126,8 @@ UPLOAD_VARIABLES: dict = {
         ),
         "required_columns": ["COD_EVE", "FEC_DEF", "ANO", "EDAD", "COD_PAIS_O", "COD_DPTO_O", "COD_MUN_O"],
         "pipeline": "mortalidad_desnutricion",
+        "format_image": "apps/streamlit/assets/formats/mortalidad_desnutricion.png",
+        "download_url": "https://portalsivigila.ins.gov.co/Paginas/Buscador.aspx",
     },
 
     "desnutricion_aguda_5": {
@@ -143,6 +141,8 @@ UPLOAD_VARIABLES: dict = {
         ),
         "required_columns": [ "confirmados", "CON_FIN", "FEC_NOT", "ANO", "EDAD", "COD_PAIS_O", "COD_DPTO_O", "COD_MUN_O", "COD_EVE"],
         "pipeline": "desnutricion_aguda_5",
+        "format_image": "apps/streamlit/assets/formats/desnutricion_5.png",
+        "download_url": "https://portalsivigila.ins.gov.co/Paginas/Buscador.aspx",
     },
 
     "bajo_peso_nacer": {
@@ -156,6 +156,8 @@ UPLOAD_VARIABLES: dict = {
         ),
         "required_columns": [ "confirmados", "FECHA_NTO","COD_PAIS", "COD_DPTO_O", "COD_MUN_O"],
         "pipeline": "bajo_peso_nacer",
+        "format_image": "apps/streamlit/assets/formats/bajo_peso_nacer.png",
+        "download_url": "https://portalsivigila.ins.gov.co/Paginas/Buscador.aspx",
     },
 
     "mercados_campesinos": {
@@ -168,6 +170,8 @@ UPLOAD_VARIABLES: dict = {
         ),
         "required_columns": [],
         "pipeline": "mercados_campesinos",
+        "format_image": "apps/streamlit/assets/formats/mercados_campesinos.png",
+        "download_url": "https://www.google.com/maps/d/u/0/viewer?mid=1vFPkcoidvWCixLQlu-3JzjVGDbQ&femb=1&ll=4.804698096274127%2C-75.58867292494415&z=11",
     },
 
     "censo_pecuario": {
@@ -180,6 +184,8 @@ UPLOAD_VARIABLES: dict = {
             ),
             "required_columns": [],
             "pipeline": "censo_pecuario",
+            "format_image":  "assets/formats/censo_pecuario.png",  
+            "download_url": "https://www.ica.gov.co/areas/pecuaria/servicios/epidemiologia-veterinaria/censos-2016",
             "extra_fields": [
                 {
                     "id":      "year",
@@ -211,5 +217,7 @@ UPLOAD_VARIABLES: dict = {
         ),
         "required_columns": [],
         "pipeline": "agricola",
+        "format_image": "apps/streamlit/assets/formats/upra_eva.png",
+        "download_url": "https://upra.gov.co/es-co/eva",
     },
 }
