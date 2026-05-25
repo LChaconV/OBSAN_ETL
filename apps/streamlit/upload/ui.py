@@ -2,6 +2,8 @@
 upload/ui.py — Interfaz Streamlit del módulo de carga de archivos
 """
 
+import os
+
 import streamlit as st
 from upload.variables_config import UPLOAD_VARIABLES
 from upload.validator import validate_file
@@ -22,9 +24,19 @@ def render_upload_page():
     with col_form:
         _render_upload_form()
 
-"""    with col_history:
-        _render_upload_history()"""
-
+        """    with col_history:
+                _render_upload_history()"""
+    with col_history:
+        selected_id = st.session_state.get("upload_variable_select", "")
+        if selected_id:
+            config = UPLOAD_VARIABLES.get(selected_id, {})
+            image_path = config.get("format_image", "")
+            if image_path and os.path.exists(image_path):
+                st.image(image_path, caption="Formato esperado", use_container_width=True)
+            else:
+                st.caption("No hay imagen de referencia para esta variable.")
+        else:
+            st.caption("Selecciona una variable para ver el formato esperado.")
 
 # ─────────────────────────────────────────────────────────────
 #  FORMULARIO DE CARGA
