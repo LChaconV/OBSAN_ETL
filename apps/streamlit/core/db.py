@@ -243,10 +243,21 @@ def get_muni_agropecuario(id_mun: str, year: int) -> dict:
             (SELECT geometry FROM dim_divipola WHERE id_mun = %(id_mun)s)
         )
     """, {"id_mun": id_mun, "year": year})
-
+    agro = query_rows("""
+        SELECT type,
+               ROUND(AVG(yield)::numeric, 2)        AS avg_yield,
+               ROUND(AVG(production)::numeric, 2)   AS avg_production,
+               ROUND(AVG(area_harvested)::numeric, 2) AS avg_area
+        FROM agricultural_production
+        WHERE id_mun = %(id_mun)s
+        AND year = %(year)s
+        GROUP BY type
+        ORDER BY avg_production DESC
+    """, {"id_mun": id_mun, "year": year})
     return {
         "pecuario": livestock,
         "mercados": markets,
+        "agricola": agro,
     }
 
 

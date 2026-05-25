@@ -1407,7 +1407,18 @@ def _build_panel_b_html(data: dict, year: int, cat_id: str) -> str:
             content += section("🛒 Mercados Campesinos")
             for m in mercados:
                 content += f"<div style='font-size:11px;padding:1px 0;'>📍 {m.get('name','—')}</div>"
-
+                agro = data.get("agricola", [])
+        agro = data.get("agricola") or []
+        if agro:
+            content += section("🌱 Producción Agrícola")
+            for a in agro:
+                content += kv(
+                    a.get("type", "—"),
+                    f"Rend: {a.get('avg_yield','—')} t/ha · "
+                    #f"Prod: {a.get('avg_production','—')} t · "
+                    #f"Área: {a.get('avg_area','—')} ha",
+                    ""
+                )
     elif cat_id == "conflicto":
         victimas = data.get("victimas", [])
         if victimas:
