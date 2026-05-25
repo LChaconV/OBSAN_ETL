@@ -583,6 +583,92 @@ agro_raices = BubbleLayer(
     offset     = (0.08,  0.00),
     **_agro_base,
 )
+
+# ── Producción agrícola — base compartida ─────────────────────
+_pecu_base = dict(
+    data_table   = "census_livestock",
+    geo_table    = "dim_divipola",
+    geo_id_col   = "id_mun",
+    geo_geom_col = "geometry",
+    value_col    = "total_animals",
+    value_label  = "produccion pecuaria",
+    agg_func     = "SUM",
+    year_col     = "year",
+    category     = "agropecuario",
+    source_name  = "ICA",
+    source_url   = "https://www.ica.gov.co/areas/pecuaria/servicios/epidemiologia-veterinaria/censos-2016",
+    z_index      = 10,
+)
+
+pecu_aves = BubbleLayer(
+    id         = "pecu_aves",
+    label      = "Aves",
+    color_low  = "#fef9c3",
+    color_high = "#854d0e",
+    row_filter = "type = 'aves'",
+    offset     = (0.00,  0.00),
+    **_pecu_base,
+)
+
+pecu_bovino = BubbleLayer(
+    id         = "pecu_bovinos",
+    label      = "Bovinos",
+    color_low  = "#f0fdf4",
+    color_high = "#14532d",
+    row_filter = "type = 'bovinos'",
+    offset     = (0.04,  0.04),
+    **_agro_base,
+)
+
+pecu_bufalino = BubbleLayer(
+    id         = "pecu_bufalino",
+    label      = "Bufalino",
+    color_low  = "#fefce8",
+    color_high = "#713f12",
+    row_filter = "type = 'bufalino'",
+    offset     = (-0.04,  0.04),
+    **_agro_base,
+)
+
+pecu_caprino = BubbleLayer(
+    id         = "pecu_caprino",
+    label      = "Caprino",
+    color_low  = "#fff1f2",
+    color_high = "#9f1239",
+    row_filter = "type = 'caprino'",
+    offset     = (0.04, -0.04),
+    **_agro_base,
+)
+
+pecu_equino = BubbleLayer(
+    id         = "pecu_equino",
+    label      = "Equino",
+    color_low  = "#fff7ed",
+    color_high = "#7c2d12",
+    row_filter = "type = 'equino'",
+    offset     = (0.04, -0.04),
+    **_agro_base,
+)
+
+pecu_ovino = BubbleLayer(
+    id         = "pecu_ovino",
+    label      = "Ovino",
+    color_low  = "#fff1f2",
+    color_high = "#9f1239",
+    row_filter = "type = 'ovino'",
+    offset     = (0.04, -0.04),
+    **_agro_base,
+)
+
+pecu_porcino = BubbleLayer(
+    id         = "pecu_porcino",
+    label      = "Porcino",
+    color_low  = "#fff1f2",
+    color_high = "#9f1239",
+    row_filter = "type = 'porcino'",
+    offset     = (0.04, -0.04),
+    **_agro_base,
+)
 # ─────────────────────────────────────────────────────────────
 #  ÁRBOL DE CAPAS
 # ─────────────────────────────────────────────────────────────
@@ -685,6 +771,21 @@ LAYER_TREE = LayerGroup(
             ],
         ),
 
+LayerGroup(
+            id       = "produccion_pecuaria",
+            label    = "Producción pecuaria",
+            icon     = "🐄",
+            expanded = False,
+            items    = [
+                pecu_aves,
+                pecu_bovino,
+                pecu_caprino,
+                pecu_porcino,
+                pecu_equino,
+                pecu_ovino,
+                pecu_bufalino,
+            ],
+        ),
     ]
 )
 
