@@ -11,7 +11,7 @@ bajo_peso_nacer_transform:
   validation:
     required_columns:
       - "CONSECUTIVE"
-      - "FECHA_NTO"
+      - "FEC_NOT"
       - "confirmados"
       - "COD_DPTO_O"
       - "COD_MUN_O"
@@ -28,7 +28,7 @@ bajo_peso_nacer_transform:
   # Manejo de fechas
   # -----------------------------------
   date_parsing:
-    source_column: "FECHA_NTO"
+    source_column: "FEC_NOT"
     parsed_column: "date_event"
     invalid_flag_column: "invalid_date"
     formats:
@@ -74,7 +74,14 @@ bajo_peso_nacer_transform:
     COD_PAIS_O: "id_country"
     COD_DPTO_O: "id_dept"
 
-
+  columns:
+    - "id_consecutive"
+    - "date_event"
+    - "year"
+    - "confirmed"
+    - "id_country"
+    - "id_dept"
+    - "id_mun"
   # -----------------------------------
   # Tabla de hechos
   # -----------------------------------
@@ -107,3 +114,4 @@ bajo_peso_nacer_transform:
     aggregation:
       total_cases: "count"
     file_prefix: "bajo_peso_nacer"
+  

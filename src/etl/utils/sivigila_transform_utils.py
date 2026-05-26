@@ -315,7 +315,7 @@ def transform_manual(
     # INPUT FILE DESDE VARIABLE DE ENTORNO
     # =====================================================
     file_path = os.environ.get("OBSAN_INPUT_FILE")
-    
+    print(f"Archivo recibido: {file_path}")
     #file_path = os.environ["OBSAN_INPUT_FILE"] = (
     #r"C:\Users\laura\ESCUELA COLOMBIANA DE INGENIERIA JULIO GARAVITO\Proyecto OBSAN - General\Datos_OBSAN_web\OBSAN\observatorio-san\data\bronze\mortalidad_desnutricion\run_2026_03_28\Datos_2018_112.xls")
 
@@ -399,3 +399,172 @@ def transform_manual(
     )
 
     return df_fact, config, run_name
+def select_columns(
+    df: pd.DataFrame,
+    config: dict
+) -> pd.DataFrame:
+
+    columnas = config["columns"]
+
+    faltantes = [
+        col for col in columnas
+        if col not in df.columns
+    ]
+
+    if faltantes:
+        raise ValueError(
+            f"Columnas faltantes: {faltantes}"
+        )
+
+    return df[columnas].copy()
+
+import logging
+import pandas as pd
+
+
+def drop_duplicate(
+    df: pd.DataFrame,
+    keep: str = "first",
+    config: dict | None = None
+) -> pd.DataFrame:
+
+    if config is None:
+        raise ValueError(
+            "config no puede ser None"
+        )
+
+    columnas = config["columns"]
+
+    if not columnas:
+        raise ValueError(
+            "Debes indicar al menos una columna"
+        )
+
+    total_original = len(df)
+
+    df_clean = (
+        df
+        .drop_duplicates(
+            subset=columnas,
+            keep=keep
+        )
+        .reset_index(drop=True)
+    )
+
+    total_final = len(df_clean)
+    duplicados = total_original - total_final
+
+    logging.info(
+        "Duplicados encontrados: %s",
+        duplicados
+    )
+
+    print(
+        f"Duplicados encontrados: {duplicados}"
+    )
+
+    return df_clean
+
+def clear_raw(
+    key: str,
+    LOG_DIR: Path,
+    CONFIG_PATH: Path
+):
+
+    log_name = f"{key}_transform.log"
+    setup_logging(LOG_DIR, log_name)
+    logging.info("Inicio transformación")
+
+    config = load_transform_config(
+        key,
+        CONFIG_PATH
+    )
+
+    fact_dir = (
+        PROJECT_ROOT
+        / config["source"]["golden_fact_dir"]
+    )
+
+    # =====================================================
+    # INPUT FILE DESDE VARIABLE DE ENTORNO
+    # =====================================================
+    file_path = os.environ.get("OBSAN_INPUT_FILE")
+    
+    #file_path = os.environ["OBSAN_INPUT_FILE"] = (r"C:\Users\laura\Downloads\Datos_2020_110.xls")
+
+    if not file_path:
+        raise ValueError(
+            "No se definió OBSAN_INPUT_FILE"
+        )
+
+    input_path = Path(file_path)
+
+    if not input_path.exists():
+        raise FileNotFoundError(
+            f"No existe el archivo: {input_path}"
+        )
+
+    logging.info(
+        "Archivo recibido: %s",
+        input_path
+    )
+
+    filename = input_path.stem
+    run_name = filename.split("_run_")[-1]
+    run_name = f"run_{run_name}"
+    logging.info(
+        "Run name: %s",
+        run_name
+    )
+
+
+    ext = input_path.suffix.lower()
+    if ext in [".xlsx", ".xls"]:
+        df = pd.read_excel(input_path)
+    elif ext == ".csv":
+        df = pd.read_csv(input_path)
+    elif ext == ".parquet":
+        df = pd.read_parquet(input_path)
+    else:
+        raise ValueError(
+            f"Formato no soportado: {ext}"
+        )
+
+    df = clean_columns(df)
+    validate_required_columns(
+        df,
+        config["validation"]["required_columns"]
+    )
+    df = apply_filter(df, config)
+    df = normalize_types(df, config)
+    df = parse_dates(df, config)
+    df = transform_dates(df, config)
+    df = create_id_muni(df)
+    df = rename_columns(df, config)
+    df["year"]= df["date_event"].dt.year
+    df = select_columns(df,config)
+    df["id_mun"] = df["id_mun"].astype(str)
+    df["id_country"] = df["id_country"].astype(str)
+    df= drop_duplicate(df,"first",config
+)
+    df = df[
+            ~(
+                df["id_mun"].str.endswith("000") |
+                (df["id_mun"] == "01862") |
+                (df["id_mun"] == "01533")|
+                (df["id_mun"]== "01076") |
+                (df["id_mun"]== "27086") |
+                (df["id_mun"] == "01239")|
+                (df["id_mun"] == "01249")|
+                (df["id_mun"] == "01050")|
+                (df["id_mun"].str[-3:] == df["id_country"])
+            )
+        ]
+    
+    logging.info(
+        "Transformación finalizada correctamente"
+    )
+
+    return df, config, run_name
+
+

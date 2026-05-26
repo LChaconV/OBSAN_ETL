@@ -14,14 +14,13 @@ TRANSFORM_CONFIG_PATH = (
 create_table_sql = """
 CREATE TABLE IF NOT EXISTS low_birth_weight (
 
-    id_low_birth_weight SERIAL PRIMARY KEY,
-
+    id_consecutive varchar(50) PRIMARY KEY,
+    date_event DATE,
     year INTEGER,
-
-    total_cases INTEGER,
-
+    confirmed INTEGER,
     id_mun VARCHAR(10),
-
+    id_country VARCHAR(10),
+    id_dept VARCHAR(10),
     CONSTRAINT fk_divipola
         FOREIGN KEY (id_mun)
         REFERENCES dim_divipola(id_mun)
@@ -33,7 +32,9 @@ create_index_sql = """
 CREATE UNIQUE INDEX IF NOT EXISTS ux_low_birth_weight
 ON low_birth_weight (
     year,
-    id_mun
+    id_mun,
+    date_event,
+    id_consecutive
 );
 """
 
@@ -58,14 +59,13 @@ def run(**kwargs):
         load_mode="upsert",
 
         conflict_columns=[
-            "year",
-            "id_mun"
+            "year","id_mun", "date_event","id_consecutive"
         ],
 
         update_columns=[
-            "total_cases",
-            "year"
-            #"date_event"
+            "confirmed",
+            "id_country",
+            "id_dept"
         ],
 
         state_field_name="last_incremental_value",
