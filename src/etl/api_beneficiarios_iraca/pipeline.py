@@ -1,4 +1,5 @@
 from . import extract, transform, load
+from apscheduler.schedulers.blocking import BlockingScheduler
 
 def run(**kwargs):
     print("Iniciando extracción...")
@@ -18,4 +19,12 @@ def run(**kwargs):
     print("Carga completada.")
 
 if __name__ == "__main__":
-    run()
+
+    scheduler = BlockingScheduler()
+    scheduler.add_job(run, 'interval', seconds=15)
+
+    try:
+        print("Iniciando el scheduler...")
+        scheduler.start()
+    except (KeyboardInterrupt, SystemExit):
+        print("Scheduler detenido.")

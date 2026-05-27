@@ -1,19 +1,11 @@
-from . import  extract,transform, load
+from datetime import datetime
 from apscheduler.schedulers.blocking import BlockingScheduler
 
 def run(**kwargs):
+    print(f"Pipeline ejecutada a las {datetime.now()} con argumentos: {kwargs}")
 
-    print("Iniciando extracción...")
-    extract.run()
-    print("Extracción completada")
-
-    print("Iniciando transformación...")
-    transform.run()
-    print("Transformación completada")
-
-    print("Iniciando carga...")
-    load.run()
-    print("Carga completada.")
+    with open("pipeline_log.txt", "a") as log_file:
+        log_file.write(f"Pipeline ejecutada a las {datetime.now()} con argumentos: {kwargs}\n")
 
 if __name__ == "__main__":
     scheduler = BlockingScheduler()
