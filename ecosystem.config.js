@@ -1,149 +1,36 @@
-const path = require('path');
+const pipelineSchedules = [
+    { name: "api_beneficiarios_iraca", trigger: "interval", seconds: 60, startDelaySeconds: 60 },
+    { name: "api_edu_escolar", trigger: "interval", seconds: 60, startDelaySeconds: 60 },
+    { name: "api_edu_superior", trigger: "interval", seconds: 60, startDelaySeconds: 60 },
+    { name: "api_erradicacion_cultivos_coca", trigger: "interval", seconds: 60, startDelaySeconds: 60 },
+    { name: "api_familias_accion", trigger: "interval", seconds: 60, startDelaySeconds: 60 },
+    { name: "api_indice_riesgo_irca", trigger: "interval", seconds: 60, startDelaySeconds: 60 },
+    { name: "api_minerales", trigger: "interval", seconds: 60, startDelaySeconds: 60 },
+    { name: "api_produc_gas", trigger: "interval", seconds: 60, startDelaySeconds: 60 },
+    { name: "api_produc_petroleo", trigger: "interval", seconds: 60, startDelaySeconds: 60 },
+    { name: "api_regalias", trigger: "interval", seconds: 60, startDelaySeconds: 60 },
+    { name: "api_victimas", trigger: "interval", seconds: 60, startDelaySeconds: 60 },
+];
 
 module.exports = {
     apps: [
         {
-            name: "api_beneficiarios_iraca",
-            script: "./.venv/bin/python", 
-            args: ["-m", "src.etl.api_beneficiarios_iraca.pipeline"], 
+            name: "etl_scheduler",
+            script: "uv",
+            args: ["run", "-m", "src.scheduler"],
             cwd: __dirname,
             exec_mode: "fork",
-            interpreter: "", 
+            interpreter: "none",
             watch: false,
             autorestart: true,
+            restart_delay: 5000,
+            max_memory_restart: "200M",
             env: {
-                PYTHONUNBUFFERED: "1"
-            }
+                PYTHONUNBUFFERED: "1",
+                ETL_MAX_CONCURRENT_JOBS: "1",
+                ETL_JOB_MISFIRE_GRACE_TIME: "30",
+                ETL_SCHEDULES: JSON.stringify(pipelineSchedules),
+            },
         },
-        {
-            name: "api_edu_escolar",
-            script: "./.venv/bin/python", 
-            args: ["-m", "src.etl.api_edu_escolar.pipeline"], 
-            cwd: __dirname,
-            exec_mode: "fork",
-            interpreter: "", 
-            watch: false,
-            autorestart: true,
-            env: {
-                PYTHONUNBUFFERED: "1"
-            }
-        },
-        {
-            name: "api_edu_superior",
-            script: "./.venv/bin/python", 
-            args: ["-m", "src.etl.api_edu_superior.pipeline"], 
-            cwd: __dirname,
-            exec_mode: "fork",
-            interpreter: "", 
-            watch: false,
-            autorestart: true,
-            env: {
-                PYTHONUNBUFFERED: "1"
-            }
-        },
-        {
-            name: "api_erradicacion_cultivos_coca",
-            script: "./.venv/bin/python", 
-            args: ["-m", "src.etl.api_erradicacion_cultivos_coca.pipeline"], 
-            cwd: __dirname,
-            exec_mode: "fork",
-            interpreter: "", 
-            watch: false,
-            autorestart: true,
-            env: {
-                PYTHONUNBUFFERED: "1"
-            }
-        },
-        {
-            name: "api_familias_accion",
-            script: "./.venv/bin/python", 
-            args: ["-m", "src.etl.api_familias_accion.pipeline"], 
-            cwd: __dirname,
-            exec_mode: "fork",
-            interpreter: "", 
-            watch: false,
-            autorestart: true,
-            env: {
-                PYTHONUNBUFFERED: "1"
-            }
-        },
-        {
-            name: "api_indice_riesgo_irca",
-            script: "./.venv/bin/python", 
-            args: ["-m", "src.etl.api_indice_riesgo_irca.pipeline"], 
-            cwd: __dirname,
-            exec_mode: "fork",
-            interpreter: "", 
-            watch: false,
-            autorestart: true,
-            env: {
-                PYTHONUNBUFFERED: "1"
-            }
-        },
-        {
-            name: "api_minerales",
-            script: "./.venv/bin/python", 
-            args: ["-m", "src.etl.api_minerales.pipeline"], 
-            cwd: __dirname,
-            exec_mode: "fork",
-            interpreter: "", 
-            watch: false,
-            autorestart: true,
-            env: {
-                PYTHONUNBUFFERED: "1"
-            }
-        },
-        {
-            name: "api_produc_gas",
-            script: "./.venv/bin/python", 
-            args: ["-m", "src.etl.api_produc_gas.pipeline"], 
-            cwd: __dirname,
-            exec_mode: "fork",
-            interpreter: "", 
-            watch: false,
-            autorestart: true,
-            env: {
-                PYTHONUNBUFFERED: "1"
-            }
-        },
-        {
-            name: "api_produc_petroleo",
-            script: "./.venv/bin/python", 
-            args: ["-m", "src.etl.api_produc_petroleo.pipeline"], 
-            cwd: __dirname,
-            exec_mode: "fork",
-            interpreter: "", 
-            watch: false,
-            autorestart: true,
-            env: {
-                PYTHONUNBUFFERED: "1"
-            }
-        },
-        {
-            name: "api_regalias",
-            script: "./.venv/bin/python", 
-            args: ["-m", "src.etl.api_regalias.pipeline"], 
-            cwd: __dirname,
-            exec_mode: "fork",
-            interpreter: "", 
-            watch: false,
-            autorestart: true,
-            env: {
-                PYTHONUNBUFFERED: "1"
-            }
-        },
-        {
-            name: "api_victimas",
-            script: "./.venv/bin/python", 
-            args: ["-m", "src.etl.api_victimas.pipeline"], 
-            cwd: __dirname,
-            exec_mode: "fork",
-            interpreter: "", 
-            watch: false,
-            autorestart: true,
-            env: {
-                PYTHONUNBUFFERED: "1"
-            }
-        }
-    ]
+    ],
 };

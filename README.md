@@ -66,6 +66,14 @@ Ejecutar scheduler:
 uv run -m src.scheduler
 ```
 
+Ejecutar ETL con PM2 sin dejar un proceso Python residente por pipeline:
+
+```bash
+pm2 start ecosystem.config.js
+```
+
+`ecosystem.config.js` ahora levanta un unico proceso `etl_scheduler`. Ese scheduler dispara cada pipeline como subproceso solo cuando le toca correr, y la variable `pipelineSchedules` es el lugar para ajustar frecuencia (`seconds`, `minutes`, etc.) o pasar a `trigger: "cron"` por pipeline.
+
 ## Lógica del proceso ETL
 
 Flujo de alto nivel:

@@ -20,7 +20,7 @@ def run(**kwargs):
 
 if __name__ == "__main__":
     scheduler = BlockingScheduler()
-    scheduler.add_job(run, "interval", seconds=15)
+    scheduler.add_job(run, "interval", seconds=7200)
 
     try:
         print("Iniciando el scheduler...")
