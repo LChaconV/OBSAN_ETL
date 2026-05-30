@@ -7,6 +7,7 @@ import sys
 import threading
 from datetime import datetime, timedelta
 from pathlib import Path
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from apscheduler.events import EVENT_JOB_ERROR, EVENT_JOB_EXECUTED
 from apscheduler.executors.pool import ThreadPoolExecutor
@@ -53,6 +54,17 @@ def load_schedule_config() -> list[dict]:
             raise ValueError("Cada pipeline debe definir al menos el campo 'name'.")
 
     return schedules
+
+
+def load_scheduler_timezone() -> ZoneInfo:
+    timezone_name = os.getenv("ETL_TIMEZONE", "America/Bogota")
+
+    try:
+        return ZoneInfo(timezone_name)
+    except ZoneInfoNotFoundError as exc:
+        raise ValueError(
+            f"La zona horaria '{timezone_name}' definida en ETL_TIMEZONE no es valida."
+        ) from exc
 
 
 def build_trigger(schedule: dict) -> tuple[str, dict]:
@@ -184,6 +196,7 @@ def create_scheduler(
     schedules: list[dict],
     max_workers: int,
     misfire_grace_time: int,
+    timezone: ZoneInfo,
 ) -> BlockingScheduler:
     scheduler = BlockingScheduler(
         executors={"default": ThreadPoolExecutor(max_workers=max_workers)},
@@ -191,6 +204,7 @@ def create_scheduler(
             "coalesce": True,
             "misfire_grace_time": misfire_grace_time,
         },
+        timezone=timezone,
     )
     scheduler.add_listener(log_job_event, EVENT_JOB_EXECUTED | EVENT_JOB_ERROR)
 
@@ -212,6 +226,7 @@ def create_scheduler(
 def main() -> None:
     configure_logging()
     schedules = load_schedule_config()
+    timezone = load_scheduler_timezone()
     max_workers = int(os.getenv("ETL_MAX_CONCURRENT_JOBS", "1"))
     misfire_grace_time = int(os.getenv("ETL_JOB_MISFIRE_GRACE_TIME", "30"))
 
@@ -219,12 +234,14 @@ def main() -> None:
         schedules=schedules,
         max_workers=max_workers,
         misfire_grace_time=misfire_grace_time,
+        timezone=timezone,
     )
 
     LOGGER.info(
-        "Scheduler ETL iniciado con %s pipelines y concurrencia maxima %s.",
+        "Scheduler ETL iniciado con %s pipelines, concurrencia maxima %s y zona horaria %s.",
         len(schedules),
         max_workers,
+        timezone.key,
     )
     scheduler.start()
 

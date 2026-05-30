@@ -72,7 +72,7 @@ Ejecutar ETL con PM2 sin dejar un proceso Python residente por pipeline:
 pm2 start ecosystem.config.js
 ```
 
-`ecosystem.config.js` ahora levanta un unico proceso `etl_scheduler`. Ese scheduler dispara cada pipeline como subproceso solo cuando le toca correr, y la variable `pipelineSchedules` es el lugar para ajustar frecuencia (`seconds`, `minutes`, etc.) o pasar a `trigger: "cron"` por pipeline.
+`ecosystem.config.js` ahora levanta un unico proceso `etl_scheduler`. Ese scheduler dispara cada pipeline como subproceso solo cuando le toca correr, y la variable `pipelineSchedules` es el lugar para ajustar la agenda por pipeline. La configuracion actual usa `trigger: "cron"` una vez al dia, en horario `America/Bogota`, con ventanas escalonadas y `ETL_MAX_CONCURRENT_JOBS=1` para evitar solapamientos y picos de memoria.
 
 ## Lógica del proceso ETL
 
