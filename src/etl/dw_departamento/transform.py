@@ -58,10 +58,12 @@ def simplify_geometry(gdf):
         return None
 def run():
     file_path = os.environ.get("OBSAN_INPUT_FILE")
+    #file_path = sources_config['departamentos']['storage']['bronze_dir'] + '/' + sources_config['divipola']['storage']['file']
     if not file_path:
         raise ValueError("No se definió OBSAN_INPUT_FILE")
 
     gdf = gpd.read_file(file_path)
+    print(gdf.columns)
     column_map = config['data_silver']["columns"]["departamentos"]
     gdf = gdf[list(column_map.values())]
 

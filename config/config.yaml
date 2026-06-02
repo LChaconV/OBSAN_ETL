@@ -30,8 +30,8 @@ data_silver:
       geometry: geometry
 
     departamentos:
-      id_dept: DeCodigo
-      name_dept: DeNombre
+      id_dept: departamentos — Departamentos_Diciembre_2025_shp/Depto.shp_DeCodigo
+      name_dept: Depto
       geometry: geometry
     
     red_vial:

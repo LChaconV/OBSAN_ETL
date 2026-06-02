@@ -41,7 +41,7 @@ def ensure_db_infrastructure(engine) -> None:
             CREATE TABLE IF NOT EXISTS dim_divipola (
                 id_mun VARCHAR(10) PRIMARY KEY,
                 name_mun VARCHAR(150),
-                name_dept VARCHAR(150),
+             
                 id_dept VARCHAR(10),
                 geometry GEOMETRY(Geometry, 4326)
             );
