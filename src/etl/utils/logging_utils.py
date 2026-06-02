@@ -18,6 +18,14 @@ class _ETLContextFilter(logging.Filter):
         return True
 
 
+def _configure_text_stream(stream) -> None:
+    if hasattr(stream, "reconfigure"):
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, ValueError, OSError):
+            pass
+
+
 def setup_logging(log_dir: Path, log_file: str = "etl.log") -> None:
     """
     Configura el sistema de logging del proyecto.
@@ -31,6 +39,8 @@ def setup_logging(log_dir: Path, log_file: str = "etl.log") -> None:
     """
 
     log_dir.mkdir(parents=True, exist_ok=True)
+    _configure_text_stream(sys.stdout)
+    _configure_text_stream(sys.stderr)
 
     pipeline_name = os.getenv("ETL_PIPELINE_NAME", "etl")
     component_name = Path(log_file).stem

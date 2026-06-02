@@ -27,6 +27,7 @@ module.exports = {
             max_memory_restart: "200M",
             env: {
                 PYTHONUNBUFFERED: "1",
+                PYTHONIOENCODING: "utf-8",
                 ETL_TIMEZONE: "America/Bogota",
                 ETL_MAX_CONCURRENT_JOBS: "1",
                 ETL_JOB_MISFIRE_GRACE_TIME: "43200",

@@ -30,7 +30,18 @@ LOG_LEVELS = {
 }
 
 
+def configure_text_stream(stream) -> None:
+    if hasattr(stream, "reconfigure"):
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, ValueError, OSError):
+            pass
+
+
 def configure_logging() -> None:
+    configure_text_stream(sys.stdout)
+    configure_text_stream(sys.stderr)
+
     log_level = os.getenv("ETL_SCHEDULER_LOG_LEVEL", "INFO").upper()
     logging.basicConfig(
         level=log_level,
@@ -111,6 +122,7 @@ def run_pipeline_subprocess(source_name: str) -> None:
     env.pop("ETL_SCHEDULES", None)
     env["ETL_PIPELINE_NAME"] = source_name
     env.setdefault("PYTHONUNBUFFERED", "1")
+    env.setdefault("PYTHONIOENCODING", "utf-8")
 
     LOGGER.info("Iniciando pipeline '%s'.", source_name)
     process = subprocess.Popen(
