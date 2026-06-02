@@ -18,6 +18,7 @@ visualizaciones/
 logs/
 *.ipynb
 .env
+.env.production
 config/db.yaml
 config/state_db.yaml
 state/state.yaml
