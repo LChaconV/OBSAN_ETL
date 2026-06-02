@@ -86,7 +86,7 @@ def run_pipeline(
             [sys.executable, "-m", module_path],
             capture_output = True,
             text           = True,
-            timeout        = 300,
+            timeout        = 900,
             cwd            = str(PROJECT_ROOT),
             env            = env,
         )
