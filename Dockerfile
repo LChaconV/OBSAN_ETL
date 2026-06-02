@@ -3,10 +3,11 @@
 ARG PYTHON_VERSION=3.11
 ARG UV_VERSION=0.11.16
 
+FROM ghcr.io/astral-sh/uv:${UV_VERSION} AS uv-bin
+
 FROM python:${PYTHON_VERSION}-slim-bookworm AS builder
 
-ARG UV_VERSION
-COPY --from=ghcr.io/astral-sh/uv:${UV_VERSION} /uv /uvx /usr/local/bin/
+COPY --from=uv-bin /uv /uvx /usr/local/bin/
 
 ENV UV_COMPILE_BYTECODE=1 \
     UV_LINK_MODE=copy \
@@ -36,10 +37,9 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 FROM python:${PYTHON_VERSION}-slim-bookworm AS production
 
-ARG UV_VERSION
 ARG PM2_VERSION=5.4.3
 
-COPY --from=ghcr.io/astral-sh/uv:${UV_VERSION} /uv /uvx /usr/local/bin/
+COPY --from=uv-bin /uv /uvx /usr/local/bin/
 
 ENV APP_HOME=/app \
     DEBIAN_FRONTEND=noninteractive \
