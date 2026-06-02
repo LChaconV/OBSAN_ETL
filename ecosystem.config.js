@@ -1,7 +1,7 @@
 const pipelineSchedules = [
-    { name: "api_edu_escolar", trigger: "cron", hour: 0, minute: 0 }, // Aprox 6 horas
-    { name: "api_victimas", trigger: "cron", hour: 6, minute: 30 }, // Aprox 3 horas
-    { name: "api_familias_accion", trigger: "cron", hour: 9, minute: 45 }, // Aprox 1 hora
+    // { name: "api_edu_escolar", trigger: "cron", hour: 0, minute: 0 }, // Aprox 6 horas
+    // { name: "api_victimas", trigger: "cron", hour: 6, minute: 30 }, // Aprox 3 horas
+    // { name: "api_familias_accion", trigger: "cron", hour: 9, minute: 45 }, // Aprox 1 hora
     { name: "api_beneficiarios_iraca", trigger: "cron", hour: 11, minute: 0 }, // Aprox 2 minutos
     { name: "api_edu_superior", trigger: "cron", hour: 11, minute: 10 }, // Aprox 1 minuto
     { name: "api_erradicacion_cultivos_coca", trigger: "cron", hour: 11, minute: 15 }, // Aprox 1 minuto
