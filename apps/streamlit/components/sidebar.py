@@ -85,7 +85,7 @@ def _render_dept_filter():
     if "available_depts" not in st.session_state:
         rows = query_rows("""
             SELECT DISTINCT id_dept, name_dept
-            FROM dim_divipola
+            FROM dim_departament
             WHERE id_dept IS NOT NULL
             ORDER BY name_dept
         """)
