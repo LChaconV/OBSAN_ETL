@@ -87,6 +87,30 @@ WORKDIR /app
 COPY --from=builder --chown=app:app /app/.venv /app/.venv
 COPY --chown=app:app . .
 
+RUN python - <<'PY'
+from pathlib import Path
+
+import streamlit
+
+index_path = Path(streamlit.__file__).parent / "static" / "index.html"
+html = index_path.read_text(encoding="utf-8")
+marker = "    <script>\n      window.prerenderReady = false\n    </script>"
+backend_config = """    <script>
+      window.__streamlit = {
+        ...(window.__streamlit || {}),
+        BACKEND_BASE_URL: window.location.origin,
+        HOST_CONFIG_BASE_URL: window.location.origin,
+      }
+    </script>
+"""
+
+if backend_config not in html:
+    if marker not in html:
+        raise RuntimeError(f"No se pudo parchear {index_path}: marker no encontrado")
+    html = html.replace(marker, f"{backend_config}{marker}", 1)
+    index_path.write_text(html, encoding="utf-8")
+PY
+
 RUN mkdir -p data/bronze data/silver data/golden logs state \
     && rm -f config/state_db.yaml \
     && ln -s ../state/state_db.yaml config/state_db.yaml \

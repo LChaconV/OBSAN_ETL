@@ -280,7 +280,7 @@ def _render_footer():
     total = len(LAYER_TREE.all_layers())
     st.caption(f"{n} de {total} capas activas")
     if n > 0:
-        if st.button("🗑️ Limpiar capas", use_container_width=True):
+        if st.button("🗑️ Limpiar capas", width="stretch"):
             st.session_state.active_layers              = []
             st.session_state.active_exclusive_category  = None
             st.rerun()

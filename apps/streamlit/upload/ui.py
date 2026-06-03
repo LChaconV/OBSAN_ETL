@@ -34,8 +34,7 @@ def render_upload_page():
             # Imagen del formato
             image_path = config.get("format_image", "")
             if image_path and os.path.exists(image_path):
-                st.image(image_path, caption="Formato esperado",
-                        use_container_width=True)
+                st.image(image_path, caption="Formato esperado", width="stretch")
             else:
                 st.caption("No hay imagen de referencia para esta variable.")
 
@@ -111,7 +110,12 @@ def _render_upload_form():
     if btn_disabled:
         st.caption("⚠️ Completa todos los parámetros adicionales para continuar.")
 
-    if st.button("🚀 Guardar y ejecutar pipeline", use_container_width=True, type="primary"):
+    if st.button(
+        "🚀 Guardar y ejecutar pipeline",
+        width="stretch",
+        type="primary",
+        disabled=btn_disabled,
+    ):
         _process_file(uploaded, selected_id, config, extra_values or {})
 
 def _render_extra_fields(config: dict) -> dict | None:

@@ -18,6 +18,7 @@ from upload.pipelines.base import PipelineResult
 # Raíz del repositorio unificado (etl/)
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 ETL_ROOT = PROJECT_ROOT / "src" / "etl"
+PIPELINE_TIMEOUT_SECONDS = int(os.getenv("OBSAN_PIPELINE_TIMEOUT_SECONDS", "900"))
 
 # ─────────────────────────────────────────────────────────────
 #  REGISTRO DE PIPELINES
@@ -80,13 +81,14 @@ def run_pipeline(
         env.update(extra_env)
 
     try:
-        module_path = f"src.etl.{etl_folder}.pipeline"
+        command = [sys.executable, "-m", "src.runner", etl_folder]
+        logs.append(f"Comando: {' '.join(command)}")
 
         result = subprocess.run(
-            [sys.executable, "-m", module_path],
+            command,
             capture_output = True,
             text           = True,
-            timeout        = 900,
+            timeout        = PIPELINE_TIMEOUT_SECONDS,
             cwd            = str(PROJECT_ROOT),
             env            = env,
         )
@@ -110,10 +112,14 @@ def run_pipeline(
                 logs    = logs,
             )
 
-    except subprocess.TimeoutExpired:
+    except subprocess.TimeoutExpired as e:
+        if e.stdout:
+            logs += [f"[OUT] {line}" for line in str(e.stdout).strip().splitlines()]
+        if e.stderr:
+            logs += [f"[ERR] {line}" for line in str(e.stderr).strip().splitlines()]
         return PipelineResult(
             success = False,
-            message = "El pipeline excedió el tiempo máximo de 5 minutos.",
+            message = f"El pipeline excedió el tiempo máximo de {PIPELINE_TIMEOUT_SECONDS} segundos.",
             logs    = logs,
         )
     except Exception as e:

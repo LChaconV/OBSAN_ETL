@@ -172,7 +172,7 @@ def render_info_panel():
             "✖ Cerrar panel",
             key      = "close_panel_a",
             on_click = _close_panel_a,
-            use_container_width = True,
+            width    = "stretch",
         )
         return
 
@@ -251,7 +251,7 @@ def render_info_panel():
         "⟵ Ocultar",
         key      = "hide_panel_a",
         on_click = _hide_panel_a,
-        use_container_width = True,
+        width    = "stretch",
     )
 
 
