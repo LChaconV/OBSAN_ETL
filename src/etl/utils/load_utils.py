@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Sequence
 
 import pandas as pd
+import geopandas as gpd
 from sqlalchemy import text
 
 from src.etl.utils.logging_utils import setup_logging
@@ -54,6 +55,38 @@ def build_upsert_query(
     ON CONFLICT ({conflict_cols_sql})
     {conflict_action};
     """
+
+
+def read_parquet_frame(path: Path) -> pd.DataFrame:
+    """Lee parquet normal o GeoParquet preservando geometría cuando existe."""
+    try:
+        return gpd.read_parquet(path)
+    except Exception:
+        return pd.read_parquet(path)
+
+
+def write_frame_to_db(
+    df: pd.DataFrame,
+    *,
+    table_name: str,
+    conn,
+    if_exists: str,
+) -> None:
+    if isinstance(df, gpd.GeoDataFrame) and "geometry" in df.columns:
+        df.to_postgis(
+            name=table_name,
+            con=conn,
+            if_exists=if_exists,
+            index=False,
+        )
+        return
+
+    df.to_sql(
+        name=table_name,
+        con=conn,
+        if_exists=if_exists,
+        index=False,
+    )
 
 
 def load_parquet_to_postgres(
@@ -107,7 +140,7 @@ def load_parquet_to_postgres(
             logging.info("El archivo %s ya fue cargado. Omitiendo.", latest_file.name)
             return
 
-        df = pd.read_parquet(latest_file)
+        df = read_parquet_frame(latest_file)
 
         with engine.begin() as conn:
             logging.info("Verificando/creando tabla %s", table_name)
@@ -119,11 +152,11 @@ def load_parquet_to_postgres(
 
             if load_mode == "append":
                 logging.info("Insertando %d registros en modo APPEND", len(df))
-                df.to_sql(
-                    name=table_name,
-                    con=conn,
+                write_frame_to_db(
+                    df,
+                    table_name=table_name,
+                    conn=conn,
                     if_exists="append",
-                    index=False,
                 )
 
             elif load_mode == "upsert":
@@ -134,11 +167,11 @@ def load_parquet_to_postgres(
                 update_columns = list(update_columns or [])
 
                 logging.info("Subiendo datos a tabla temporal %s", temp_table)
-                df.to_sql(
-                    name=temp_table,
-                    con=conn,
+                write_frame_to_db(
+                    df,
+                    table_name=temp_table,
+                    conn=conn,
                     if_exists="replace",
-                    index=False,
                 )
 
                 upsert_sql = build_upsert_query(

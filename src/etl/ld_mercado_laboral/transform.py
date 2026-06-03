@@ -8,8 +8,7 @@ import pandas as pd
 
 from src.etl.utils.logging_utils import setup_logging
 from src.etl.utils.config_utils import load_yaml
-from src.etl.utils.transform_utils import ensure_five_digits, load_latest_silver_run, load_transform_config, get_latest_bronze_run,extract_run_name,clean_columns,clean_text_data,validate_required_columns,normalize_types,save_fact_table
-from src.etl.utils.sivigila_transform_utils import load_latest_bronze_run
+from src.etl.utils.transform_utils import ensure_five_digits, file_from_web, load_transform_config, clean_columns, clean_text_data, normalize_types, save_fact_table
 # ============================================================
 # RUTAS DEL PROYECTO
 # ============================================================
@@ -101,16 +100,11 @@ def run() -> None:
 
     config = load_transform_config("mercado_laboral_transform", CONFIG_PATH)
 
-    bronze_dir = PROJECT_ROOT / config["source"]["bronze_dir"]
     fact_dir = PROJECT_ROOT / config["source"]["silver_fact_dir"]
     fact_dir_golden = PROJECT_ROOT / config["source"]["golden_fact_dir"]
     rename_columns = config["fact_table"]["rename_columns"]
-    metric_column = config["fact_table"]["metric_column"]
-    #run_dir = get_latest_bronze_run(bronze_dir)
-    #run_name = extract_run_name(run_dir)
 
-    df, run_name= load_latest_silver_run(bronze_dir,".xlsx")
-    #df=pd.read_excel(bronze_dir, "xlsx")
+    df, run_name = file_from_web()
     df = clean_columns(df)
     df= df.rename(columns=rename_columns)
     df["total"] = (

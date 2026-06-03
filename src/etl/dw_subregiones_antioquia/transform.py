@@ -46,7 +46,8 @@ def validate_id_subregion(gdf):
 def run() -> None:
     # 1. CARGA DE CONFIGURACIONES
     # Carga la configuración de la fuente específica
-    source_cfg = load_source_config("subregiones", SOURCES_CONFIG_PATH)
+    load_source_config("subregiones", SOURCES_CONFIG_PATH)
+    sources_cfg = load_yaml(SOURCES_CONFIG_PATH)
     # Carga la configuración general de rutas de salida
     general_cfg = load_yaml(GENERAL_CONFIG_PATH)
 
@@ -60,6 +61,7 @@ def run() -> None:
     output_dir = PROJECT_ROOT / general_cfg["silver"]["subregiones_dir"]
     output_name = general_cfg["silver"]["subregiones_file"]
     ruta_salida = output_dir / output_name
+    ruta_gold = PROJECT_ROOT / sources_cfg["subregion"]["path_gold"]
 
     # 3. LECTURA DE DATOS
 
@@ -90,10 +92,12 @@ def run() -> None:
     
     # Asegurar que el directorio de destino exista
     output_dir.mkdir(parents=True, exist_ok=True)
+    ruta_gold.parent.mkdir(parents=True, exist_ok=True)
     
     # Guardar GeoDataFrame como GeoParquet
     try:
         gdf.to_parquet(ruta_salida, index=False)
+        gdf.to_parquet(ruta_gold, index=False)
         print("¡Transformación exitosa!")
     except Exception as e:
         print(f"Error al guardar el archivo Parquet: {e}")

@@ -100,7 +100,8 @@ def simplify_mun_geometry(gdf):
     
     except Exception as e:
         print(f"Error procesando topología: {e}")
-        return None
+        print("Se continuará con la geometría original.")
+        return gdf
 def run() -> None:
     #file_path = sources_config['divipola']['storage']['bronze_dir'] + '/' + sources_config['divipola']['storage']['file']
     file_path = os.environ.get("OBSAN_INPUT_FILE")

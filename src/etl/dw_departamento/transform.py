@@ -55,7 +55,8 @@ def simplify_geometry(gdf):
     
     except Exception as e:
         print(f"Error procesando topología: {e}")
-        return None
+        print("Se continuará con la geometría original.")
+        return gdf
 def run():
     file_path = os.environ.get("OBSAN_INPUT_FILE")
     #file_path = sources_config['departamentos']['storage']['bronze_dir'] + '/' + sources_config['divipola']['storage']['file']

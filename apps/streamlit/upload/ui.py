@@ -8,7 +8,7 @@ import streamlit as st
 from upload.variables_config import UPLOAD_VARIABLES
 from upload.validator import validate_file
 from upload.storage import save_file, list_uploaded_files
-from upload.pipeline_runner import run_pipeline
+from upload.pipeline_runner import stream_pipeline
 
 
 def render_upload_page():
@@ -192,17 +192,44 @@ def _process_file(uploaded, variable_id: str, config: dict, extra_values: dict =
         return
 
     st.success(f"💾 {msg}")
-    # Ejecutar pipeline
     st.markdown("**Ejecutando pipeline ETL...**")
-    log_container = st.empty()
+    status = st.status(f"Ejecutando pipeline `{config['pipeline']}`...", expanded=True)
+    progress_bar = st.progress(0, text="Preparando ejecución...")
+    live_log = st.empty()
+    logs: list[str] = []
+    pipeline_result = None
 
-    with st.spinner(f"Ejecutando pipeline `{config['pipeline']}`..."):
-        pipeline_result = run_pipeline(
-            config["pipeline"],
-            saved_path,
-            extra_env = {f"OBSAN_{k.upper()}": str(v) for k, v in extra_values.items()}
-        )
-    # Mostrar logs del pipeline
+    for event in stream_pipeline(
+        config["pipeline"],
+        saved_path,
+        extra_env={f"OBSAN_{k.upper()}": str(v) for k, v in extra_values.items()},
+    ):
+        if event.kind in {"meta", "log", "heartbeat"}:
+            logs.append(event.message)
+            live_log.code("\n".join(logs[-120:]), language="text")
+
+        if event.progress is not None:
+            progress_value = max(0, min(100, int(event.progress * 100)))
+            progress_text = "Procesando..." if event.kind == "log" else event.message
+            progress_bar.progress(progress_value, text=progress_text)
+
+        if event.kind in {"progress", "heartbeat", "result"}:
+            status.update(label=event.message)
+
+        if event.kind == "result":
+            pipeline_result = event.result
+
+    if pipeline_result is None:
+        status.update(label="El pipeline terminó sin devolver resultado.", state="error")
+        st.error("❌ Error al cargar: el pipeline terminó sin devolver resultado.")
+        return
+
+    status.update(
+        label=pipeline_result.message,
+        state="complete" if pipeline_result.success else "error",
+        expanded=not pipeline_result.success,
+    )
+
     if pipeline_result.logs:
         with st.expander("📋 Logs del pipeline", expanded=not pipeline_result.success):
             for log_line in pipeline_result.logs:

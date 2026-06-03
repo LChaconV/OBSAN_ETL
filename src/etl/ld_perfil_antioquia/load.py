@@ -23,6 +23,39 @@ if str(PROJECT_ROOT) not in sys.path:
 STATE_DB_PATH = PROJECT_ROOT / "config" / "state_db.yaml"
 SOURCES_CONFIG_PATH = PROJECT_ROOT / "config" / "sources.yaml"
 LOG_DIR = PROJECT_ROOT / "logs"
+PROFILE_COLUMNS = [
+    "year",
+    "id_subregion",
+    "name_subregion",
+    "pct_u5_wasting_severe",
+    "pct_u5_wasting_moderate",
+    "pct_u5_wasting_risk",
+    "pct_u5_underweight",
+    "pct_u5_underweight_risk",
+    "pct_u5_underweight_normal",
+    "pct_u5_stunting",
+    "pct_u5_stunting_risk",
+    "pct_u5_stunting_normal",
+    "pct_u5_wasting_normal",
+    "pct_u5_overweight_risk",
+    "pct_u5_overweight",
+    "pct_u5_obesity",
+    "pct_5_10_thinness_risk",
+    "pct_5_10_bmi_normal",
+    "pct_5_18_stunting",
+    "pct_5_18_stunting_risk",
+    "pct_5_18_stunting_normal",
+    "pct_5_18_thinness_risk",
+    "pct_5_18_bmi_normal",
+    "pct_5_18_overweight",
+    "pct_5_18_obesity",
+    "pct_u18_food_security",
+    "pct_u18_food_insecurity",
+    "pct_u18_food_insecurity_mild",
+    "pct_u18_food_insecurity_moderate",
+    "pct_u18_food_insecurity_severe",
+]
+REQUIRED_PROFILE_COLUMNS = {"year", "id_subregion", "name_subregion"}
 
 # ============================================================
 # UTILIDADES DE BÚSQUEDA
@@ -34,6 +67,85 @@ def get_latest_run_file(directory: Path) -> Path | None:
         return None
     files.sort(reverse=True)
     return files[0]
+
+def read_profile_file(file_path: Path) -> pd.DataFrame:
+    """Lee el perfil desde CSV o Excel según la extensión cargada."""
+    suffix = file_path.suffix.lower()
+    if suffix in {".xlsx", ".xls"}:
+        return pd.read_excel(file_path, dtype={"id_subregion": str})
+    return pd.read_csv(file_path, dtype={"id_subregion": str})
+
+def normalize_profile_dataframe(df_source: pd.DataFrame) -> pd.DataFrame:
+    """Normaliza columnas y tipos antes de cargar perfil_antioquia."""
+    missing_required = REQUIRED_PROFILE_COLUMNS - set(df_source.columns)
+    if missing_required:
+        raise ValueError(
+            "Faltan columnas obligatorias en perfil_antioquia: "
+            + ", ".join(sorted(missing_required))
+        )
+
+    for col in PROFILE_COLUMNS:
+        if col not in df_source.columns:
+            df_source[col] = pd.NA
+
+    df_source = df_source[PROFILE_COLUMNS].copy()
+    df_source["id_subregion"] = df_source["id_subregion"].str.replace('"', '').str.strip()
+    df_source = df_source.replace(['na', 'nan', ' ', ''], pd.NA)
+
+    cols_pct = [c for c in df_source.columns if c.startswith("pct_")]
+    for col in cols_pct:
+        df_source[col] = pd.to_numeric(df_source[col], errors="coerce")
+
+    df_source["year"] = pd.to_numeric(df_source["year"], errors="coerce")
+    if df_source["year"].isna().any():
+        raise ValueError("La columna year contiene valores vacíos o no numéricos.")
+    df_source["year"] = df_source["year"].astype(int)
+
+    return df_source
+
+def ensure_subregion_infrastructure(conn) -> None:
+    """Garantiza la dimensión subregion requerida por perfil_antioquia."""
+    conn.execute(text("CREATE EXTENSION IF NOT EXISTS postgis;"))
+    conn.execute(text("""
+        CREATE TABLE IF NOT EXISTS subregion (
+            id_subregion VARCHAR(20) PRIMARY KEY,
+            id_dept VARCHAR(10),
+            name_subregion VARCHAR(150),
+            geometry GEOMETRY(MultiPolygon, 4326)
+        );
+    """))
+    conn.execute(text("""
+        CREATE INDEX IF NOT EXISTS idx_subregion_geom
+        ON subregion USING GIST (geometry);
+    """))
+
+def upsert_subregion_placeholders(conn, df_source: pd.DataFrame) -> None:
+    """
+    Inserta subregiones mínimas desde el perfil para permitir cargar indicadores
+    antes de cargar la capa geográfica. El pipeline geográfico actualiza luego
+    nombre, departamento y geometría mediante upsert.
+    """
+    df_subregion = (
+        df_source[["id_subregion", "name_subregion"]]
+        .dropna(subset=["id_subregion"])
+        .drop_duplicates(subset=["id_subregion"])
+    )
+
+    if df_subregion.empty:
+        logging.warning("No se encontraron id_subregion para validar la dimensión subregion.")
+        return
+
+    rows = df_subregion.where(pd.notna(df_subregion), None).to_dict("records")
+    conn.execute(
+        text("""
+            INSERT INTO subregion (id_subregion, name_subregion)
+            VALUES (:id_subregion, :name_subregion)
+            ON CONFLICT (id_subregion) DO UPDATE
+            SET name_subregion = COALESCE(subregion.name_subregion, EXCLUDED.name_subregion);
+        """),
+        rows,
+    )
+    logging.info("Dimensión subregion validada con %d códigos del perfil.", len(rows))
 
 # ============================================================
 # PROCESO DE CARGA
@@ -68,28 +180,14 @@ def run() -> None:
             return
         
         # 3. Lectura y Tipado (id_subregion como string para evitar pérdida de ceros)
-        df_source = pd.read_csv(latest_file, dtype={'id_subregion': str})
+        df_source = normalize_profile_dataframe(read_profile_file(latest_file))
         years_to_clean = df_source['year'].unique().tolist()
 
-        df_source['id_subregion'] = df_source['id_subregion'].str.replace('"', '').str.strip()
-        df_source = df_source.replace(['na', 'nan', ' ', ''], pd.NA)
-        # CONVERSIÓN MASIVA A NUMÉRICO (FLOAT)
-        # Seleccionamos todas las columnas que empiezan con 'pct_'
-        cols_pct = [c for c in df_source.columns if c.startswith('pct_')]
-
-        for col in cols_pct:
-            # errors='coerce' convierte cualquier texto restante en NaN
-            df_source[col] = pd.to_numeric(df_source[col], errors='coerce')
-            # Opcional: Llenar nulos con 0.0 si prefieres no tener NULLs en la DB
-            # df_source[col] = df_source[col].fillna(0.0)
-
-        # Asegurar tipos enteros para llaves y fechas
-        df_source['year'] = pd.to_numeric(df_source['year'], errors='coerce').astype(int)
-
-
-
         with engine.begin() as conn:
-            # 4. Infraestructura de Tabla (Fact Table)
+            # 4. Infraestructura de dimensiones y tabla de hechos
+            ensure_subregion_infrastructure(conn)
+            upsert_subregion_placeholders(conn, df_source)
+
             conn.execute(text("""
                 CREATE TABLE IF NOT EXISTS perfil_antioquia (
                     year INTEGER,

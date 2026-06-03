@@ -9,9 +9,7 @@ Valida:
 """
 
 from dataclasses import dataclass
-from typing import BinaryIO
 import pandas as pd
-import json
 
 
 @dataclass
@@ -34,29 +32,39 @@ def validate_file(
     Punto de entrada principal. Ejecuta todas las validaciones
     en orden y retorna el primer error encontrado.
     """
-    ext = _get_extension(filename)
+    try:
+        ext = _get_extension(filename)
 
-    # 1. Validar extensión
-    result = _validate_extension(ext, variable_config["allowed_types"])
-    if not result.valid:
+        # 1. Validar extensión
+        result = _validate_extension(ext, variable_config["allowed_types"])
+        if not result.valid:
+            return result
+
+        # 2. Validar que no esté vacío
+        result = _validate_not_empty(file_obj, filename)
+        if not result.valid:
+            return result
+
+        # 3. Validar estructura según tipo
+        required_cols = variable_config.get("required_columns", [])
+
+        if ext in ("xlsx", "xls", "csv"):
+            result = _validate_tabular(file_obj, filename, required_cols)
+        elif ext == "geojson":
+            result = _validate_geojson(file_obj)
+        elif ext == "kml":
+            result = _validate_kml(file_obj)
+        else:
+            result = ValidationResult(valid=True, message="Archivo listo para procesar.")
+
         return result
-
-    # 2. Validar que no esté vacío
-    result = _validate_not_empty(file_obj, filename)
-    if not result.valid:
-        return result
-
-    # 3. Validar estructura según tipo
-    required_cols = variable_config.get("required_columns", [])
-
-    if ext in ("xlsx", "csv"):
-        result = _validate_tabular(file_obj, filename, required_cols)
-    elif ext == "geojson":
-        result = _validate_geojson(file_obj)
-    elif ext == "kml":
-        result = _validate_kml(file_obj)
-
-    return result
+    except Exception as e:
+        file_obj.seek(0)
+        return ValidationResult(
+            valid=False,
+            message="No se pudo validar el archivo.",
+            details=[str(e)],
+        )
 
 
 # ─────────────────────────────────────────────────────────────
@@ -129,33 +137,32 @@ def _validate_tabular(file_obj, filename: str, required_cols: list) -> Validatio
 
 
 def _validate_geojson(file_obj) -> ValidationResult:
-    """Valida estructura básica de un GeoJSON."""
+    """Valida de forma liviana para no bloquear archivos GeoJSON grandes."""
     try:
-        data = json.load(file_obj)
+        sample = file_obj.read(65536)
         file_obj.seek(0)
-    except json.JSONDecodeError as e:
+        text = sample.decode("utf-8", errors="ignore")
+    except Exception as e:
         return ValidationResult(
             valid   = False,
-            message = "El archivo no es un JSON válido.",
+            message = "No se pudo leer el GeoJSON.",
             details = [str(e)],
         )
 
-    if data.get("type") != "FeatureCollection":
+    if not text.lstrip().startswith("{"):
         return ValidationResult(
             valid   = False,
-            message = 'El GeoJSON debe ser de tipo "FeatureCollection".',
+            message = "El archivo no parece ser un GeoJSON válido.",
         )
 
-    features = data.get("features", [])
-    if not features:
-        return ValidationResult(
-            valid   = False,
-            message = "El GeoJSON no contiene features.",
-        )
+    details = ["Validación rápida completada. La estructura geoespacial se revisa durante el pipeline."]
+    if "FeatureCollection" not in text:
+        details.append('No se detectó "FeatureCollection" en los primeros 64 KB.')
 
     return ValidationResult(
         valid   = True,
-        message = f"GeoJSON válido — {len(features)} features",
+        message = "GeoJSON listo para procesar",
+        details = details,
     )
 
 

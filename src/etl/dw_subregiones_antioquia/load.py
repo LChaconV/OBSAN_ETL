@@ -3,7 +3,6 @@ from __future__ import annotations
 import logging
 import sys
 from pathlib import Path
-import pandas as pd
 import geopandas as gpd
 from sqlalchemy import text
 
@@ -70,26 +69,33 @@ def run() -> None:
             gdf = gdf.to_crs(epsg=4326)
 
         with engine.begin() as conn:
-            # 4. Lógica de Sincronización (Evitar duplicados)
-            existing_ids = pd.read_sql("SELECT id_subregion FROM subregion", conn)["id_subregion"].tolist()
-            df_to_load = gdf[~gdf["id_subregion"].isin(existing_ids)]
+            # 4. Sincronización: insertar nuevas subregiones y completar
+            # placeholders creados por cargas de perfil_antioquia.
+            staging_table = "_staging_subregion"
+            conn.execute(text(f'DROP TABLE IF EXISTS "{staging_table}";'))
+            gdf.to_postgis(staging_table, conn, if_exists="replace", index=False)
+            result = conn.execute(text(f"""
+                INSERT INTO subregion (id_subregion, id_dept, name_subregion, geometry)
+                SELECT id_subregion, id_dept, name_subregion, geometry
+                FROM "{staging_table}"
+                WHERE id_subregion IS NOT NULL
+                ON CONFLICT (id_subregion) DO UPDATE SET
+                    id_dept = EXCLUDED.id_dept,
+                    name_subregion = EXCLUDED.name_subregion,
+                    geometry = EXCLUDED.geometry;
+            """))
+            conn.execute(text(f'DROP TABLE IF EXISTS "{staging_table}";'))
 
-            if not df_to_load.empty:
-                logging.info("Insertando %d nuevas subregiones.", len(df_to_load))
-                df_to_load.to_postgis("subregion", conn, if_exists="append", index=False)
-                
-                # 5. Actualización de estado de DB
-                update_state(
-                    key="subregion",
-                    incremental_value=max(df_to_load["id_subregion"]),
-                    incremental_column="id_subregion",
-                    row_count=len(df_to_load),
-                    extraction_mode="db_load_geo_parquet",
-                    path_state=STATE_DB_PATH
-                )
-                logging.info("Carga de subregiones finalizada exitosamente.")
-            else:
-                logging.info("La tabla subregion ya está actualizada.")
+            row_count = result.rowcount if result.rowcount is not None else len(gdf)
+            update_state(
+                key="subregion",
+                incremental_value=max(gdf["id_subregion"]),
+                incremental_column="id_subregion",
+                row_count=row_count,
+                extraction_mode="db_upsert_geo_parquet",
+                path_state=STATE_DB_PATH
+            )
+            logging.info("Carga de subregiones finalizada: %d filas sincronizadas.", row_count)
 
     except Exception as e:
         logging.critical("Error en la carga de subregiones: %s", str(e), exc_info=True)

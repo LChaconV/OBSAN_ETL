@@ -3,6 +3,15 @@ import topojson as tp
 import pandas as pd
 from pathlib import Path
 import geopandas as gpd
+
+
+def build_run_name(file_path: str) -> str:
+    filename = Path(file_path).stem
+    if "_run_" in filename:
+        return f"run_{filename.split('_run_')[-1]}"
+    return f"run_{filename}"
+
+
 def simplify_mun_geometry(gdf):
     try:
 
@@ -36,7 +45,7 @@ def run():
 
     # Crea la carpeta si no existe (incluye subcarpetas)
     ruta.mkdir(parents=True, exist_ok=True)
-    df.to_parquet(ruta / "resguardo_indigena_run_20260421_202413.parquet", index=False)
+    df.to_parquet(ruta / f"resguardo_indigena_{build_run_name(file_path)}.parquet", index=False)
 
 if __name__ == "__main__":
     run()
