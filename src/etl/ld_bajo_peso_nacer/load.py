@@ -1,6 +1,10 @@
+import logging
 from pathlib import Path
 
+from sqlalchemy import text
+
 from src.etl.utils.load_utils import load_parquet_to_postgres
+from src.etl.utils.db_utils import get_engine
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 
@@ -10,6 +14,8 @@ TRANSFORM_CONFIG_PATH = (
     / "transform"
     / "bajo_peso_nacer_transform.yaml"
 )
+
+VIEW_SQL_PATH = PROJECT_ROOT / "sql" / "views" / "v_low_birth_weight.sql"
 
 create_table_sql = """
 CREATE TABLE IF NOT EXISTS low_birth_weight (
@@ -70,6 +76,11 @@ def run(**kwargs):
 
         state_field_name="last_incremental_value",
     )
+
+    sql = VIEW_SQL_PATH.read_text(encoding="utf-8")
+    with get_engine().begin() as conn:
+        conn.execute(text(sql))
+    logging.info("Vista v_low_birth_weight_pc actualizada")
 
 if __name__ == "__main__":
     run()
