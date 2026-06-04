@@ -33,7 +33,7 @@ def safe_wkt_loads(value):
 def simplify_geometry(gdf):
     try:
         topo = tp.Topology(gdf, prequantize=False)
-        gdf_topo = topo.toposimplify(3000).to_gdf()
+        gdf_topo = topo.toposimplify(6000).to_gdf()
         return gdf_topo
     except Exception as e:
         print(f"Error procesando topología: {e}")

@@ -49,7 +49,7 @@ def simplify_geometry(gdf):
 
         topo = tp.Topology(gdf, prequantize=False)
     
-        gdf_topo = topo.toposimplify(3000).to_gdf()
+        gdf_topo = topo.toposimplify(6000).to_gdf()
         
         return gdf_topo
     
