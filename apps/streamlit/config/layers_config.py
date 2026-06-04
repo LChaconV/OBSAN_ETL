@@ -319,7 +319,7 @@ produccion_gas = IconScaleLayer(
     icon        = "🔥",
     icon_size   = 28,
     color_low   = "#fef9c3",   # amarillo suave → poca producción
-    color_high  = "#78350f",   # café oscuro    → mucha producción
+    color_high  = "#ea580c",   # naranja oscuro → mucha producción
     has_own_geometry = True,
     z_index     = 10,
     offset = (0.0, -0.05),
@@ -344,8 +344,8 @@ regalias = IconScaleLayer(
     year_col    = "year",
     icon        = "💰",
     icon_size   = 28,
-    color_low   = "#fef9c3",   
-    color_high  = "#78350f",   
+    color_low   = "#dcfce7",
+    color_high  = "#166534",
     has_own_geometry = True,
     z_index     = 10,
     offset = (0.0, 0),
@@ -369,8 +369,8 @@ regalias_minerales = IconScaleLayer(
     year_col    = "year",
     icon        = "💰💎",
     icon_size   = 28,
-    color_low   = "#fef9c3",   # amarillo suave → poca producción
-    color_high  = "#78350f",   # café oscuro    → mucha producción
+    color_low   = "#f1f5f9",
+    color_high  = "#334155",
     has_own_geometry = False,
     z_index     = 10,
     offset = (0.0, 0),
@@ -412,8 +412,8 @@ clima_tmin = ChoroplethLayer(
     value_col    = "value",
     value_label  = "Temperatura mínima (°C)",
     year_col     = "year",
-    color_low    = "#f5e18b",
-    color_high   = "#a10303",
+    color_low    = "#dbeafe",
+    color_high   = "#1e40af",
     category     = "ambiente",
     filter_sql   = "variable = 'tmin'",
     source_name = "Terraclimate",
@@ -433,8 +433,8 @@ clima_tmax = ChoroplethLayer(
     value_col    = "value",
     value_label  = "Temperatura máxima (°C)",
     year_col     = "year",
-    color_low    = "#f5e18b",
-    color_high   = "#a10303",
+    color_low    = "#fef3c7",
+    color_high   = "#b91c1c",
     category     = "ambiente",
     filter_sql   = "variable = 'tmax'",
     source_name = "Terraclimate",
@@ -603,8 +603,8 @@ _pecu_base = dict(
 pecu_aves = BubbleLayer(
     id         = "pecu_aves",
     label      = "Aves",
-    color_low  = "#fef9c3",
-    color_high = "#854d0e",
+    color_low  = "#e0f2fe",
+    color_high = "#0369a1",
     row_filter = "type = 'aves'",
     offset     = (0.00,  0.00),
     **_pecu_base,
@@ -613,61 +613,61 @@ pecu_aves = BubbleLayer(
 pecu_bovino = BubbleLayer(
     id         = "pecu_bovinos",
     label      = "Bovinos",
-    color_low  = "#f0fdf4",
-    color_high = "#14532d",
+    color_low  = "#ccfbf1",
+    color_high = "#134e4a",
     row_filter = "type = 'bovinos'",
     offset     = (0.04,  0.04),
-    **_agro_base,
+    **_pecu_base,
 )
 
 pecu_bufalino = BubbleLayer(
     id         = "pecu_bufalino",
     label      = "Bufalino",
-    color_low  = "#fefce8",
-    color_high = "#713f12",
+    color_low  = "#e0e7ff",
+    color_high = "#312e81",
     row_filter = "type = 'bufalino'",
     offset     = (-0.04,  0.04),
-    **_agro_base,
+    **_pecu_base,
 )
 
 pecu_caprino = BubbleLayer(
     id         = "pecu_caprino",
     label      = "Caprino",
-    color_low  = "#fff1f2",
-    color_high = "#9f1239",
+    color_low  = "#cffafe",
+    color_high = "#0e7490",
     row_filter = "type = 'caprino'",
     offset     = (0.04, -0.04),
-    **_agro_base,
+    **_pecu_base,
 )
 
 pecu_equino = BubbleLayer(
     id         = "pecu_equino",
     label      = "Equino",
-    color_low  = "#fff7ed",
-    color_high = "#7c2d12",
+    color_low  = "#ede9fe",
+    color_high = "#4c1d95",
     row_filter = "type = 'equino'",
     offset     = (0.04, -0.04),
-    **_agro_base,
+    **_pecu_base,
 )
 
 pecu_ovino = BubbleLayer(
     id         = "pecu_ovino",
     label      = "Ovino",
-    color_low  = "#fff1f2",
-    color_high = "#9f1239",
+    color_low  = "#dbeafe",
+    color_high = "#1e3a8a",
     row_filter = "type = 'ovino'",
     offset     = (0.04, -0.04),
-    **_agro_base,
+    **_pecu_base,
 )
 
 pecu_porcino = BubbleLayer(
     id         = "pecu_porcino",
     label      = "Porcino",
-    color_low  = "#fff1f2",
-    color_high = "#9f1239",
+    color_low  = "#fce7f3",
+    color_high = "#831843",
     row_filter = "type = 'porcino'",
     offset     = (0.04, -0.04),
-    **_agro_base,
+    **_pecu_base,
 )
 # ─────────────────────────────────────────────────────────────
 #  ÁRBOL DE CAPAS
