@@ -3,16 +3,15 @@ from src.etl.utils.load_utils import load_parquet_to_postgres
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 TRANSFORM_CONFIG_PATH = PROJECT_ROOT / "config" / "transform" / "resguardo_indigena_transform.yaml"
 
+# Reemplaza la definición actual
 create_table_sql = """
 CREATE TABLE IF NOT EXISTS dim_indigenous_reserve (
     id_indigenous SERIAL PRIMARY KEY,
     indigenous VARCHAR(500),
     id_mun VARCHAR(100),
-    geometry GEOMETRY
-
+    geometry GEOMETRY(GEOMETRY, 4326)
 );
 """
-
 def run() -> None:
     load_parquet_to_postgres(
         transform_config_path=TRANSFORM_CONFIG_PATH,
