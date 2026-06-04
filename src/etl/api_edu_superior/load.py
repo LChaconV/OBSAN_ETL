@@ -1,8 +1,12 @@
+import logging
 from pathlib import Path
+from src.etl.utils.db_utils import get_engine
 from src.etl.utils.load_utils import load_parquet_to_postgres
+from sqlalchemy import text
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 TRANSFORM_CONFIG_PATH = PROJECT_ROOT / "config" / "transform" / "edu_superior_transform.yaml"
+VIEW_SQL_PATH = PROJECT_ROOT / "sql" / "views" / "v_higher_education_pc.sql"
 
 
 create_table_sql = """
@@ -52,5 +56,16 @@ def run(**kwargs):
         ],
         state_field_name="last_incremental_value",
     )
+    sql = VIEW_SQL_PATH.read_text(encoding="utf-8")
+    with get_engine().begin() as conn:
+        conn.execute(text(sql))
+        exists = conn.execute(text(
+            "SELECT 1 FROM information_schema.views WHERE table_name = 'v_higher_education_pc'"
+        )).fetchone()
+    if exists:
+        logging.info("Vista v_higher_education_pc creada/actualizada correctamente")
+    else:
+        logging.warning("Vista v_higher_education_pc NO fue creada — la tabla 'population' probablemente no existe en la BD")
+
 if __name__ == "__main__":
     run()
