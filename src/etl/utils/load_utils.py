@@ -110,6 +110,7 @@ def load_parquet_to_postgres(
     load_mode: str = "append",
     conflict_columns: Sequence[str] | None = None,
     update_columns: Sequence[str] | None = None,
+    insert_columns: Sequence[str] | None = None,
     state_field_name: str = "last_incremental_value",
     input_file_path: Path | str | None = None,
 ) -> None:
@@ -172,12 +173,14 @@ def load_parquet_to_postgres(
                 if not conflict_columns:
                     raise ValueError("Para load_mode='upsert' debes definir conflict_columns")
 
-                insert_columns = list(df.columns)
+                cols = list(insert_columns) if insert_columns else list(df.columns)
                 update_columns = list(update_columns or [])
+
+                df_to_load = df[cols] if insert_columns else df
 
                 logging.info("Subiendo datos a tabla temporal %s", temp_table)
                 write_frame_to_db(
-                    df,
+                    df_to_load,
                     table_name=temp_table,
                     conn=conn,
                     if_exists="replace",
@@ -186,7 +189,7 @@ def load_parquet_to_postgres(
                 upsert_sql = build_upsert_query(
                     table_name=table_name,
                     temp_table=temp_table,
-                    insert_columns=insert_columns,
+                    insert_columns=cols,
                     conflict_columns=conflict_columns,
                     update_columns=update_columns,
                 )

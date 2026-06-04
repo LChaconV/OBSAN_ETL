@@ -78,6 +78,18 @@ mortalidad_desnutricion_transform:
 
 
   # -----------------------------------
+  # Columnas a conservar tras el renombramiento
+  # -----------------------------------
+  columns:
+    - "id_consecutive"
+    - "date_event"
+    - "year"
+    - "age"
+    - "id_mun"
+    - "id_country"
+    - "id_dept"
+
+  # -----------------------------------
   # Tabla de hechos
   # -----------------------------------
   fact_table:

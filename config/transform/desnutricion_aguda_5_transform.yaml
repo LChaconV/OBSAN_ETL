@@ -80,6 +80,20 @@ desnutricion_aguda_5_transform:
     COD_DPTO_O: "id_dept"
 
   # -----------------------------------
+  # Columnas a conservar tras el renombramiento
+  # -----------------------------------
+  columns:
+    - "id_consecutive"
+    - "confirmed"
+    - "condition_end"
+    - "date_event"
+    - "year"
+    - "age"
+    - "id_mun"
+    - "id_country"
+    - "id_dept"
+
+  # -----------------------------------
   # Tabla de hechos
   # -----------------------------------
   fact_table:
