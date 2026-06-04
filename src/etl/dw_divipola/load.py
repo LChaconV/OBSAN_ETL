@@ -17,6 +17,7 @@ from src.etl.utils.db_utils import get_engine
 # ============================================================
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
+SEEDS_SQL_PATH = PROJECT_ROOT / "sql" / "seeds" / "insert_missing_municipios.sql"
 
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.append(str(PROJECT_ROOT))
@@ -53,6 +54,19 @@ def ensure_db_infrastructure(engine) -> None:
             ON dim_divipola USING GIST (geometry);
         """))
     logging.info("Infraestructura de base de datos confirmada.")
+
+# ============================================================
+# INSERCIÓN DE MUNICIPIOS FALTANTES (SEEDS)
+# ============================================================
+def _insert_missing_municipios(engine) -> None:
+    """Inserta municipios que no están en el shapefile fuente."""
+    sql = SEEDS_SQL_PATH.read_text(encoding="utf-8")
+    with engine.begin() as conn:
+        for stmt in sql.split(";"):
+            non_comment = [l for l in stmt.splitlines() if l.strip() and not l.strip().startswith("--")]
+            if non_comment:
+                conn.execute(text(stmt))
+    logging.info("Inserción de municipios faltantes finalizada.")
 
 # ============================================================
 # PROCESO DE CARGA INCREMENTAL (LOAD)
@@ -117,6 +131,8 @@ def run() -> None:
                 logging.info("Carga incremental finalizada exitosamente. Nuevo last_loaded_id: %s", current_max_id)
             else:
                 logging.info("La base de datos se encuentra actualizada. No se requiere inserción.")
+
+        _insert_missing_municipios(engine)
 
     except Exception as e:
         logging.critical("Error crítico en el proceso de carga: %s", str(e), exc_info=True)
