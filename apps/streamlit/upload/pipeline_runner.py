@@ -8,9 +8,10 @@ No reimplementa la lógica ETL — la delega al script original
 usando subprocess para mantener el entorno aislado.
 """
 import os
-import selectors
+import queue
 import subprocess
 import sys
+import threading
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -107,6 +108,29 @@ def _format_elapsed(seconds: float) -> str:
     return f"{secs}s"
 
 
+def _drain_output_queue(
+    output_queue: queue.Queue[str],
+    logs: list[str],
+    progress: float,
+) -> tuple[float, list[PipelineEvent]]:
+    events: list[PipelineEvent] = []
+    while True:
+        try:
+            raw_line = output_queue.get_nowait()
+        except queue.Empty:
+            break
+
+        raw_line = raw_line.rstrip()
+        line = f"[OUT] {raw_line}"
+        logs.append(line)
+        progress, label = _progress_from_line(raw_line, progress)
+        events.append(PipelineEvent(kind="log", message=line, progress=progress))
+        if label:
+            events.append(PipelineEvent(kind="progress", message=label, progress=progress))
+
+    return progress, events
+
+
 def stream_pipeline(
     pipeline_id: str,
     file_path: str,
@@ -145,7 +169,7 @@ def stream_pipeline(
     yield PipelineEvent(kind="progress", message="Pipeline iniciado", progress=progress)
 
     process: subprocess.Popen[str] | None = None
-    selector = selectors.DefaultSelector()
+    output_queue: queue.Queue[str] = queue.Queue()
 
     try:
         process = subprocess.Popen(
@@ -161,36 +185,37 @@ def stream_pipeline(
         if process.stdout is None:
             raise RuntimeError("No se pudo capturar stdout del pipeline.")
 
-        selector.register(process.stdout, selectors.EVENT_READ)
+        def read_stdout() -> None:
+            assert process is not None
+            assert process.stdout is not None
+            for line in process.stdout:
+                output_queue.put(line)
 
-        while process.poll() is None:
+        reader_thread = threading.Thread(target=read_stdout, daemon=True)
+        reader_thread.start()
+
+        while process.poll() is None or not output_queue.empty():
             elapsed = time.monotonic() - start
             if elapsed > PIPELINE_TIMEOUT_SECONDS:
                 process.kill()
-                remaining, _ = process.communicate(timeout=5)
-                if remaining:
-                    for raw_line in remaining.splitlines():
-                        line = f"[OUT] {raw_line}"
-                        logs.append(line)
-                        yield PipelineEvent(kind="log", message=line, progress=progress)
+                try:
+                    process.wait(timeout=5)
+                except subprocess.TimeoutExpired:
+                    pass
+
+                reader_thread.join(timeout=1)
+                progress, queued_events = _drain_output_queue(output_queue, logs, progress)
+                for event in queued_events:
+                    yield event
 
                 message = f"El pipeline excedió el tiempo máximo de {PIPELINE_TIMEOUT_SECONDS} segundos."
                 result = PipelineResult(success=False, message=message, logs=logs)
                 yield PipelineEvent(kind="result", message=message, progress=1.0, result=result)
                 return
 
-            events = selector.select(timeout=0.25)
-            for key, _ in events:
-                raw_line = key.fileobj.readline()
-                if not raw_line:
-                    continue
-                raw_line = raw_line.rstrip()
-                line = f"[OUT] {raw_line}"
-                logs.append(line)
-                progress, label = _progress_from_line(raw_line, progress)
-                yield PipelineEvent(kind="log", message=line, progress=progress)
-                if label:
-                    yield PipelineEvent(kind="progress", message=label, progress=progress)
+            progress, queued_events = _drain_output_queue(output_queue, logs, progress)
+            for event in queued_events:
+                yield event
 
             now = time.monotonic()
             if now - last_heartbeat >= PIPELINE_HEARTBEAT_SECONDS:
@@ -209,14 +234,13 @@ def stream_pipeline(
                 )
                 last_heartbeat = now
 
-        if process.stdout is not None:
-            for raw_line in process.stdout.read().splitlines():
-                line = f"[OUT] {raw_line.rstrip()}"
-                logs.append(line)
-                progress, label = _progress_from_line(raw_line, progress)
-                yield PipelineEvent(kind="log", message=line, progress=progress)
-                if label:
-                    yield PipelineEvent(kind="progress", message=label, progress=progress)
+            if not queued_events:
+                time.sleep(0.05)
+
+        reader_thread.join(timeout=1)
+        progress, queued_events = _drain_output_queue(output_queue, logs, progress)
+        for event in queued_events:
+            yield event
 
         return_code = process.wait()
         if return_code == 0:
@@ -243,8 +267,6 @@ def stream_pipeline(
             logs=logs,
         )
         yield PipelineEvent(kind="result", message=result.message, progress=1.0, result=result)
-    finally:
-        selector.close()
 
 
 def run_pipeline(
