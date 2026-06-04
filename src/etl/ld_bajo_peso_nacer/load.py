@@ -25,8 +25,6 @@ CREATE TABLE IF NOT EXISTS low_birth_weight (
     year INTEGER,
     confirmed INTEGER,
     id_mun VARCHAR(10),
-    id_country VARCHAR(10),
-    id_dept VARCHAR(10),
     CONSTRAINT fk_divipola
         FOREIGN KEY (id_mun)
         REFERENCES dim_divipola(id_mun)
@@ -65,13 +63,15 @@ def run(**kwargs):
         load_mode="upsert",
 
         conflict_columns=[
-            "year","id_mun", "date_event","id_consecutive"
+            "year", "id_mun", "date_event", "id_consecutive"
+        ],
+
+        insert_columns=[
+            "id_consecutive", "date_event", "year", "confirmed", "id_mun"
         ],
 
         update_columns=[
             "confirmed",
-            "id_country",
-            "id_dept"
         ],
 
         state_field_name="last_incremental_value",
@@ -80,7 +80,13 @@ def run(**kwargs):
     sql = VIEW_SQL_PATH.read_text(encoding="utf-8")
     with get_engine().begin() as conn:
         conn.execute(text(sql))
-    logging.info("Vista v_low_birth_weight_pc actualizada")
+        exists = conn.execute(text(
+            "SELECT 1 FROM information_schema.views WHERE table_name = 'v_low_birth_weight_pc'"
+        )).fetchone()
+    if exists:
+        logging.info("Vista v_low_birth_weight_pc creada/actualizada correctamente")
+    else:
+        logging.warning("Vista v_low_birth_weight_pc NO fue creada — la tabla 'population' probablemente no existe en la BD")
 
 if __name__ == "__main__":
     run()
