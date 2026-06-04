@@ -154,7 +154,7 @@ UPLOAD_VARIABLES: dict = {
             "El archivo debe contener las columnas: **CONSECUTIVE**, **confirmados**, **FEC_NOT**, **COD_PAIS_O**, **COD_DPTO_O**, **COD_MUN_O**"
            
         ),
-        "required_columns": [ "confirmados","COD_PAIS", "COD_DPTO_O", "COD_MUN_O"],
+        "required_columns": [ "confirmados","COD_PAIS_O", "COD_DPTO_O", "COD_MUN_O"],
         "pipeline": "bajo_peso_nacer",
         "format_image": "apps/streamlit/assets/formats/bajo_peso_nacer.png",
         "download_url": "https://portalsivigila.ins.gov.co/Paginas/Buscador.aspx",
