@@ -2,6 +2,8 @@ import os
 from pathlib import Path
 import pandas as pd
 import logging
+from shapely.geometry import mapping, shape
+from shapely.ops import transform as shapely_transform
 import fiona
 fiona.drvsupport.supported_drivers['KML'] = 'rw'
 import geopandas as gpd
@@ -45,7 +47,8 @@ def load_kml_file(file_path: Path):
     )
 
     return df
-
+def drop_z_coords(x, y, z=None):
+    return (x, y)
 def run():
     config = load_transform_config(
         "mercados_campesinos_transform",
@@ -89,6 +92,8 @@ def run():
     )
 
     df = load_kml_file(input_path)
+    df = df.to_crs('EPSG:4326')
+    df.geometry = df.geometry.apply(lambda geom: shapely_transform(drop_z_coords, geom) if geom is not None else geom)
 
     df = df[["Name", "geometry"]]
 

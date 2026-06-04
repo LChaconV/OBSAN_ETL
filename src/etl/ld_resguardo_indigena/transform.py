@@ -3,7 +3,8 @@ import topojson as tp
 import pandas as pd
 from pathlib import Path
 import geopandas as gpd
-
+from shapely.geometry import mapping, shape
+from shapely.ops import transform as shapely_transform
 
 def build_run_name(file_path: str) -> str:
     filename = Path(file_path).stem
@@ -24,6 +25,9 @@ def simplify_mun_geometry(gdf):
     except Exception as e:
         print(f"Error procesando topología: {e}")
         return None
+def drop_z_coords(x, y, z=None):
+    return (x, y)
+
 def run():
     # 1. Leer el archivo Excel
     file_path = os.environ.get("OBSAN_INPUT_FILE")
@@ -39,7 +43,9 @@ def run():
 
 
     df["id_mun"] = df["id_mun"].astype(str).str.zfill(5)
-
+    df = df.to_crs('EPSG:4326')
+    df.geometry = df.geometry.apply(lambda geom: shapely_transform(drop_z_coords, geom) if geom is not None else geom)
+    
     ruta = Path("data/golden/resguardo_indigena")
 
     # Crea la carpeta si no existe (incluye subcarpetas)

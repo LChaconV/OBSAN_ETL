@@ -7,8 +7,7 @@ create_table_sql = """
 CREATE TABLE IF NOT EXISTS farmer_market (
     id_market SERIAL PRIMARY KEY,
     name VARCHAR(500),
-    geometry GEOMETRY
-
+    geometry GEOMETRY(GEOMETRY, 4326)
 );
 """
 

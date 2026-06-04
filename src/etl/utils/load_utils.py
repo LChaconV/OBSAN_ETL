@@ -73,6 +73,15 @@ def write_frame_to_db(
     if_exists: str,
 ) -> None:
     if isinstance(df, gpd.GeoDataFrame) and "geometry" in df.columns:
+        if if_exists == "append" and df.crs is not None:
+            srid = df.crs.to_epsg()
+            if srid:
+                try:
+                    conn.execute(text(
+                        f"SELECT UpdateGeometrySRID('{table_name}', 'geometry', {srid})"
+                    ))
+                except Exception:
+                    pass
         df.to_postgis(
             name=table_name,
             con=conn,
