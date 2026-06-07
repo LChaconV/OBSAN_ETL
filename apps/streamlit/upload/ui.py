@@ -20,6 +20,7 @@ STREAMLIT_CONFIG_PATH = PROJECT_ROOT / ".streamlit" / "config.toml"
 UPLOAD_LOG_KEY = "upload_diagnostic_events"
 UPLOAD_LAST_SEEN_KEY = "upload_last_seen_signature"
 UPLOAD_LAST_VALIDATED_KEY = "upload_last_validated_signature"
+UPLOAD_LAST_SIZE_WARNING_KEY = "upload_last_size_warning_signature"
 MAX_UPLOAD_LOG_EVENTS = 80
 
 
@@ -166,7 +167,7 @@ def _render_upload_diagnostic_panel() -> None:
 
 
 def _render_browser_error_log() -> None:
-    st.iframe(
+    st.html(
         """
         <div id="obsan-client-log" style="
             border:1px solid #ddd;
@@ -180,10 +181,29 @@ def _render_browser_error_log() -> None:
         <script>
         (() => {
             const root = document.getElementById("obsan-client-log");
-            const parentWindow = window.parent || window;
+            const loggerVersion = 2;
+
+            if (
+                window.__obsanUploadLoggerPatched &&
+                window.__obsanUploadLoggerVersion !== loggerVersion &&
+                !window.sessionStorage.getItem("obsanUploadLoggerReloaded")
+            ) {
+                window.sessionStorage.setItem("obsanUploadLoggerReloaded", "1");
+                window.location.reload();
+                return;
+            }
+
+            function shouldIgnore(message) {
+                const text = String(message || "").toLowerCase();
+                return (
+                    text.includes("global scope is shutting down") ||
+                    text.includes("aborterror: the operation was aborted") ||
+                    text.includes("the user aborted a request")
+                );
+            }
 
             function render() {
-                const entries = parentWindow.__obsanUploadClientErrors || [];
+                const entries = window.__obsanUploadClientErrors || [];
                 if (!entries.length) {
                     root.textContent = "Log del navegador: sin errores de red detectados.";
                     return;
@@ -191,28 +211,48 @@ def _render_browser_error_log() -> None:
                 root.textContent = entries
                     .slice(-12)
                     .reverse()
-                    .map((entry) => `${entry.time} [${entry.level}] ${entry.message}`)
+                    .map((entry) => {
+                        const suffix = entry.count > 1 ? ` (x${entry.count})` : "";
+                        return `${entry.time} [${entry.level}] ${entry.message}${suffix}`;
+                    })
                     .join("\\n");
             }
 
             function push(level, message) {
-                parentWindow.__obsanUploadClientErrors =
-                    parentWindow.__obsanUploadClientErrors || [];
-                parentWindow.__obsanUploadClientErrors.push({
+                if (shouldIgnore(message)) {
+                    return;
+                }
+
+                window.__obsanUploadClientErrors =
+                    window.__obsanUploadClientErrors || [];
+
+                const entries = window.__obsanUploadClientErrors;
+                const lastEntry = entries[entries.length - 1];
+                if (lastEntry && lastEntry.level === level && lastEntry.message === message) {
+                    lastEntry.count = (lastEntry.count || 1) + 1;
+                    lastEntry.time = new Date().toLocaleTimeString();
+                    render();
+                    return;
+                }
+
+                entries.push({
                     level,
                     message,
+                    count: 1,
                     time: new Date().toLocaleTimeString(),
                 });
+                window.__obsanUploadClientErrors = entries.slice(-30);
                 render();
             }
 
             try {
-                if (!parentWindow.__obsanUploadLoggerPatched) {
-                    parentWindow.__obsanUploadLoggerPatched = true;
+                if (window.__obsanUploadLoggerVersion !== loggerVersion) {
+                    window.__obsanUploadLoggerPatched = true;
+                    window.__obsanUploadLoggerVersion = loggerVersion;
 
-                    const originalFetch = parentWindow.fetch;
+                    const originalFetch = window.fetch;
                     if (originalFetch) {
-                        parentWindow.fetch = async function(...args) {
+                        window.fetch = async function(...args) {
                             try {
                                 const response = await originalFetch.apply(this, args);
                                 if (!response.ok) {
@@ -226,7 +266,7 @@ def _render_browser_error_log() -> None:
                         };
                     }
 
-                    const XHR = parentWindow.XMLHttpRequest;
+                    const XHR = window.XMLHttpRequest;
                     if (XHR) {
                         const originalOpen = XHR.prototype.open;
                         const originalSend = XHR.prototype.send;
@@ -253,11 +293,11 @@ def _render_browser_error_log() -> None:
                         };
                     }
 
-                    parentWindow.addEventListener("unhandledrejection", (event) => {
+                    window.addEventListener("unhandledrejection", (event) => {
                         const reason = event.reason || {};
                         push("ERROR", `Promise ${reason.message || reason}`);
                     });
-                    parentWindow.addEventListener("error", (event) => {
+                    window.addEventListener("error", (event) => {
                         push("ERROR", `${event.message || "Error de navegador"}`);
                     });
                 }
@@ -269,7 +309,7 @@ def _render_browser_error_log() -> None:
         })();
         </script>
         """,
-        height=180,
+        unsafe_allow_javascript=True,
     )
 
 
@@ -280,6 +320,40 @@ def _render_upload_receipt(uploaded) -> None:
         text=f"Archivo recibido por la aplicación: 100% ({_format_bytes(size)})",
     )
     st.caption(f"{uploaded.name} listo para validar y procesar.")
+
+
+def _check_upload_size(variable_id: str, uploaded) -> bool:
+    size = _get_uploaded_size(uploaded)
+    max_upload_size_mb = _read_max_upload_size_mb()
+    if size is None or max_upload_size_mb is None:
+        return True
+
+    limit = max_upload_size_mb * 1024 * 1024
+    ratio = size / limit if limit else 0
+    signature = _file_signature(variable_id, uploaded)
+
+    if size > limit:
+        message = (
+            f"El archivo pesa {_format_bytes(size)} y supera el límite configurado "
+            f"de {_format_bytes(limit)}."
+        )
+        if st.session_state.get(UPLOAD_LAST_SIZE_WARNING_KEY) != signature:
+            _add_upload_event("ERROR", "Tamaño", message)
+            st.session_state[UPLOAD_LAST_SIZE_WARNING_KEY] = signature
+        st.error(f"❌ {message}")
+        return False
+
+    if ratio >= 0.8:
+        message = (
+            f"Archivo grande: {_format_bytes(size)} de {_format_bytes(limit)} permitidos. "
+            "Si aparece un error de conexión, prueba comprimir/partir el archivo o subirlo desde una conexión estable."
+        )
+        if st.session_state.get(UPLOAD_LAST_SIZE_WARNING_KEY) != signature:
+            _add_upload_event("WARNING", "Tamaño", message)
+            st.session_state[UPLOAD_LAST_SIZE_WARNING_KEY] = signature
+        st.warning(f"⚠️ {message}")
+
+    return True
 
 
 def render_upload_page():
@@ -365,6 +439,8 @@ def _render_upload_form():
 
     _register_uploaded_file(selected_id, uploaded)
     _render_upload_receipt(uploaded)
+    if not _check_upload_size(selected_id, uploaded):
+        return
 
     # ── Validación automática ─────────────────────────────────
     st.markdown("### 4. Validación")

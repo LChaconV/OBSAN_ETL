@@ -27,7 +27,7 @@ x-app-base: &app-base
     - obsan_logs:/app/logs
     - obsan_state:/app/state
   tmpfs:
-    - /tmp:size=512m,mode=1777
+    - /tmp:size=1g,mode=1777
   read_only: true
   security_opt:
     - no-new-privileges:true
@@ -82,7 +82,7 @@ services:
       retries: 5
       start_period: 60s
     cpus: "1.0"
-    mem_limit: 1g
+    mem_limit: 2g
 
   scheduler:
     <<: *app-base

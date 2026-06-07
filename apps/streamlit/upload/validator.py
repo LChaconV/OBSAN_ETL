@@ -11,6 +11,8 @@ Valida:
 from dataclasses import dataclass
 import pandas as pd
 
+SAMPLE_BYTES = 65536
+
 
 @dataclass
 class ValidationResult:
@@ -75,6 +77,18 @@ def _get_extension(filename: str) -> str:
     return filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
 
 
+def _get_file_size(file_obj) -> int:
+    size = getattr(file_obj, "size", None)
+    if isinstance(size, int) and size >= 0:
+        return size
+
+    current_pos = file_obj.tell()
+    file_obj.seek(0, 2)
+    size = file_obj.tell()
+    file_obj.seek(current_pos)
+    return size
+
+
 def _validate_extension(ext: str, allowed: list[str]) -> ValidationResult:
     if ext not in allowed:
         return ValidationResult(
@@ -86,9 +100,9 @@ def _validate_extension(ext: str, allowed: list[str]) -> ValidationResult:
 
 
 def _validate_not_empty(file_obj, filename: str) -> ValidationResult:
-    content = file_obj.read()
+    size = _get_file_size(file_obj)
     file_obj.seek(0)
-    if not content or len(content) == 0:
+    if size <= 0:
         return ValidationResult(
             valid   = False,
             message = "El archivo está vacío.",
@@ -139,7 +153,7 @@ def _validate_tabular(file_obj, filename: str, required_cols: list) -> Validatio
 def _validate_geojson(file_obj) -> ValidationResult:
     """Valida de forma liviana para no bloquear archivos GeoJSON grandes."""
     try:
-        sample = file_obj.read(65536)
+        sample = file_obj.read(SAMPLE_BYTES)
         file_obj.seek(0)
         text = sample.decode("utf-8", errors="ignore")
     except Exception as e:
@@ -167,14 +181,15 @@ def _validate_geojson(file_obj) -> ValidationResult:
 
 
 def _validate_kml(file_obj) -> ValidationResult:
-    """Validación básica de KML: verifica que sea XML con etiqueta kml."""
+    """Validación básica de KML sin leer el archivo completo en memoria."""
     try:
-        content = file_obj.read().decode("utf-8", errors="ignore")
+        sample = file_obj.read(SAMPLE_BYTES)
         file_obj.seek(0)
+        content = sample.decode("utf-8", errors="ignore")
         if "<kml" not in content.lower():
             return ValidationResult(
                 valid   = False,
-                message = "El archivo no parece ser un KML válido.",
+                message = "El archivo no parece ser un KML válido en los primeros 64 KB.",
             )
     except Exception as e:
         return ValidationResult(
@@ -182,4 +197,8 @@ def _validate_kml(file_obj) -> ValidationResult:
             message = "No se pudo leer el archivo KML.",
             details = [str(e)],
         )
-    return ValidationResult(valid=True, message="KML válido")
+    return ValidationResult(
+        valid=True,
+        message="KML listo para procesar",
+        details=["Validación rápida completada. La estructura completa se revisa durante el pipeline."],
+    )
