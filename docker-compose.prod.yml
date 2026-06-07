@@ -39,6 +39,8 @@ x-app-base: &app-base
 services:
   db:
     image: postgis/postgis:16-3.4
+    ports:
+      - "5432:5432"
     env_file:
       - .env.production
     volumes:
