@@ -11,6 +11,10 @@ Valida:
 from dataclasses import dataclass
 import pandas as pd
 
+from upload.backend_logging import log_upload_event, log_upload_exception
+
+SAMPLE_BYTES = 65536
+
 
 @dataclass
 class ValidationResult:
@@ -32,18 +36,45 @@ def validate_file(
     Punto de entrada principal. Ejecuta todas las validaciones
     en orden y retorna el primer error encontrado.
     """
+    ext = _get_extension(filename)
+    size_bytes = None
     try:
-        ext = _get_extension(filename)
+        size_bytes = _get_file_size(file_obj)
+        log_upload_event(
+            "INFO",
+            "validation_start",
+            "Iniciando validación de archivo",
+            filename=filename,
+            extension=ext,
+            size_bytes=size_bytes,
+            allowed_types=variable_config.get("allowed_types", []),
+            pipeline=variable_config.get("pipeline"),
+            label=variable_config.get("label"),
+        )
+
+        def finish(result: ValidationResult) -> ValidationResult:
+            log_upload_event(
+                "INFO" if result.valid else "WARNING",
+                "validation_complete" if result.valid else "validation_failed",
+                result.message,
+                filename=filename,
+                extension=ext,
+                size_bytes=size_bytes,
+                pipeline=variable_config.get("pipeline"),
+                label=variable_config.get("label"),
+                details=result.details,
+            )
+            return result
 
         # 1. Validar extensión
         result = _validate_extension(ext, variable_config["allowed_types"])
         if not result.valid:
-            return result
+            return finish(result)
 
         # 2. Validar que no esté vacío
         result = _validate_not_empty(file_obj, filename)
         if not result.valid:
-            return result
+            return finish(result)
 
         # 3. Validar estructura según tipo
         required_cols = variable_config.get("required_columns", [])
@@ -57,9 +88,19 @@ def validate_file(
         else:
             result = ValidationResult(valid=True, message="Archivo listo para procesar.")
 
-        return result
+        return finish(result)
     except Exception as e:
         file_obj.seek(0)
+        log_upload_exception(
+            "validation_error",
+            "Error inesperado validando archivo",
+            e,
+            filename=filename,
+            extension=ext,
+            size_bytes=size_bytes,
+            pipeline=variable_config.get("pipeline"),
+            label=variable_config.get("label"),
+        )
         return ValidationResult(
             valid=False,
             message="No se pudo validar el archivo.",
@@ -75,6 +116,18 @@ def _get_extension(filename: str) -> str:
     return filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
 
 
+def _get_file_size(file_obj) -> int:
+    size = getattr(file_obj, "size", None)
+    if isinstance(size, int) and size >= 0:
+        return size
+
+    current_pos = file_obj.tell()
+    file_obj.seek(0, 2)
+    size = file_obj.tell()
+    file_obj.seek(current_pos)
+    return size
+
+
 def _validate_extension(ext: str, allowed: list[str]) -> ValidationResult:
     if ext not in allowed:
         return ValidationResult(
@@ -86,9 +139,9 @@ def _validate_extension(ext: str, allowed: list[str]) -> ValidationResult:
 
 
 def _validate_not_empty(file_obj, filename: str) -> ValidationResult:
-    content = file_obj.read()
+    size = _get_file_size(file_obj)
     file_obj.seek(0)
-    if not content or len(content) == 0:
+    if size <= 0:
         return ValidationResult(
             valid   = False,
             message = "El archivo está vacío.",
@@ -139,7 +192,7 @@ def _validate_tabular(file_obj, filename: str, required_cols: list) -> Validatio
 def _validate_geojson(file_obj) -> ValidationResult:
     """Valida de forma liviana para no bloquear archivos GeoJSON grandes."""
     try:
-        sample = file_obj.read(65536)
+        sample = file_obj.read(SAMPLE_BYTES)
         file_obj.seek(0)
         text = sample.decode("utf-8", errors="ignore")
     except Exception as e:
@@ -167,14 +220,15 @@ def _validate_geojson(file_obj) -> ValidationResult:
 
 
 def _validate_kml(file_obj) -> ValidationResult:
-    """Validación básica de KML: verifica que sea XML con etiqueta kml."""
+    """Validación básica de KML sin leer el archivo completo en memoria."""
     try:
-        content = file_obj.read().decode("utf-8", errors="ignore")
+        sample = file_obj.read(SAMPLE_BYTES)
         file_obj.seek(0)
+        content = sample.decode("utf-8", errors="ignore")
         if "<kml" not in content.lower():
             return ValidationResult(
                 valid   = False,
-                message = "El archivo no parece ser un KML válido.",
+                message = "El archivo no parece ser un KML válido en los primeros 64 KB.",
             )
     except Exception as e:
         return ValidationResult(
@@ -182,4 +236,8 @@ def _validate_kml(file_obj) -> ValidationResult:
             message = "No se pudo leer el archivo KML.",
             details = [str(e)],
         )
-    return ValidationResult(valid=True, message="KML válido")
+    return ValidationResult(
+        valid=True,
+        message="KML listo para procesar",
+        details=["Validación rápida completada. La estructura completa se revisa durante el pipeline."],
+    )

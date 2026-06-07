@@ -3,16 +3,445 @@ upload/ui.py — Interfaz Streamlit del módulo de carga de archivos
 """
 
 import os
+import tomllib
+import traceback
+import uuid
+from datetime import datetime
+from pathlib import Path
 
 import streamlit as st
+from upload.backend_logging import log_upload_event
 from upload.variables_config import UPLOAD_VARIABLES
 from upload.validator import validate_file
 from upload.storage import save_file, list_uploaded_files
-from upload.pipeline_runner import stream_pipeline
+from upload.pipeline_runner import PIPELINE_TIMEOUT_SECONDS, stream_pipeline
+
+
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
+STREAMLIT_CONFIG_PATH = PROJECT_ROOT / ".streamlit" / "config.toml"
+UPLOAD_LOG_KEY = "upload_diagnostic_events"
+UPLOAD_LAST_SEEN_KEY = "upload_last_seen_signature"
+UPLOAD_LAST_VALIDATED_KEY = "upload_last_validated_signature"
+UPLOAD_LAST_SIZE_WARNING_KEY = "upload_last_size_warning_signature"
+UPLOAD_SESSION_ID_KEY = "upload_session_id"
+UPLOAD_PAGE_RENDER_LOGGED_KEY = "upload_page_render_logged"
+MAX_UPLOAD_LOG_EVENTS = 80
+
+
+def _format_bytes(size: int | None) -> str:
+    if size is None:
+        return "tamaño desconocido"
+
+    value = float(size)
+    for unit in ("B", "KB", "MB", "GB"):
+        if value < 1024 or unit == "GB":
+            return f"{value:.1f} {unit}" if unit != "B" else f"{int(value)} {unit}"
+        value /= 1024
+
+    return f"{value:.1f} GB"
+
+
+def _format_seconds(seconds: int) -> str:
+    minutes, secs = divmod(seconds, 60)
+    if minutes:
+        return f"{minutes}m {secs}s"
+    return f"{secs}s"
+
+
+def _read_streamlit_server_config_int(key: str) -> int | None:
+    try:
+        with STREAMLIT_CONFIG_PATH.open("rb") as config_file:
+            config = tomllib.load(config_file)
+    except (OSError, tomllib.TOMLDecodeError):
+        return None
+
+    value = config.get("server", {}).get(key)
+    return value if isinstance(value, int) else None
+
+
+def _read_max_upload_size_mb() -> int | None:
+    return _read_streamlit_server_config_int("maxUploadSize")
+
+
+def _read_max_message_size_mb() -> int | None:
+    return _read_streamlit_server_config_int("maxMessageSize")
+
+
+def _get_uploaded_size(uploaded) -> int | None:
+    size = getattr(uploaded, "size", None)
+    return size if isinstance(size, int) and size >= 0 else None
+
+
+def _file_signature(variable_id: str, uploaded) -> str:
+    return f"{variable_id}:{uploaded.name}:{_get_uploaded_size(uploaded)}"
+
+
+def _get_upload_events() -> list[dict]:
+    if UPLOAD_LOG_KEY not in st.session_state:
+        st.session_state[UPLOAD_LOG_KEY] = []
+    return st.session_state[UPLOAD_LOG_KEY]
+
+
+def _get_upload_session_id() -> str:
+    if UPLOAD_SESSION_ID_KEY not in st.session_state:
+        st.session_state[UPLOAD_SESSION_ID_KEY] = uuid.uuid4().hex
+    return st.session_state[UPLOAD_SESSION_ID_KEY]
+
+
+def _log_upload_page_render() -> None:
+    if st.session_state.get(UPLOAD_PAGE_RENDER_LOGGED_KEY):
+        return
+
+    st.session_state[UPLOAD_PAGE_RENDER_LOGGED_KEY] = True
+    log_upload_event(
+        "INFO",
+        "page_render",
+        "Página de carga renderizada",
+        upload_session_id=_get_upload_session_id(),
+        max_upload_size_mb=_read_max_upload_size_mb(),
+        max_message_size_mb=_read_max_message_size_mb(),
+        pipeline_timeout_seconds=PIPELINE_TIMEOUT_SECONDS,
+    )
+
+
+def _add_upload_event(
+    level: str,
+    stage: str,
+    message: str,
+    details: list[str] | None = None,
+    **fields,
+) -> None:
+    upload_session_id = _get_upload_session_id()
+    events = _get_upload_events()
+    events.append({
+        "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "level": level.upper(),
+        "stage": stage,
+        "message": message,
+        "details": details or [],
+    })
+    del events[:-MAX_UPLOAD_LOG_EVENTS]
+    log_upload_event(
+        level,
+        stage,
+        message,
+        upload_session_id=upload_session_id,
+        details=details or [],
+        **fields,
+    )
+
+
+def _register_uploaded_file(variable_id: str, uploaded) -> None:
+    signature = _file_signature(variable_id, uploaded)
+    if st.session_state.get(UPLOAD_LAST_SEEN_KEY) == signature:
+        return
+
+    st.session_state[UPLOAD_LAST_SEEN_KEY] = signature
+    size = _get_uploaded_size(uploaded)
+    _add_upload_event(
+        "INFO",
+        "Recepción",
+        "Archivo recibido por Streamlit",
+        [
+            f"Variable: {variable_id}",
+            f"Archivo: {uploaded.name}",
+            f"Tamaño: {_format_bytes(size)}",
+        ],
+        variable_id=variable_id,
+        filename=uploaded.name,
+        size_bytes=size,
+    )
+
+
+def _looks_like_error(line: str) -> bool:
+    text = line.lower()
+    needles = (
+        "error",
+        "exception",
+        "traceback",
+        "critical",
+        "fallo",
+        "falló",
+        "timeout",
+        "timed out",
+        "denied",
+        "refused",
+    )
+    return any(needle in text for needle in needles)
+
+
+def _render_upload_diagnostic_panel() -> None:
+    events = _get_upload_events()
+    has_errors = any(event["level"] == "ERROR" for event in events)
+    max_upload_size_mb = _read_max_upload_size_mb()
+    max_upload_label = (
+        _format_bytes(max_upload_size_mb * 1024 * 1024)
+        if max_upload_size_mb is not None
+        else "no disponible"
+    )
+    max_message_size_mb = _read_max_message_size_mb()
+    max_message_label = (
+        _format_bytes(max_message_size_mb * 1024 * 1024)
+        if max_message_size_mb is not None
+        else "no disponible"
+    )
+
+    with st.expander("🧾 Diagnóstico de carga", expanded=has_errors):
+        st.caption(
+            " · ".join([
+                f"Límite de subida: {max_upload_label}",
+                f"Límite WebSocket: {max_message_label}",
+                f"Timeout del pipeline: {_format_seconds(PIPELINE_TIMEOUT_SECONDS)}",
+            ])
+        )
+        st.caption(
+            "Si aparece Axios Error y no hay evento de recepción, la transferencia falló antes de llegar al backend."
+        )
+        _render_browser_error_log()
+
+        if st.button("Limpiar diagnóstico", key="clear_upload_diagnostic", width="stretch"):
+            st.session_state[UPLOAD_LOG_KEY] = []
+            return
+
+        if not events:
+            st.info("Sin eventos registrados en esta sesión.")
+            return
+
+        for event in reversed(events[-25:]):
+            icon = {
+                "ERROR": "🔴",
+                "WARNING": "🟠",
+                "SUCCESS": "🟢",
+                "INFO": "🔵",
+            }.get(event["level"], "⚪")
+            st.markdown(
+                f"{icon} `{event['time']}` **{event['stage']}** — {event['message']}"
+            )
+            if event["details"]:
+                st.code("\n".join(event["details"][-40:]), language="text")
+
+
+def _render_browser_error_log() -> None:
+    st.html(
+        """
+        <div id="obsan-client-log" style="
+            border:1px solid #ddd;
+            border-radius:6px;
+            font:12px/1.4 system-ui, sans-serif;
+            max-height:150px;
+            overflow:auto;
+            padding:8px;
+            white-space:pre-wrap;
+        ">Log del navegador: sin errores de red detectados.</div>
+        <script>
+        (() => {
+            const root = document.getElementById("obsan-client-log");
+            const loggerVersion = 2;
+
+            if (
+                window.__obsanUploadLoggerPatched &&
+                window.__obsanUploadLoggerVersion !== loggerVersion &&
+                !window.sessionStorage.getItem("obsanUploadLoggerReloaded")
+            ) {
+                window.sessionStorage.setItem("obsanUploadLoggerReloaded", "1");
+                window.location.reload();
+                return;
+            }
+
+            function shouldIgnore(message) {
+                const text = String(message || "").toLowerCase();
+                return (
+                    text.includes("global scope is shutting down") ||
+                    text.includes("aborterror: the operation was aborted") ||
+                    text.includes("the user aborted a request")
+                );
+            }
+
+            function normalizeMessage(message) {
+                const text = String(message || "");
+                if (text.includes("/_stcore/upload_file/")) {
+                    return "Fallo durante la transferencia del archivo a Streamlit (PUT /_stcore/upload_file). Revisa tamaño, conexión, memoria del servidor y límites maxUploadSize/maxMessageSize.";
+                }
+                if (text.includes("Failed to fetch")) {
+                    return "El navegador perdió la conexión con el servidor mientras Streamlit hacía una petición de red.";
+                }
+                return text;
+            }
+
+            function render() {
+                const entries = window.__obsanUploadClientErrors || [];
+                if (!entries.length) {
+                    root.textContent = "Log del navegador: sin errores de red detectados.";
+                    return;
+                }
+                root.textContent = entries
+                    .slice(-12)
+                    .reverse()
+                    .map((entry) => {
+                        const suffix = entry.count > 1 ? ` (x${entry.count})` : "";
+                        return `${entry.time} [${entry.level}] ${entry.message}${suffix}`;
+                    })
+                    .join("\\n");
+            }
+
+            function push(level, message) {
+                if (shouldIgnore(message)) {
+                    return;
+                }
+
+                message = normalizeMessage(message);
+                window.__obsanUploadClientErrors =
+                    window.__obsanUploadClientErrors || [];
+
+                const entries = window.__obsanUploadClientErrors;
+                const lastEntry = entries[entries.length - 1];
+                if (lastEntry && lastEntry.level === level && lastEntry.message === message) {
+                    lastEntry.count = (lastEntry.count || 1) + 1;
+                    lastEntry.time = new Date().toLocaleTimeString();
+                    render();
+                    return;
+                }
+
+                entries.push({
+                    level,
+                    message,
+                    count: 1,
+                    time: new Date().toLocaleTimeString(),
+                });
+                window.__obsanUploadClientErrors = entries.slice(-30);
+                render();
+            }
+
+            try {
+                if (window.__obsanUploadLoggerVersion !== loggerVersion) {
+                    window.__obsanUploadLoggerPatched = true;
+                    window.__obsanUploadLoggerVersion = loggerVersion;
+
+                    const originalFetch = window.fetch;
+                    if (originalFetch) {
+                        window.fetch = async function(...args) {
+                            try {
+                                const response = await originalFetch.apply(this, args);
+                                if (!response.ok) {
+                                    push("ERROR", `fetch ${response.status} ${response.url}`);
+                                }
+                                return response;
+                            } catch (error) {
+                                push("ERROR", `fetch ${error.name || "Error"}: ${error.message || error}`);
+                                throw error;
+                            }
+                        };
+                    }
+
+                    const XHR = window.XMLHttpRequest;
+                    if (XHR) {
+                        const originalOpen = XHR.prototype.open;
+                        const originalSend = XHR.prototype.send;
+
+                        XHR.prototype.open = function(method, url) {
+                            this.__obsanMethod = method;
+                            this.__obsanUrl = String(url);
+                            return originalOpen.apply(this, arguments);
+                        };
+
+                        XHR.prototype.send = function() {
+                            this.addEventListener("error", () => {
+                                push("ERROR", `XHR error ${this.__obsanMethod || ""} ${this.__obsanUrl || this.responseURL || ""}`);
+                            });
+                            this.addEventListener("timeout", () => {
+                                push("ERROR", `XHR timeout ${this.__obsanMethod || ""} ${this.__obsanUrl || this.responseURL || ""}`);
+                            });
+                            this.addEventListener("loadend", () => {
+                                if (this.status >= 400) {
+                                    push("ERROR", `XHR ${this.status} ${this.statusText || ""} ${this.__obsanUrl || this.responseURL || ""}`);
+                                }
+                            });
+                            return originalSend.apply(this, arguments);
+                        };
+                    }
+
+                    window.addEventListener("unhandledrejection", (event) => {
+                        const reason = event.reason || {};
+                        push("ERROR", `Promise ${reason.message || reason}`);
+                    });
+                    window.addEventListener("error", (event) => {
+                        push("ERROR", `${event.message || "Error de navegador"}`);
+                    });
+                }
+                render();
+                setInterval(render, 1000);
+            } catch (error) {
+                root.textContent = `Log del navegador no disponible: ${error.message || error}`;
+            }
+        })();
+        </script>
+        """,
+        unsafe_allow_javascript=True,
+    )
+
+
+def _render_upload_receipt(uploaded) -> None:
+    size = _get_uploaded_size(uploaded)
+    st.progress(
+        100,
+        text=f"Archivo recibido por la aplicación: 100% ({_format_bytes(size)})",
+    )
+    st.caption(f"{uploaded.name} listo para validar y procesar.")
+
+
+def _check_upload_size(variable_id: str, uploaded) -> bool:
+    size = _get_uploaded_size(uploaded)
+    max_upload_size_mb = _read_max_upload_size_mb()
+    if size is None or max_upload_size_mb is None:
+        return True
+
+    limit = max_upload_size_mb * 1024 * 1024
+    ratio = size / limit if limit else 0
+    signature = _file_signature(variable_id, uploaded)
+
+    if size > limit:
+        message = (
+            f"El archivo pesa {_format_bytes(size)} y supera el límite configurado "
+            f"de {_format_bytes(limit)}."
+        )
+        if st.session_state.get(UPLOAD_LAST_SIZE_WARNING_KEY) != signature:
+            _add_upload_event(
+                "ERROR",
+                "Tamaño",
+                message,
+                variable_id=variable_id,
+                filename=uploaded.name,
+                size_bytes=size,
+                limit_bytes=limit,
+            )
+            st.session_state[UPLOAD_LAST_SIZE_WARNING_KEY] = signature
+        st.error(f"❌ {message}")
+        return False
+
+    if ratio >= 0.8:
+        message = (
+            f"Archivo grande: {_format_bytes(size)} de {_format_bytes(limit)} permitidos. "
+            "Si aparece un error de conexión, prueba comprimir/partir el archivo o subirlo desde una conexión estable."
+        )
+        if st.session_state.get(UPLOAD_LAST_SIZE_WARNING_KEY) != signature:
+            _add_upload_event(
+                "WARNING",
+                "Tamaño",
+                message,
+                variable_id=variable_id,
+                filename=uploaded.name,
+                size_bytes=size,
+                limit_bytes=limit,
+            )
+            st.session_state[UPLOAD_LAST_SIZE_WARNING_KEY] = signature
+        st.warning(f"⚠️ {message}")
+
+    return True
 
 
 def render_upload_page():
     """Renderiza la página completa de carga de archivos."""
+    _log_upload_page_render()
 
     st.markdown("## 📂 Carga de archivos")
     st.markdown("Selecciona la variable, carga el archivo y el sistema ejecutará el pipeline ETL automáticamente.")
@@ -47,6 +476,9 @@ def render_upload_page():
                 )
         else:
             st.caption("Selecciona una variable para ver el formato esperado.")
+
+        st.markdown("---")
+        _render_upload_diagnostic_panel()
 
 # ─────────────────────────────────────────────────────────────
 #  FORMULARIO DE CARGA
@@ -89,16 +521,63 @@ def _render_upload_form():
     if uploaded is None:
         return
 
+    _register_uploaded_file(selected_id, uploaded)
+    _render_upload_receipt(uploaded)
+    if not _check_upload_size(selected_id, uploaded):
+        return
+
     # ── Validación automática ─────────────────────────────────
     st.markdown("### 4. Validación")
+    validation_signature = _file_signature(selected_id, uploaded)
+    should_log_validation = (
+        st.session_state.get(UPLOAD_LAST_VALIDATED_KEY) != validation_signature
+    )
+    uploaded_size = _get_uploaded_size(uploaded)
+    if should_log_validation:
+        _add_upload_event(
+            "INFO",
+            "Validación",
+            "Validando estructura del archivo",
+            variable_id=selected_id,
+            filename=uploaded.name,
+            size_bytes=uploaded_size,
+            allowed_types=config["allowed_types"],
+            pipeline=config["pipeline"],
+        )
+
     with st.spinner("Validando archivo..."):
         result = validate_file(uploaded, uploaded.name, config)
 
     if not result.valid:
+        if should_log_validation:
+            _add_upload_event(
+                "ERROR",
+                "Validación",
+                result.message,
+                result.details,
+                variable_id=selected_id,
+                filename=uploaded.name,
+                size_bytes=uploaded_size,
+                pipeline=config["pipeline"],
+            )
+            st.session_state[UPLOAD_LAST_VALIDATED_KEY] = validation_signature
         st.error(f"❌ {result.message}")
         for detail in result.details:
             st.caption(detail)
         return
+
+    if should_log_validation:
+        _add_upload_event(
+            "SUCCESS",
+            "Validación",
+            result.message,
+            result.details,
+            variable_id=selected_id,
+            filename=uploaded.name,
+            size_bytes=uploaded_size,
+            pipeline=config["pipeline"],
+        )
+        st.session_state[UPLOAD_LAST_VALIDATED_KEY] = validation_signature
 
     st.success(f"✅ {result.message}")
     for detail in result.details:
@@ -116,7 +595,21 @@ def _render_upload_form():
         type="primary",
         disabled=btn_disabled,
     ):
-        _process_file(uploaded, selected_id, config, extra_values or {})
+        try:
+            _process_file(uploaded, selected_id, config, extra_values or {})
+        except Exception as e:
+            _add_upload_event(
+                "ERROR",
+                "Interfaz",
+                f"Error inesperado en la carga: {e}",
+                traceback.format_exception(type(e), e, e.__traceback__),
+                variable_id=selected_id,
+                filename=uploaded.name,
+                size_bytes=uploaded_size,
+                pipeline=config["pipeline"],
+                error_type=type(e).__name__,
+            )
+            st.error(f"❌ Error inesperado en la carga: {e}")
 
 def _render_extra_fields(config: dict) -> dict | None:
     """
@@ -179,18 +672,71 @@ def _process_file(uploaded, variable_id: str, config: dict, extra_values: dict =
     # ejemplo: censo_bovino_bovino_2023_run_20240315.xlsx
     extra_suffix = "_".join([str(v) for v in extra_values.values()])
     # Guardar archivo
-    with st.spinner("Guardando archivo..."):
-        success, msg, saved_path = save_file(
-            file_obj       = uploaded,
-            filename       = uploaded.name,
-            variable_id    = variable_id,
-            storage_folder = config["storage_folder"],
-        )
+    st.markdown("**Guardando archivo...**")
+    _add_upload_event(
+        "INFO",
+        "Guardado",
+        "Guardando archivo en capa bronze",
+        [
+            f"Variable: {variable_id}",
+            f"Archivo: {uploaded.name}",
+            f"Tamaño: {_format_bytes(_get_uploaded_size(uploaded))}",
+            f"Pipeline: {config['pipeline']}",
+        ],
+        variable_id=variable_id,
+        filename=uploaded.name,
+        size_bytes=_get_uploaded_size(uploaded),
+        pipeline=config["pipeline"],
+        storage_folder=config["storage_folder"],
+    )
+    save_progress = st.progress(0, text="Guardando archivo: 0%")
+    save_detail = st.empty()
+
+    def update_save_progress(written: int, total: int) -> None:
+        if total > 0:
+            percent = min(100, max(0, int(written / total * 100)))
+            detail = f"{_format_bytes(written)} de {_format_bytes(total)} guardados"
+        else:
+            percent = 100 if written else 0
+            detail = f"{_format_bytes(written)} guardados"
+
+        save_progress.progress(percent, text=f"Guardando archivo: {percent}%")
+        save_detail.caption(detail)
+
+    success, msg, saved_path = save_file(
+        file_obj          = uploaded,
+        filename          = uploaded.name,
+        variable_id       = variable_id,
+        storage_folder    = config["storage_folder"],
+        progress_callback = update_save_progress,
+    )
 
     if not success:
+        _add_upload_event(
+            "ERROR",
+            "Guardado",
+            msg,
+            variable_id=variable_id,
+            filename=uploaded.name,
+            size_bytes=_get_uploaded_size(uploaded),
+            pipeline=config["pipeline"],
+            storage_folder=config["storage_folder"],
+        )
         st.error(f"❌ {msg}")
         return
 
+    save_progress.progress(100, text="Guardando archivo: 100%")
+    _add_upload_event(
+        "SUCCESS",
+        "Guardado",
+        msg,
+        [saved_path],
+        variable_id=variable_id,
+        filename=uploaded.name,
+        size_bytes=_get_uploaded_size(uploaded),
+        pipeline=config["pipeline"],
+        saved_path=saved_path,
+    )
     st.success(f"💾 {msg}")
     st.markdown("**Ejecutando pipeline ETL...**")
     status = st.status(f"Ejecutando pipeline `{config['pipeline']}`...", expanded=True)
@@ -207,6 +753,16 @@ def _process_file(uploaded, variable_id: str, config: dict, extra_values: dict =
         if event.kind in {"meta", "log", "heartbeat"}:
             logs.append(event.message)
             live_log.code("\n".join(logs[-120:]), language="text")
+            if event.kind == "log" and _looks_like_error(event.message):
+                _add_upload_event(
+                    "ERROR",
+                    "Pipeline",
+                    event.message,
+                    variable_id=variable_id,
+                    filename=uploaded.name,
+                    pipeline=config["pipeline"],
+                    saved_path=saved_path,
+                )
 
         if event.progress is not None:
             progress_value = max(0, min(100, int(event.progress * 100)))
@@ -220,6 +776,16 @@ def _process_file(uploaded, variable_id: str, config: dict, extra_values: dict =
             pipeline_result = event.result
 
     if pipeline_result is None:
+        _add_upload_event(
+            "ERROR",
+            "Pipeline",
+            "El pipeline terminó sin devolver resultado.",
+            logs[-30:],
+            variable_id=variable_id,
+            filename=uploaded.name,
+            pipeline=config["pipeline"],
+            saved_path=saved_path,
+        )
         status.update(label="El pipeline terminó sin devolver resultado.", state="error")
         st.error("❌ Error al cargar: el pipeline terminó sin devolver resultado.")
         return
@@ -236,12 +802,32 @@ def _process_file(uploaded, variable_id: str, config: dict, extra_values: dict =
                 st.caption(f"› {log_line}")
 
     if pipeline_result.success:
+        _add_upload_event(
+            "SUCCESS",
+            "Pipeline",
+            pipeline_result.message,
+            variable_id=variable_id,
+            filename=uploaded.name,
+            pipeline=config["pipeline"],
+            saved_path=saved_path,
+            rows_processed=pipeline_result.rows_processed,
+        )
         st.success(
             f"✅ {pipeline_result.message}"
             + (f" ({pipeline_result.rows_processed:,} filas)" if pipeline_result.rows_processed else "")
         )
         st.balloons()
     else:
+        _add_upload_event(
+            "ERROR",
+            "Pipeline",
+            pipeline_result.message,
+            pipeline_result.logs[-40:],
+            variable_id=variable_id,
+            filename=uploaded.name,
+            pipeline=config["pipeline"],
+            saved_path=saved_path,
+        )
         st.error(f"❌ Error al cargar: {pipeline_result.message}")
 
 

@@ -12,6 +12,7 @@ x-app-base: &app-base
     DB_HOST: db
     DB_PORT: "5432"
     PYTHONUNBUFFERED: "1"
+    OBSAN_UPLOAD_LOG_LEVEL: DEBUG
     UV_NO_SYNC: "1"
     UV_PROJECT_ENVIRONMENT: /app/.venv
     UV_CACHE_DIR: /tmp/uv-cache
@@ -27,7 +28,7 @@ x-app-base: &app-base
     - obsan_logs:/app/logs
     - obsan_state:/app/state
   tmpfs:
-    - /tmp:size=512m,mode=1777
+    - /tmp:size=1g,mode=1777
   read_only: true
   security_opt:
     - no-new-privileges:true
@@ -39,6 +40,8 @@ x-app-base: &app-base
 services:
   db:
     image: postgis/postgis:16-3.4
+    ports:
+      - "5432:5432"
     env_file:
       - .env.production
     volumes:
@@ -69,6 +72,8 @@ services:
       - --server.address=0.0.0.0
       - --server.port=8501
       - --server.headless=true
+      - --server.maxUploadSize=500
+      - --server.maxMessageSize=500
     healthcheck:
       test:
         - CMD
@@ -80,7 +85,7 @@ services:
       retries: 5
       start_period: 60s
     cpus: "1.0"
-    mem_limit: 1g
+    mem_limit: 2g
 
   scheduler:
     <<: *app-base
