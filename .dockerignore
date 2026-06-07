@@ -16,7 +16,11 @@ __pycache__/
 .env.*
 !.env.production.example
 
-data/
+data/bronze
+data/ref/
+data/golden
+data/silver
+data/tmp
 logs/
 state/state.yaml
 state/state_db.yaml
@@ -28,6 +32,7 @@ visualizaciones/
 *.geojson
 *.log
 *.parquet
+!data/obligatory/divipola.parquet
 *.shp
 *.tmp
 

@@ -61,7 +61,7 @@ victimas:
   incremental:
     enabled: true
     column: ":updated_at"
-    start_value: null
+    start_value: "2018-01-01T00:00:00.000"
 
   pagination:
     page_size: 50000
@@ -159,7 +159,7 @@ coca:
   incremental:
     enabled: true
     column: ":updated_at"
-    start_value: "2024-01-01T00:00:00.000"
+    start_value: "2018-01-01T00:00:00.000"
 
   pagination:
     page_size: 50000
@@ -200,7 +200,7 @@ erradicacion_cultivos:
   incremental:
     enabled: true
     column: ":updated_at"
-    start_value: "2025-06-01T00:00:00.000"
+    start_value: "2018-01-01T00:00:00.000"
 
   pagination:
     page_size: 50000

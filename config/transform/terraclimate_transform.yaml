@@ -1,7 +1,7 @@
 terraclimate_transform:
   source:
     bronze_dir: "data/bronze/terraclimate"
-    municipalities_path: "data/silver/divipola/divipola.parquet"
+    municipalities_path: "data/obligatory/divipola.parquet"
 
   output:
     silver_dir: "data/silver/terraclimate"
