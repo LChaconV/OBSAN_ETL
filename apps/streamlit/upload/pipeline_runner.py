@@ -17,6 +17,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterator, Mapping
 
+from upload.backend_logging import log_upload_event, log_upload_exception
 from upload.pipelines.base import PipelineResult
 
 # Raíz del repositorio unificado (etl/)
@@ -108,6 +109,27 @@ def _format_elapsed(seconds: float) -> str:
     return f"{secs}s"
 
 
+def _log_pipeline_event(event: PipelineEvent, pipeline_id: str, file_path: str) -> None:
+    if event.kind == "log":
+        log_upload_event(
+            "INFO",
+            "pipeline_output",
+            event.message,
+            pipeline_id=pipeline_id,
+            file_path=file_path,
+            progress=event.progress,
+        )
+    elif event.kind in {"progress", "heartbeat"}:
+        log_upload_event(
+            "INFO",
+            f"pipeline_{event.kind}",
+            event.message,
+            pipeline_id=pipeline_id,
+            file_path=file_path,
+            progress=event.progress,
+        )
+
+
 def _drain_output_queue(
     output_queue: queue.Queue[str],
     logs: list[str],
@@ -139,6 +161,14 @@ def stream_pipeline(
     """Ejecuta un pipeline y emite eventos de log/progreso en tiempo real."""
     etl_folder, pipeline_path, error_result = _resolve_pipeline(pipeline_id)
     if error_result:
+        log_upload_event(
+            "ERROR",
+            "pipeline_resolve_error",
+            error_result.message,
+            pipeline_id=pipeline_id,
+            file_path=file_path,
+            details=error_result.logs,
+        )
         yield PipelineEvent(
             kind="result",
             message=error_result.message,
@@ -160,6 +190,19 @@ def stream_pipeline(
     if extra_env:
         env.update(extra_env)
 
+    log_upload_event(
+        "INFO",
+        "pipeline_start",
+        "Iniciando pipeline ETL",
+        pipeline_id=pipeline_id,
+        etl_folder=etl_folder,
+        pipeline_path=str(pipeline_path),
+        file_path=file_path,
+        command=command,
+        extra_env_keys=sorted((extra_env or {}).keys()),
+        timeout_seconds=PIPELINE_TIMEOUT_SECONDS,
+    )
+
     for log_line in logs:
         yield PipelineEvent(kind="meta", message=log_line, progress=0.05)
 
@@ -180,6 +223,15 @@ def stream_pipeline(
             bufsize=1,
             cwd=str(PROJECT_ROOT),
             env=env,
+        )
+        log_upload_event(
+            "INFO",
+            "pipeline_process_started",
+            "Subprocess del pipeline iniciado",
+            pipeline_id=pipeline_id,
+            etl_folder=etl_folder,
+            file_path=file_path,
+            pid=process.pid,
         )
 
         if process.stdout is None:
@@ -206,15 +258,27 @@ def stream_pipeline(
                 reader_thread.join(timeout=1)
                 progress, queued_events = _drain_output_queue(output_queue, logs, progress)
                 for event in queued_events:
+                    _log_pipeline_event(event, pipeline_id, file_path)
                     yield event
 
                 message = f"El pipeline excedió el tiempo máximo de {PIPELINE_TIMEOUT_SECONDS} segundos."
                 result = PipelineResult(success=False, message=message, logs=logs)
+                log_upload_event(
+                    "ERROR",
+                    "pipeline_timeout",
+                    message,
+                    pipeline_id=pipeline_id,
+                    etl_folder=etl_folder,
+                    file_path=file_path,
+                    timeout_seconds=PIPELINE_TIMEOUT_SECONDS,
+                    logs_tail=logs[-40:],
+                )
                 yield PipelineEvent(kind="result", message=message, progress=1.0, result=result)
                 return
 
             progress, queued_events = _drain_output_queue(output_queue, logs, progress)
             for event in queued_events:
+                _log_pipeline_event(event, pipeline_id, file_path)
                 yield event
 
             now = time.monotonic()
@@ -232,6 +296,17 @@ def stream_pipeline(
                     ),
                     progress=progress,
                 )
+                log_upload_event(
+                    "INFO",
+                    "pipeline_heartbeat",
+                    "Pipeline en ejecución",
+                    pipeline_id=pipeline_id,
+                    etl_folder=etl_folder,
+                    file_path=file_path,
+                    elapsed_seconds=int(elapsed),
+                    remaining_seconds=remaining,
+                    progress=progress,
+                )
                 last_heartbeat = now
 
             if not queued_events:
@@ -240,6 +315,7 @@ def stream_pipeline(
         reader_thread.join(timeout=1)
         progress, queued_events = _drain_output_queue(output_queue, logs, progress)
         for event in queued_events:
+            _log_pipeline_event(event, pipeline_id, file_path)
             yield event
 
         return_code = process.wait()
@@ -249,6 +325,16 @@ def stream_pipeline(
                 message="Pipeline ejecutado correctamente",
                 logs=logs,
             )
+            log_upload_event(
+                "INFO",
+                "pipeline_complete",
+                result.message,
+                pipeline_id=pipeline_id,
+                etl_folder=etl_folder,
+                file_path=file_path,
+                return_code=return_code,
+                logs_tail=logs[-40:],
+            )
             yield PipelineEvent(kind="result", message=result.message, progress=1.0, result=result)
         else:
             result = PipelineResult(
@@ -256,11 +342,30 @@ def stream_pipeline(
                 message=f"Pipeline terminó con código de error {return_code}",
                 logs=logs,
             )
+            log_upload_event(
+                "ERROR",
+                "pipeline_failed",
+                result.message,
+                pipeline_id=pipeline_id,
+                etl_folder=etl_folder,
+                file_path=file_path,
+                return_code=return_code,
+                logs_tail=logs[-80:],
+            )
             yield PipelineEvent(kind="result", message=result.message, progress=1.0, result=result)
 
     except Exception as e:
         if process and process.poll() is None:
             process.kill()
+        log_upload_exception(
+            "pipeline_exception",
+            "Error ejecutando pipeline",
+            e,
+            pipeline_id=pipeline_id,
+            etl_folder=etl_folder,
+            file_path=file_path,
+            logs_tail=logs[-80:],
+        )
         result = PipelineResult(
             success=False,
             message=f"Error ejecutando el pipeline: {e}",

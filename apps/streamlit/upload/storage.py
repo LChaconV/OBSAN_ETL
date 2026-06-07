@@ -9,6 +9,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Callable
 
+from upload.backend_logging import log_upload_event, log_upload_exception
+
 # Raíz del repositorio unificado (etl/)
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 BRONZE_ROOT = PROJECT_ROOT / "data" / "bronze"
@@ -46,6 +48,16 @@ def save_file(
         dest_path = dest_folder / new_name
         total_size = _get_file_size(file_obj)
         written = 0
+        log_upload_event(
+            "INFO",
+            "storage_start",
+            "Iniciando guardado de archivo",
+            variable_id=variable_id,
+            filename=filename,
+            storage_folder=storage_folder,
+            dest_path=str(dest_path),
+            size_bytes=total_size,
+        )
         file_obj.seek(0)
         if progress_callback:
             progress_callback(written, total_size)
@@ -62,10 +74,29 @@ def save_file(
                     progress_callback(written, total_size)
 
         file_obj.seek(0)
+        log_upload_event(
+            "INFO",
+            "storage_complete",
+            "Archivo guardado correctamente",
+            variable_id=variable_id,
+            filename=filename,
+            storage_folder=storage_folder,
+            dest_path=str(dest_path),
+            size_bytes=total_size,
+            written_bytes=written,
+        )
 
         return True, f"Archivo guardado en `data/bronze/{storage_folder}/{new_name}`", str(dest_path)
 
     except Exception as e:
+        log_upload_exception(
+            "storage_error",
+            "Error al guardar archivo",
+            e,
+            variable_id=variable_id,
+            filename=filename,
+            storage_folder=storage_folder,
+        )
         return False, f"Error al guardar el archivo: {e}", ""
 
 

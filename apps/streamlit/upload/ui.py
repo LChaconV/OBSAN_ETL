@@ -5,10 +5,12 @@ upload/ui.py — Interfaz Streamlit del módulo de carga de archivos
 import os
 import tomllib
 import traceback
+import uuid
 from datetime import datetime
 from pathlib import Path
 
 import streamlit as st
+from upload.backend_logging import log_upload_event
 from upload.variables_config import UPLOAD_VARIABLES
 from upload.validator import validate_file
 from upload.storage import save_file, list_uploaded_files
@@ -21,6 +23,8 @@ UPLOAD_LOG_KEY = "upload_diagnostic_events"
 UPLOAD_LAST_SEEN_KEY = "upload_last_seen_signature"
 UPLOAD_LAST_VALIDATED_KEY = "upload_last_validated_signature"
 UPLOAD_LAST_SIZE_WARNING_KEY = "upload_last_size_warning_signature"
+UPLOAD_SESSION_ID_KEY = "upload_session_id"
+UPLOAD_PAGE_RENDER_LOGGED_KEY = "upload_page_render_logged"
 MAX_UPLOAD_LOG_EVENTS = 80
 
 
@@ -44,15 +48,23 @@ def _format_seconds(seconds: int) -> str:
     return f"{secs}s"
 
 
-def _read_max_upload_size_mb() -> int | None:
+def _read_streamlit_server_config_int(key: str) -> int | None:
     try:
         with STREAMLIT_CONFIG_PATH.open("rb") as config_file:
             config = tomllib.load(config_file)
     except (OSError, tomllib.TOMLDecodeError):
         return None
 
-    value = config.get("server", {}).get("maxUploadSize")
+    value = config.get("server", {}).get(key)
     return value if isinstance(value, int) else None
+
+
+def _read_max_upload_size_mb() -> int | None:
+    return _read_streamlit_server_config_int("maxUploadSize")
+
+
+def _read_max_message_size_mb() -> int | None:
+    return _read_streamlit_server_config_int("maxMessageSize")
 
 
 def _get_uploaded_size(uploaded) -> int | None:
@@ -70,12 +82,36 @@ def _get_upload_events() -> list[dict]:
     return st.session_state[UPLOAD_LOG_KEY]
 
 
+def _get_upload_session_id() -> str:
+    if UPLOAD_SESSION_ID_KEY not in st.session_state:
+        st.session_state[UPLOAD_SESSION_ID_KEY] = uuid.uuid4().hex
+    return st.session_state[UPLOAD_SESSION_ID_KEY]
+
+
+def _log_upload_page_render() -> None:
+    if st.session_state.get(UPLOAD_PAGE_RENDER_LOGGED_KEY):
+        return
+
+    st.session_state[UPLOAD_PAGE_RENDER_LOGGED_KEY] = True
+    log_upload_event(
+        "INFO",
+        "page_render",
+        "Página de carga renderizada",
+        upload_session_id=_get_upload_session_id(),
+        max_upload_size_mb=_read_max_upload_size_mb(),
+        max_message_size_mb=_read_max_message_size_mb(),
+        pipeline_timeout_seconds=PIPELINE_TIMEOUT_SECONDS,
+    )
+
+
 def _add_upload_event(
     level: str,
     stage: str,
     message: str,
     details: list[str] | None = None,
+    **fields,
 ) -> None:
+    upload_session_id = _get_upload_session_id()
     events = _get_upload_events()
     events.append({
         "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
@@ -85,6 +121,14 @@ def _add_upload_event(
         "details": details or [],
     })
     del events[:-MAX_UPLOAD_LOG_EVENTS]
+    log_upload_event(
+        level,
+        stage,
+        message,
+        upload_session_id=upload_session_id,
+        details=details or [],
+        **fields,
+    )
 
 
 def _register_uploaded_file(variable_id: str, uploaded) -> None:
@@ -93,6 +137,7 @@ def _register_uploaded_file(variable_id: str, uploaded) -> None:
         return
 
     st.session_state[UPLOAD_LAST_SEEN_KEY] = signature
+    size = _get_uploaded_size(uploaded)
     _add_upload_event(
         "INFO",
         "Recepción",
@@ -100,8 +145,11 @@ def _register_uploaded_file(variable_id: str, uploaded) -> None:
         [
             f"Variable: {variable_id}",
             f"Archivo: {uploaded.name}",
-            f"Tamaño: {_format_bytes(_get_uploaded_size(uploaded))}",
+            f"Tamaño: {_format_bytes(size)}",
         ],
+        variable_id=variable_id,
+        filename=uploaded.name,
+        size_bytes=size,
     )
 
 
@@ -131,11 +179,18 @@ def _render_upload_diagnostic_panel() -> None:
         if max_upload_size_mb is not None
         else "no disponible"
     )
+    max_message_size_mb = _read_max_message_size_mb()
+    max_message_label = (
+        _format_bytes(max_message_size_mb * 1024 * 1024)
+        if max_message_size_mb is not None
+        else "no disponible"
+    )
 
     with st.expander("🧾 Diagnóstico de carga", expanded=has_errors):
         st.caption(
             " · ".join([
                 f"Límite de subida: {max_upload_label}",
+                f"Límite WebSocket: {max_message_label}",
                 f"Timeout del pipeline: {_format_seconds(PIPELINE_TIMEOUT_SECONDS)}",
             ])
         )
@@ -202,6 +257,17 @@ def _render_browser_error_log() -> None:
                 );
             }
 
+            function normalizeMessage(message) {
+                const text = String(message || "");
+                if (text.includes("/_stcore/upload_file/")) {
+                    return "Fallo durante la transferencia del archivo a Streamlit (PUT /_stcore/upload_file). Revisa tamaño, conexión, memoria del servidor y límites maxUploadSize/maxMessageSize.";
+                }
+                if (text.includes("Failed to fetch")) {
+                    return "El navegador perdió la conexión con el servidor mientras Streamlit hacía una petición de red.";
+                }
+                return text;
+            }
+
             function render() {
                 const entries = window.__obsanUploadClientErrors || [];
                 if (!entries.length) {
@@ -223,6 +289,7 @@ def _render_browser_error_log() -> None:
                     return;
                 }
 
+                message = normalizeMessage(message);
                 window.__obsanUploadClientErrors =
                     window.__obsanUploadClientErrors || [];
 
@@ -338,7 +405,15 @@ def _check_upload_size(variable_id: str, uploaded) -> bool:
             f"de {_format_bytes(limit)}."
         )
         if st.session_state.get(UPLOAD_LAST_SIZE_WARNING_KEY) != signature:
-            _add_upload_event("ERROR", "Tamaño", message)
+            _add_upload_event(
+                "ERROR",
+                "Tamaño",
+                message,
+                variable_id=variable_id,
+                filename=uploaded.name,
+                size_bytes=size,
+                limit_bytes=limit,
+            )
             st.session_state[UPLOAD_LAST_SIZE_WARNING_KEY] = signature
         st.error(f"❌ {message}")
         return False
@@ -349,7 +424,15 @@ def _check_upload_size(variable_id: str, uploaded) -> bool:
             "Si aparece un error de conexión, prueba comprimir/partir el archivo o subirlo desde una conexión estable."
         )
         if st.session_state.get(UPLOAD_LAST_SIZE_WARNING_KEY) != signature:
-            _add_upload_event("WARNING", "Tamaño", message)
+            _add_upload_event(
+                "WARNING",
+                "Tamaño",
+                message,
+                variable_id=variable_id,
+                filename=uploaded.name,
+                size_bytes=size,
+                limit_bytes=limit,
+            )
             st.session_state[UPLOAD_LAST_SIZE_WARNING_KEY] = signature
         st.warning(f"⚠️ {message}")
 
@@ -358,6 +441,7 @@ def _check_upload_size(variable_id: str, uploaded) -> bool:
 
 def render_upload_page():
     """Renderiza la página completa de carga de archivos."""
+    _log_upload_page_render()
 
     st.markdown("## 📂 Carga de archivos")
     st.markdown("Selecciona la variable, carga el archivo y el sistema ejecutará el pipeline ETL automáticamente.")
@@ -448,15 +532,34 @@ def _render_upload_form():
     should_log_validation = (
         st.session_state.get(UPLOAD_LAST_VALIDATED_KEY) != validation_signature
     )
+    uploaded_size = _get_uploaded_size(uploaded)
     if should_log_validation:
-        _add_upload_event("INFO", "Validación", "Validando estructura del archivo")
+        _add_upload_event(
+            "INFO",
+            "Validación",
+            "Validando estructura del archivo",
+            variable_id=selected_id,
+            filename=uploaded.name,
+            size_bytes=uploaded_size,
+            allowed_types=config["allowed_types"],
+            pipeline=config["pipeline"],
+        )
 
     with st.spinner("Validando archivo..."):
         result = validate_file(uploaded, uploaded.name, config)
 
     if not result.valid:
         if should_log_validation:
-            _add_upload_event("ERROR", "Validación", result.message, result.details)
+            _add_upload_event(
+                "ERROR",
+                "Validación",
+                result.message,
+                result.details,
+                variable_id=selected_id,
+                filename=uploaded.name,
+                size_bytes=uploaded_size,
+                pipeline=config["pipeline"],
+            )
             st.session_state[UPLOAD_LAST_VALIDATED_KEY] = validation_signature
         st.error(f"❌ {result.message}")
         for detail in result.details:
@@ -464,7 +567,16 @@ def _render_upload_form():
         return
 
     if should_log_validation:
-        _add_upload_event("SUCCESS", "Validación", result.message, result.details)
+        _add_upload_event(
+            "SUCCESS",
+            "Validación",
+            result.message,
+            result.details,
+            variable_id=selected_id,
+            filename=uploaded.name,
+            size_bytes=uploaded_size,
+            pipeline=config["pipeline"],
+        )
         st.session_state[UPLOAD_LAST_VALIDATED_KEY] = validation_signature
 
     st.success(f"✅ {result.message}")
@@ -491,6 +603,11 @@ def _render_upload_form():
                 "Interfaz",
                 f"Error inesperado en la carga: {e}",
                 traceback.format_exception(type(e), e, e.__traceback__),
+                variable_id=selected_id,
+                filename=uploaded.name,
+                size_bytes=uploaded_size,
+                pipeline=config["pipeline"],
+                error_type=type(e).__name__,
             )
             st.error(f"❌ Error inesperado en la carga: {e}")
 
@@ -566,6 +683,11 @@ def _process_file(uploaded, variable_id: str, config: dict, extra_values: dict =
             f"Tamaño: {_format_bytes(_get_uploaded_size(uploaded))}",
             f"Pipeline: {config['pipeline']}",
         ],
+        variable_id=variable_id,
+        filename=uploaded.name,
+        size_bytes=_get_uploaded_size(uploaded),
+        pipeline=config["pipeline"],
+        storage_folder=config["storage_folder"],
     )
     save_progress = st.progress(0, text="Guardando archivo: 0%")
     save_detail = st.empty()
@@ -590,12 +712,31 @@ def _process_file(uploaded, variable_id: str, config: dict, extra_values: dict =
     )
 
     if not success:
-        _add_upload_event("ERROR", "Guardado", msg)
+        _add_upload_event(
+            "ERROR",
+            "Guardado",
+            msg,
+            variable_id=variable_id,
+            filename=uploaded.name,
+            size_bytes=_get_uploaded_size(uploaded),
+            pipeline=config["pipeline"],
+            storage_folder=config["storage_folder"],
+        )
         st.error(f"❌ {msg}")
         return
 
     save_progress.progress(100, text="Guardando archivo: 100%")
-    _add_upload_event("SUCCESS", "Guardado", msg, [saved_path])
+    _add_upload_event(
+        "SUCCESS",
+        "Guardado",
+        msg,
+        [saved_path],
+        variable_id=variable_id,
+        filename=uploaded.name,
+        size_bytes=_get_uploaded_size(uploaded),
+        pipeline=config["pipeline"],
+        saved_path=saved_path,
+    )
     st.success(f"💾 {msg}")
     st.markdown("**Ejecutando pipeline ETL...**")
     status = st.status(f"Ejecutando pipeline `{config['pipeline']}`...", expanded=True)
@@ -613,7 +754,15 @@ def _process_file(uploaded, variable_id: str, config: dict, extra_values: dict =
             logs.append(event.message)
             live_log.code("\n".join(logs[-120:]), language="text")
             if event.kind == "log" and _looks_like_error(event.message):
-                _add_upload_event("ERROR", "Pipeline", event.message)
+                _add_upload_event(
+                    "ERROR",
+                    "Pipeline",
+                    event.message,
+                    variable_id=variable_id,
+                    filename=uploaded.name,
+                    pipeline=config["pipeline"],
+                    saved_path=saved_path,
+                )
 
         if event.progress is not None:
             progress_value = max(0, min(100, int(event.progress * 100)))
@@ -632,6 +781,10 @@ def _process_file(uploaded, variable_id: str, config: dict, extra_values: dict =
             "Pipeline",
             "El pipeline terminó sin devolver resultado.",
             logs[-30:],
+            variable_id=variable_id,
+            filename=uploaded.name,
+            pipeline=config["pipeline"],
+            saved_path=saved_path,
         )
         status.update(label="El pipeline terminó sin devolver resultado.", state="error")
         st.error("❌ Error al cargar: el pipeline terminó sin devolver resultado.")
@@ -649,7 +802,16 @@ def _process_file(uploaded, variable_id: str, config: dict, extra_values: dict =
                 st.caption(f"› {log_line}")
 
     if pipeline_result.success:
-        _add_upload_event("SUCCESS", "Pipeline", pipeline_result.message)
+        _add_upload_event(
+            "SUCCESS",
+            "Pipeline",
+            pipeline_result.message,
+            variable_id=variable_id,
+            filename=uploaded.name,
+            pipeline=config["pipeline"],
+            saved_path=saved_path,
+            rows_processed=pipeline_result.rows_processed,
+        )
         st.success(
             f"✅ {pipeline_result.message}"
             + (f" ({pipeline_result.rows_processed:,} filas)" if pipeline_result.rows_processed else "")
@@ -661,6 +823,10 @@ def _process_file(uploaded, variable_id: str, config: dict, extra_values: dict =
             "Pipeline",
             pipeline_result.message,
             pipeline_result.logs[-40:],
+            variable_id=variable_id,
+            filename=uploaded.name,
+            pipeline=config["pipeline"],
+            saved_path=saved_path,
         )
         st.error(f"❌ Error al cargar: {pipeline_result.message}")
 

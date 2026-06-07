@@ -11,6 +11,8 @@ Valida:
 from dataclasses import dataclass
 import pandas as pd
 
+from upload.backend_logging import log_upload_event, log_upload_exception
+
 SAMPLE_BYTES = 65536
 
 
@@ -34,18 +36,45 @@ def validate_file(
     Punto de entrada principal. Ejecuta todas las validaciones
     en orden y retorna el primer error encontrado.
     """
+    ext = _get_extension(filename)
+    size_bytes = None
     try:
-        ext = _get_extension(filename)
+        size_bytes = _get_file_size(file_obj)
+        log_upload_event(
+            "INFO",
+            "validation_start",
+            "Iniciando validación de archivo",
+            filename=filename,
+            extension=ext,
+            size_bytes=size_bytes,
+            allowed_types=variable_config.get("allowed_types", []),
+            pipeline=variable_config.get("pipeline"),
+            label=variable_config.get("label"),
+        )
+
+        def finish(result: ValidationResult) -> ValidationResult:
+            log_upload_event(
+                "INFO" if result.valid else "WARNING",
+                "validation_complete" if result.valid else "validation_failed",
+                result.message,
+                filename=filename,
+                extension=ext,
+                size_bytes=size_bytes,
+                pipeline=variable_config.get("pipeline"),
+                label=variable_config.get("label"),
+                details=result.details,
+            )
+            return result
 
         # 1. Validar extensión
         result = _validate_extension(ext, variable_config["allowed_types"])
         if not result.valid:
-            return result
+            return finish(result)
 
         # 2. Validar que no esté vacío
         result = _validate_not_empty(file_obj, filename)
         if not result.valid:
-            return result
+            return finish(result)
 
         # 3. Validar estructura según tipo
         required_cols = variable_config.get("required_columns", [])
@@ -59,9 +88,19 @@ def validate_file(
         else:
             result = ValidationResult(valid=True, message="Archivo listo para procesar.")
 
-        return result
+        return finish(result)
     except Exception as e:
         file_obj.seek(0)
+        log_upload_exception(
+            "validation_error",
+            "Error inesperado validando archivo",
+            e,
+            filename=filename,
+            extension=ext,
+            size_bytes=size_bytes,
+            pipeline=variable_config.get("pipeline"),
+            label=variable_config.get("label"),
+        )
         return ValidationResult(
             valid=False,
             message="No se pudo validar el archivo.",
