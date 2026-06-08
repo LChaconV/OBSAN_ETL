@@ -67,7 +67,7 @@ UPLOAD_VARIABLES: dict = {
     "subregiones": {
         "label":       "Subregiones de Antioquia",
         "description": "Listado de subregiones de Antioquia",
-        "allowed_types": ["geojson"],
+        "allowed_types": ["geojson", "parquet"],
         "storage_folder": "subregion_antioquia",
         "format_hint": (
             "El archivo debe contener geometrías de tipo Polygon o MultiPolygon"

@@ -43,7 +43,7 @@ def validate_id_subregion(gdf):
     print("Validación de id_subregion finalizada.")
     return gdf
 
-def run() -> None:
+def run(input_path: Path) -> None:
     # 1. CARGA DE CONFIGURACIONES
     # Carga la configuración de la fuente específica
     load_source_config("subregiones", SOURCES_CONFIG_PATH)
@@ -52,9 +52,9 @@ def run() -> None:
     general_cfg = load_yaml(GENERAL_CONFIG_PATH)
 
     # 2. DEFINICIÓN DE RUTAS (Entrada de Bronze y Salida de Silver)
-    ruta_entrada = os.environ.get("OBSAN_INPUT_FILE")
-    if not ruta_entrada:
-        raise ValueError("No se definió OBSAN_INPUT_FILE")
+    #ruta_entrada = os.environ.get("OBSAN_INPUT_FILE")
+    if not input_path:
+        raise ValueError("No se definió la ruta de entrada")
     #ruta_entrada = PROJECT_ROOT / source_cfg["storage"]["bronze_dir"] / source_cfg["storage"]["file"]
 
     # Ruta de salida: data/silver/subregiones/subregiones_provincias_colombia.parquet
@@ -66,7 +66,7 @@ def run() -> None:
     # 3. LECTURA DE DATOS
 
 
-    gdf = gpd.read_file(ruta_entrada)
+    gdf = gpd.read_file(input_path)
 
     # 4. TRANSFORMACIÓN (Estandarización de Capa Silver)
     print("Transformando datos...")

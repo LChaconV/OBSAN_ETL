@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import os
 import sys
 from pathlib import Path
 import geopandas as gpd
@@ -43,7 +44,7 @@ def ensure_subregion_infrastructure(engine) -> None:
             ON subregion USING GIST (geometry);
         """))
 
-def run() -> None:
+def run(input_path: Path = None) -> None:
     setup_logging(LOG_DIR, "load_subregion.log")
     logging.info("Iniciando carga de geografía: subregion")
 
@@ -54,8 +55,14 @@ def run() -> None:
 
         # 1. Resolución de ruta desde configuración
         # Se espera en sources.yaml: subregion -> path_gold: "data/golden/subregion.parquet"
-        parquet_path = PROJECT_ROOT / sources_config["subregion"]["path_gold"]
+        #parquet_path = PROJECT_ROOT / sources_config["subregion"]["path_gold"]
         
+        if input_path is not None:
+            parquet_path = input_path
+        else:
+            parquet_path = PROJECT_ROOT / sources_config["subregion"]["path_gold"]
+
+
         if not parquet_path.exists():
             logging.error("Archivo Parquet no encontrado en: %s", parquet_path)
             return
