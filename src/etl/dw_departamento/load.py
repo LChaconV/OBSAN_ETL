@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pandas as pd
 import geopandas as gpd
+import os
 from sqlalchemy import text
 
 from src.etl.utils.logging_utils import setup_logging
@@ -52,7 +53,7 @@ def ensure_db_infrastructure(engine) -> None:
 # ============================================================
 # PROCESO DE CARGA INCREMENTAL (LOAD)
 # ============================================================
-def run() -> None:
+def run(input_path: Path = None) -> None:
     # Inicialización de logging formal
     setup_logging(LOG_DIR, "load_departamentos.log")
     logging.info("Iniciando proceso de carga: dim_departament")
@@ -70,9 +71,11 @@ def run() -> None:
         last_loaded_id = db_state.get("last_loaded_id")
         logging.info("Estado actual en state_db.yaml: last_loaded_id=%s", last_loaded_id)
 
-        # Resolución de ruta del archivo fuente en capa Silver
-        silver_path = PROJECT_ROOT / sources_config["departamentos"]["source"]["silver_fact_dir"]
-        
+        if input_path is not None:
+            silver_path = input_path
+        else:
+            silver_path = PROJECT_ROOT / sources_config["departamentos"]["source"]["silver_fact_dir"]
+
         if not silver_path.exists():
             logging.error("Archivo fuente no encontrado en: %s", silver_path)
             return

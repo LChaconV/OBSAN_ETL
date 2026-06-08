@@ -1,32 +1,52 @@
 
 UPLOAD_VARIABLES: dict = {
 
-    "divipola": {
-        "label":       "División municipal de Colombia",
-        "description": "División municipal de Colombia",
+"divipola": {
+        "label": "División municipal de Colombia",
+        "description": "División político-administrativa a nivel municipal de Colombia (DIVIPOLA).",
         "allowed_types": ["geojson", "parquet"],
         "storage_folder": "divipola/geojson",
         "format_hint": (
-            "Archivo GeoJSON con geometrías de tipo Polygon o MultiPolygon."
+            "GeoJSON: geometrías Polygon o MultiPolygon.\n"
+            "Columnas: MpCodigo , MpNombre , DeCodigo , geometry.\n\n"
+            "Parquet: columnas geometry, id_mun, name_mun, id_dept, __index_level_0__."
         ),
-        "required_columns": [],
+        "required_columns": {
+            "geojson": {
+                "id_mun":   "MpCodigo",
+                "name_mun": "MpNombre",
+                "id_dept":  "departamentos — Departamentos_Diciembre_2025_shp/Depto.shp_DeCodigo",
+                "geometry": "geometry",
+            },
+            "parquet": ["geometry", "id_mun", "name_mun", "id_dept", "__index_level_0__"],
+        },
         "pipeline": "divipola",
         "format_image": "apps/streamlit/assets/formats/divipola.png",
-        "download_url": "https://www.colombiaenmapas.gov.co/?e=-93.57552216249368,-8.477621778898875,-48.927084662505536,14.748502806916624,4686&b=igac&l=20&u=0&t=29&servicio=20", 
+        "download_url": "https://www.colombiaenmapas.gov.co/?e=-93.57552216249368,-8.477621778898875,-48.927084662505536,14.748502806916624,4686&b=igac&l=20&u=0&t=29&servicio=20",
     },
 
     "departamento": {
-        "label":       "División departamental de Colombia",
-        "description": "División departamental de Colombia",
-        "allowed_types": ["geojson"],
+        "label": "División departamental de Colombia",
+        "description": "División político-administrativa a nivel departamental de Colombia.",
+        "allowed_types": ["geojson", "parquet"],
         "storage_folder": "departamentos",
         "format_hint": (
-            "Archivo GeoJSON con geometrías de tipo Polygon o MultiPolygon."
-        ),
-        "required_columns": [],
+                    "GeoJSON: Archivo GeoJSON con geometrías de tipo Polygon o MultiPolygon. "
+                    "Columnas requeridas: DeCodigo, DeNombre, geometry.\n\n"
+                    "Parquet: Archivo Parquet con las columnas: geometry, id_dept, name_dept, "
+                    "__index_level_0__."
+                ),
+        "required_columns": {
+            "geojson": {
+                "id_dept":   "DeCodigo",
+                "name_dept": "DeNombre",
+                "geometry":  "geometry",
+            },
+            "parquet": ["geometry", "id_dept", "name_dept", "__index_level_0__"],
+        },
         "pipeline": "departamento",
-        "format_image": "apps/streamlit/assets/formats/divipola.png",
-        "download_url": "https://www.colombiaenmapas.gov.co/?e=-93.57552216249368,-8.477621778898875,-48.927084662505536,14.748502806916624,4686&b=igac&l=20&u=0&t=29&servicio=20", 
+        "format_image": "apps/streamlit/assets/formats/departamento.png",
+        "download_url": "https://www.colombiaenmapas.gov.co/?e=-93.57552216249368,-8.477621778898875,-48.927084662505536,14.748502806916624,4686&b=igac&l=20&u=0&t=29&servicio=20",
     },
 
     "municipios_pdet": {
