@@ -102,14 +102,14 @@ def simplify_mun_geometry(gdf):
         print(f"Error procesando topología: {e}")
         print("Se continuará con la geometría original.")
         return gdf
-def run() -> None:
+def run(input_path: Path) -> None:
     #file_path = sources_config['divipola']['storage']['bronze_dir'] + '/' + sources_config['divipola']['storage']['file']
-    file_path = os.environ.get("OBSAN_INPUT_FILE")
-    if not file_path:
+    #file_path = os.environ.get("OBSAN_INPUT_FILE")
+    if not input_path:
          raise ValueError("No se definió OBSAN_INPUT_FILE")
     
     # usar file_path para leer el archivo
-    gdf = gpd.read_file(file_path) 
+    gdf = gpd.read_file(input_path) 
 
     column_map = config['data_silver']["columns"]["divipola"]     
     gdf = gdf[list(column_map.values())]

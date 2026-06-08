@@ -4,7 +4,7 @@ UPLOAD_VARIABLES: dict = {
     "divipola": {
         "label":       "División municipal de Colombia",
         "description": "División municipal de Colombia",
-        "allowed_types": ["geojson"],
+        "allowed_types": ["geojson", "parquet"],
         "storage_folder": "divipola/geojson",
         "format_hint": (
             "Archivo GeoJSON con geometrías de tipo Polygon o MultiPolygon."
@@ -184,7 +184,7 @@ UPLOAD_VARIABLES: dict = {
             ),
             "required_columns": [],
             "pipeline": "censo_pecuario",
-            "format_image":  "assets/formats/censo_pecuario.png",  
+            "format_image": "apps/streamlit/assets/formats/censo_pecuario.png",
             "download_url": "https://www.ica.gov.co/areas/pecuaria/servicios/epidemiologia-veterinaria/censos-2016",
             "extra_fields": [
                 {

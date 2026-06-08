@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import os
 import sys
 from pathlib import Path
 
@@ -71,7 +72,7 @@ def _insert_missing_municipios(engine) -> None:
 # ============================================================
 # PROCESO DE CARGA INCREMENTAL (LOAD)
 # ============================================================
-def run() -> None:
+def run(input_path: Path = None) -> None:
     # Inicialización de logging formal
     setup_logging(LOG_DIR, "load_divipola.log")
     logging.info("Iniciando proceso de carga: dim_divipola")
@@ -90,14 +91,22 @@ def run() -> None:
         logging.info("Estado actual en state_db.yaml: last_loaded_id=%s", last_loaded_id)
 
         # Resolución de ruta del archivo fuente en capa Silver
-        silver_path = PROJECT_ROOT / sources_config["divipola"]["source"]["silver_fact_dir"]
-        
+        #silver_path = PROJECT_ROOT / sources_config["divipola"]["source"]["silver_fact_dir"]
+
+        if input_path is not None:
+            silver_path = input_path
+        else:
+            silver_path = PROJECT_ROOT / sources_config["divipola"]["source"]["silver_fact_dir"]
+
         if not silver_path.exists():
             logging.error("Archivo fuente no encontrado en: %s", silver_path)
             return
 
         logging.info("Leyendo datos desde capa Silver: %s", silver_path)
+        
+        
         gdf_source = gpd.read_parquet(silver_path)
+
 
         # Normalización de sistema de referencia de coordenadas
         if gdf_source.crs is None or gdf_source.crs != "EPSG:4326":

@@ -462,8 +462,9 @@ def render_upload_page():
 
             # Imagen del formato
             image_path = config.get("format_image", "")
-            if image_path and os.path.exists(image_path):
-                st.image(image_path, caption="Formato esperado", width="stretch")
+            abs_image_path = PROJECT_ROOT / image_path if image_path else None
+            if abs_image_path and abs_image_path.exists():
+                st.image(str(abs_image_path), caption="Formato esperado", width="stretch")
             else:
                 st.caption("No hay imagen de referencia para esta variable.")
 
