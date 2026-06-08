@@ -381,6 +381,7 @@ def transform_manual(
                 (df["id_mun"] == "01239")|
                 (df["id_mun"] == "01249")|
                 (df["id_mun"] == "01050")|
+                (df["id_mun"] == "01004")|
                 (df["id_mun"].str[-3:] == df["id_country"])
             )
         ]
@@ -557,6 +558,7 @@ def clear_raw(
                 (df["id_mun"] == "01239")|
                 (df["id_mun"] == "01249")|
                 (df["id_mun"] == "01050")|
+                (df["id_mun"] == "01004")|
                 (df["id_mun"].str[-3:] == df["id_country"])
             )
         ]

@@ -39,21 +39,19 @@ def run() -> None:
         raise EnvironmentError("Falta la variable de entorno OBSAN_ANIMAL_TYPE")
 
 
+    year = os.environ.get("OBSAN_YEAR")
+    if not year:
+        raise EnvironmentError("Falta la variable de entorno OBSAN_YEAR")
+
     full_config = load_yaml(CONFIG_PATH)
-    
+
     try:
-       
-    
-        relative_output_path = Path(full_config[key]["source"]["golden_fact_dir"]) / full_config[key]["source"]["last_file_transformed"]
-        
+        golden_dir = full_config[key]["source"]["golden_fact_dir"]
     except KeyError:
         raise KeyError(f"No se encontró la llave '{key}' en el YAML simplificado.")
 
-    if not relative_output_path or relative_output_path == "none":
-        logger.warning(f"No hay archivos para procesar en: {key}")
-        return
-
-    input_file_path = PROJECT_ROOT / relative_output_path
+    filename = f"censo_{key}_{year}.parquet"
+    input_file_path = PROJECT_ROOT / golden_dir / filename
 
     # Ejecución de la carga
     load_parquet_to_postgres(

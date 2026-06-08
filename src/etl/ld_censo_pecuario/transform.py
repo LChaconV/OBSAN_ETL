@@ -8,7 +8,7 @@ import yaml
 import pandas as pd
 
 from src.etl.utils.logging_utils import setup_logging
-from src.etl.utils.config_utils import load_yaml, save_yaml
+from src.etl.utils.config_utils import load_yaml
 from src.etl.utils.transform_utils import ensure_five_digits
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
@@ -237,9 +237,6 @@ def run() -> None:
         year=year,
         animal_type=animal_type,
     )
-    full_config = load_yaml(CONFIG_PATH)
-    full_config[key]["source"]["last_file_transformed"] = f"censo_{animal_type}_{year}.parquet"
-    save_yaml(CONFIG_PATH, full_config)
 
     logging.info("Transformación de %s finalizada correctamente", key)
 
