@@ -72,6 +72,7 @@ RUN apt-get update \
         libtiff6 \
         nodejs \
         npm \
+        procps \
         proj-data \
         tini \
     && npm install -g "pm2@${PM2_VERSION}" \
@@ -122,4 +123,4 @@ USER 10001:10001
 EXPOSE 8501
 
 ENTRYPOINT ["tini", "--"]
-CMD ["uv", "run", "streamlit", "run", "apps/streamlit/app.py", "--server.address=0.0.0.0", "--server.port=8501", "--server.headless=true", "--server.maxUploadSize=500", "--server.maxMessageSize=500"]
+CMD ["uv", "run", "streamlit", "run", "apps/streamlit/app.py", "--server.address=0.0.0.0", "--server.port=8501", "--server.headless=true", "--server.maxUploadSize=300", "--server.maxMessageSize=300"]

@@ -13,6 +13,8 @@ const pipelineSchedules = [
     { name: "api_familias_accion", trigger: "cron", hour: 6, minute: 30 }, // Aprox 1 hora
 ];
 
+const schedulerMaxMemoryRestart = process.env.ETL_SCHEDULER_MAX_MEMORY_RESTART || "1024M";
+
 module.exports = {
     apps: [
         {
@@ -25,7 +27,7 @@ module.exports = {
             watch: false,
             autorestart: true,
             restart_delay: 5000,
-            max_memory_restart: "00M",
+            max_memory_restart: schedulerMaxMemoryRestart,
             env: {
                 PYTHONUNBUFFERED: "1",
                 PYTHONIOENCODING: "utf-8",
