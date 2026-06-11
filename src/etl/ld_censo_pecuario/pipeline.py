@@ -1,7 +1,8 @@
 from . import  transform,load
 from apscheduler.schedulers.blocking import BlockingScheduler
+from src.etl.utils.pipeline_cleanup import run_with_cleanup
 #from . import  transform
-def run(**kwargs):
+def _run_steps(**kwargs):
 
     print("Iniciando transformación...")
     transform.run()
@@ -10,6 +11,10 @@ def run(**kwargs):
     print("Iniciando carga...")
     load.run()
     print("Carga completada.")
+
+
+def run(**kwargs):
+    return run_with_cleanup(__name__, _run_steps, **kwargs)
 
 if __name__ == "__main__":
     scheduler = BlockingScheduler()

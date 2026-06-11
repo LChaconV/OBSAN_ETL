@@ -1,20 +1,12 @@
 from __future__ import annotations
 
 import logging
-import os
 import sys
-import time
 from pathlib import Path
 
-import pandas as pd
-import requests
-import yaml
-
-from src.etl.utils.logging_utils import setup_logging, log_run_summary
-from src.etl.utils.config_utils import load_yaml, save_yaml, load_source_config, load_state, update_state,get_incremental_max_value
-from src.etl.utils.extraction_api_utils import get_extraction_mode, get_reference_value, build_where_clause,fetch_and_save_pages,load_run_parquets
-from src.etl.utils.request_utils import build_headers, fetch_api_page
-from src.etl.utils.extract_utils.file_utils import normalize_dataframe, create_run_directory, save_bronze_page
+from src.etl.utils.logging_utils import setup_logging
+from src.etl.utils.config_utils import load_source_config, load_state, update_state
+from src.etl.utils.extraction_api_utils import get_extraction_mode, fetch_and_save_pages, summarize_run_files
 
 
 # ============================================================
@@ -58,12 +50,9 @@ def run(**kwargs) -> Path | None:
             )
         return None
 
-    df_run = load_run_parquets(files)
-    log_run_summary(df_run, config)
+    max_incremental_value = summarize_run_files(files, config)
 
     if extraction_mode == "incremental":
-        max_incremental_value = get_incremental_max_value(df_run, config)
-
         update_state(
             key="beneficiarios_familias_en_accion",
             incremental_value=max_incremental_value,
