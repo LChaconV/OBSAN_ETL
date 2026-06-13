@@ -30,5 +30,6 @@ config/db.yaml
 config/state_db.yaml
 state/state.yaml
 state/state_db.yaml
+state/*.lock
 *.zip
 *.tmp.*

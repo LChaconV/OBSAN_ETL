@@ -4,6 +4,7 @@ pages/2_Carga_de_Archivos.py — Página de carga de archivos
 """
 
 import streamlit as st
+from styles import apply_global_styles
 from upload.ui import render_upload_page
 
 st.set_page_config(
@@ -12,12 +13,6 @@ st.set_page_config(
     layout     = "wide",
 )
 
-st.markdown("""
-<style>
-    #MainMenu { visibility: hidden; }
-    footer     { visibility: hidden; }
-    .block-container { padding-top: 1rem; }
-</style>
-""", unsafe_allow_html=True)
+apply_global_styles(compact_top=True)
 
 render_upload_page()

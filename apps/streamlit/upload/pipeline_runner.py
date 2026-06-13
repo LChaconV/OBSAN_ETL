@@ -10,7 +10,6 @@ usando subprocess para mantener el entorno aislado.
 import os
 import queue
 import subprocess
-import sys
 import threading
 import time
 from dataclasses import dataclass
@@ -19,6 +18,7 @@ from typing import Iterator, Mapping
 
 from upload.backend_logging import log_upload_event, log_upload_exception
 from upload.pipelines.base import PipelineResult
+from src.etl.utils.execution_lock import ETLExecutionLockBusy, acquire_etl_execution_lock
 
 # Raíz del repositorio unificado (etl/)
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
@@ -40,6 +40,18 @@ class PipelineEvent:
 #  valor  = nombre de la carpeta dentro de src/etl/
 # ─────────────────────────────────────────────────────────────
 PIPELINE_REGISTRY: dict = {
+    "api_beneficiarios_iraca": "api_beneficiarios_iraca",
+    "api_edu_escolar": "api_edu_escolar",
+    "api_edu_superior": "api_edu_superior",
+    "api_erradicacion_cultivos_coca": "api_erradicacion_cultivos_coca",
+    "api_familias_accion": "api_familias_accion",
+    "api_indice_riesgo_irca": "api_indice_riesgo_irca",
+    "api_minerales": "api_minerales",
+    "api_produc_gas": "api_produc_gas",
+    "api_produc_petroleo": "api_produc_petroleo",
+    "api_regalias": "api_regalias",
+    "api_victimas": "api_victimas",
+    "url_terraclimate": "url_terraclimate",
     "divipola":  "dw_divipola",
     "departamento": "dw_departamento",
     "mun_pdet": "dw_mun_pdet",
@@ -109,7 +121,7 @@ def _format_elapsed(seconds: float) -> str:
     return f"{secs}s"
 
 
-def _log_pipeline_event(event: PipelineEvent, pipeline_id: str, file_path: str) -> None:
+def _log_pipeline_event(event: PipelineEvent, pipeline_id: str, file_path: str | None) -> None:
     if event.kind == "log":
         log_upload_event(
             "INFO",
@@ -155,10 +167,13 @@ def _drain_output_queue(
 
 def stream_pipeline(
     pipeline_id: str,
-    file_path: str,
+    file_path: str | None = None,
     extra_env: Mapping[str, str] | None = None,
+    timeout_seconds: int | None = None,
+    lock_owner: str = "streamlit",
 ) -> Iterator[PipelineEvent]:
     """Ejecuta un pipeline y emite eventos de log/progreso en tiempo real."""
+    timeout_seconds = timeout_seconds or PIPELINE_TIMEOUT_SECONDS
     etl_folder, pipeline_path, error_result = _resolve_pipeline(pipeline_id)
     if error_result:
         log_upload_event(
@@ -180,13 +195,23 @@ def stream_pipeline(
     assert etl_folder is not None
     assert pipeline_path is not None
 
-    command = [sys.executable, "-u", "-m", "src.runner", etl_folder]
+    command = ["uv", "run", "-m", "src.runner", etl_folder]
     logs = [
         f"Pipeline: {pipeline_path}",
-        f"Archivo:  {file_path}",
         f"Comando: {' '.join(command)}",
     ]
-    env = {**os.environ, "OBSAN_INPUT_FILE": file_path, "PYTHONUNBUFFERED": "1"}
+    if file_path:
+        logs.insert(1, f"Archivo:  {file_path}")
+
+    env = {
+        **os.environ,
+        "ETL_PIPELINE_NAME": etl_folder,
+        "PYTHONUNBUFFERED": "1",
+        "PYTHONIOENCODING": "utf-8",
+    }
+    env.pop("ETL_SCHEDULES", None)
+    if file_path:
+        env["OBSAN_INPUT_FILE"] = file_path
     if extra_env:
         env.update(extra_env)
 
@@ -200,7 +225,8 @@ def stream_pipeline(
         file_path=file_path,
         command=command,
         extra_env_keys=sorted((extra_env or {}).keys()),
-        timeout_seconds=PIPELINE_TIMEOUT_SECONDS,
+        timeout_seconds=timeout_seconds,
+        lock_owner=lock_owner,
     )
 
     for log_line in logs:
@@ -213,8 +239,38 @@ def stream_pipeline(
 
     process: subprocess.Popen[str] | None = None
     output_queue: queue.Queue[str] = queue.Queue()
+    lock_context = None
 
     try:
+        try:
+            lock_context = acquire_etl_execution_lock(
+                pipeline_name=etl_folder,
+                owner=lock_owner,
+                blocking=False,
+            )
+            lock_context.__enter__()
+        except ETLExecutionLockBusy as busy:
+            running = busy.metadata
+            running_label = running.get("pipeline", "otro ETL")
+            owner = running.get("owner", "desconocido")
+            started_at = running.get("started_at", "sin hora registrada")
+            message = (
+                "Ya hay una ejecución ETL en curso: "
+                f"{running_label} ({owner}, inicio {started_at})."
+            )
+            result = PipelineResult(success=False, message=message, logs=logs)
+            log_upload_event(
+                "WARNING",
+                "pipeline_busy",
+                message,
+                pipeline_id=pipeline_id,
+                etl_folder=etl_folder,
+                file_path=file_path,
+                running=running,
+            )
+            yield PipelineEvent(kind="result", message=message, progress=1.0, result=result)
+            return
+
         process = subprocess.Popen(
             command,
             stdout=subprocess.PIPE,
@@ -248,7 +304,7 @@ def stream_pipeline(
 
         while process.poll() is None or not output_queue.empty():
             elapsed = time.monotonic() - start
-            if elapsed > PIPELINE_TIMEOUT_SECONDS:
+            if elapsed > timeout_seconds:
                 process.kill()
                 try:
                     process.wait(timeout=5)
@@ -261,7 +317,7 @@ def stream_pipeline(
                     _log_pipeline_event(event, pipeline_id, file_path)
                     yield event
 
-                message = f"El pipeline excedió el tiempo máximo de {PIPELINE_TIMEOUT_SECONDS} segundos."
+                message = f"El pipeline excedió el tiempo máximo de {timeout_seconds} segundos."
                 result = PipelineResult(success=False, message=message, logs=logs)
                 log_upload_event(
                     "ERROR",
@@ -270,7 +326,7 @@ def stream_pipeline(
                     pipeline_id=pipeline_id,
                     etl_folder=etl_folder,
                     file_path=file_path,
-                    timeout_seconds=PIPELINE_TIMEOUT_SECONDS,
+                    timeout_seconds=timeout_seconds,
                     logs_tail=logs[-40:],
                 )
                 yield PipelineEvent(kind="result", message=message, progress=1.0, result=result)
@@ -284,8 +340,8 @@ def stream_pipeline(
             now = time.monotonic()
             if now - last_heartbeat >= PIPELINE_HEARTBEAT_SECONDS:
                 elapsed = now - start
-                remaining = max(0, PIPELINE_TIMEOUT_SECONDS - int(elapsed))
-                estimated_progress = min(0.9, max(progress, elapsed / PIPELINE_TIMEOUT_SECONDS * 0.9))
+                remaining = max(0, timeout_seconds - int(elapsed))
+                estimated_progress = min(0.9, max(progress, elapsed / timeout_seconds * 0.9))
                 progress = estimated_progress
                 yield PipelineEvent(
                     kind="heartbeat",
@@ -372,19 +428,30 @@ def stream_pipeline(
             logs=logs,
         )
         yield PipelineEvent(kind="result", message=result.message, progress=1.0, result=result)
+    finally:
+        if lock_context is not None:
+            lock_context.__exit__(None, None, None)
 
 
 def run_pipeline(
     pipeline_id: str,
-    file_path: str,
+    file_path: str | None = None,
     extra_env: Mapping[str, str] | None = None,
+    timeout_seconds: int | None = None,
+    lock_owner: str = "streamlit",
 ) -> PipelineResult:
     """
     Busca la carpeta ETL correspondiente y ejecuta su pipeline.py,
     enviando la ruta del archivo por variable de entorno.
     """
     final_result: PipelineResult | None = None
-    for event in stream_pipeline(pipeline_id, file_path, extra_env):
+    for event in stream_pipeline(
+        pipeline_id,
+        file_path,
+        extra_env,
+        timeout_seconds=timeout_seconds,
+        lock_owner=lock_owner,
+    ):
         if event.kind == "result":
             final_result = event.result
 

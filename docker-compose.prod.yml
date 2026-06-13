@@ -18,6 +18,8 @@ x-app-base: &app-base
     UV_CACHE_DIR: /tmp/uv-cache
     PM2_HOME: /tmp/.pm2
     HOME: /tmp
+    ETL_EXECUTION_LOCK_PATH: /app/state/etl_execution.lock
+    OBSAN_MANUAL_ETL_TIMEOUT_SECONDS: "21600"
   depends_on:
     db:
       condition: service_healthy
