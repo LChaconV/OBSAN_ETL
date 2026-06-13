@@ -10,18 +10,22 @@ usando subprocess para mantener el entorno aislado.
 import os
 import queue
 import subprocess
+import sys
 import threading
 import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterator, Mapping
 
+# Raíz del repositorio unificado (etl/)
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
 from upload.backend_logging import log_upload_event, log_upload_exception
 from upload.pipelines.base import PipelineResult
 from src.etl.utils.execution_lock import ETLExecutionLockBusy, acquire_etl_execution_lock
 
-# Raíz del repositorio unificado (etl/)
-PROJECT_ROOT = Path(__file__).resolve().parents[3]
 ETL_ROOT = PROJECT_ROOT / "src" / "etl"
 PIPELINE_TIMEOUT_SECONDS = int(os.getenv("OBSAN_PIPELINE_TIMEOUT_SECONDS", "900"))
 PIPELINE_HEARTBEAT_SECONDS = int(os.getenv("OBSAN_PIPELINE_HEARTBEAT_SECONDS", "10"))
