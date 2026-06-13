@@ -39,20 +39,18 @@ def run() -> None:
     
 
     full_config = load_yaml(CONFIG_PATH)
-    
-    try:
-       
-    
-        relative_output_path = Path(full_config["agricola_transform"]["source"]["golden_fact_dir"]) / full_config["agricola_transform"]["source"]["last_file_transformed"]
-        
-    except KeyError:
-        raise KeyError(f"No se encontró la llave agricola_transform en el YAML simplificado.")
 
-    if not relative_output_path or relative_output_path == "none":
-        logger.warning(f"No hay archivos para procesar en: agricola_transform")
+    try:
+        golden_dir = PROJECT_ROOT / full_config["agricola_transform"]["source"]["golden_fact_dir"]
+    except KeyError:
+        raise KeyError("No se encontró la llave 'agricola_transform' en el YAML simplificado.")
+
+    parquets = sorted(golden_dir.glob("agricola_*.parquet"), key=lambda p: p.stat().st_mtime)
+    if not parquets:
+        logger.warning("No hay archivos parquet para procesar en: %s", golden_dir)
         return
 
-    input_file_path = PROJECT_ROOT / relative_output_path
+    input_file_path = parquets[-1]
 
 
     load_parquet_to_postgres(

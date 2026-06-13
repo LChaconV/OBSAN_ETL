@@ -10,7 +10,7 @@ import numpy as np
 import unicodedata
 
 from src.etl.utils.logging_utils import setup_logging
-from src.etl.utils.config_utils import load_yaml, save_yaml
+from src.etl.utils.config_utils import load_yaml
 from src.etl.utils.transform_utils import ensure_five_digits
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
@@ -226,13 +226,10 @@ def run() -> None:
     for i in df_gold:
         print (i)
 
-    output_path, year = save_golden(
+    save_golden(
         df=df_gold,
         config=config
     )
-    full_config = load_yaml(CONFIG_PATH)
-    full_config[key]["source"]["last_file_transformed"] = f"agricola_{year}.parquet"
-    save_yaml(CONFIG_PATH, full_config)
 
     logging.info("Transformación de %s finalizada correctamente", key)
 
