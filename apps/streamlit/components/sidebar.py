@@ -34,10 +34,10 @@ def _render_header():
         """
         <div style="padding:8px 0 12px 0;">
             <div style="font-size:22px;font-weight:800;
-                        color:#ffffff;line-height:1.2;">
+                        color:#111827;line-height:1.2;">
                 🌽 Observatorio
             </div>
-            <div style="font-size:15px;color:#8b949e;margin-top:4px;">
+            <div style="font-size:15px;color:#4b5563;margin-top:4px;">
                 Seguridad Alimentaria · Antioquia
             </div>
         </div>

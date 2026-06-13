@@ -18,6 +18,8 @@ x-app-base: &app-base
     UV_CACHE_DIR: /tmp/uv-cache
     PM2_HOME: /tmp/.pm2
     HOME: /tmp
+    ETL_EXECUTION_LOCK_PATH: /app/state/etl_execution.lock
+    OBSAN_MANUAL_ETL_TIMEOUT_SECONDS: "21600"
   depends_on:
     db:
       condition: service_healthy
@@ -72,8 +74,8 @@ services:
       - --server.address=0.0.0.0
       - --server.port=8501
       - --server.headless=true
-      - --server.maxUploadSize=500
-      - --server.maxMessageSize=500
+      - --server.maxUploadSize=300
+      - --server.maxMessageSize=300
     healthcheck:
       test:
         - CMD

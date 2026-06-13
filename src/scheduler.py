@@ -13,6 +13,8 @@ from apscheduler.events import EVENT_JOB_ERROR, EVENT_JOB_EXECUTED
 from apscheduler.executors.pool import ThreadPoolExecutor
 from apscheduler.schedulers.blocking import BlockingScheduler
 
+from src.etl.utils.execution_lock import acquire_etl_execution_lock
+
 LOGGER = logging.getLogger("etl_scheduler")
 REPO_ROOT = Path(__file__).resolve().parents[1]
 INTERVAL_FIELDS = ("weeks", "days", "hours", "minutes", "seconds")
@@ -124,38 +126,44 @@ def run_pipeline_subprocess(source_name: str) -> None:
     env.setdefault("PYTHONUNBUFFERED", "1")
     env.setdefault("PYTHONIOENCODING", "utf-8")
 
-    LOGGER.info("Iniciando pipeline '%s'.", source_name)
-    process = subprocess.Popen(
-        command,
-        cwd=REPO_ROOT,
-        env=env,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-        bufsize=1,
-    )
+    LOGGER.info("Esperando turno de ejecución para pipeline '%s'.", source_name)
+    with acquire_etl_execution_lock(
+        pipeline_name=source_name,
+        owner="scheduler",
+        blocking=True,
+    ):
+        LOGGER.info("Iniciando pipeline '%s'.", source_name)
+        process = subprocess.Popen(
+            command,
+            cwd=REPO_ROOT,
+            env=env,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            bufsize=1,
+        )
 
-    stdout_thread = threading.Thread(
-        target=forward_subprocess_logs,
-        args=(process.stdout, source_name, "stdout"),
-        daemon=True,
-    )
-    stderr_thread = threading.Thread(
-        target=forward_subprocess_logs,
-        args=(process.stderr, source_name, "stderr"),
-        daemon=True,
-    )
-    stdout_thread.start()
-    stderr_thread.start()
+        stdout_thread = threading.Thread(
+            target=forward_subprocess_logs,
+            args=(process.stdout, source_name, "stdout"),
+            daemon=True,
+        )
+        stderr_thread = threading.Thread(
+            target=forward_subprocess_logs,
+            args=(process.stderr, source_name, "stderr"),
+            daemon=True,
+        )
+        stdout_thread.start()
+        stderr_thread.start()
 
-    return_code = process.wait()
-    stdout_thread.join()
-    stderr_thread.join()
+        return_code = process.wait()
+        stdout_thread.join()
+        stderr_thread.join()
 
-    if return_code != 0:
-        raise subprocess.CalledProcessError(return_code, command)
+        if return_code != 0:
+            raise subprocess.CalledProcessError(return_code, command)
 
 
 def forward_subprocess_logs(pipe, source_name: str, stream_name: str) -> None:

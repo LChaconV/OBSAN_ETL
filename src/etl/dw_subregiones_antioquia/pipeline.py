@@ -5,10 +5,12 @@ from src.etl.utils.config_utils import load_yaml
 from . import  transform, load
 from apscheduler.schedulers.blocking import BlockingScheduler
 
+from src.etl.utils.pipeline_cleanup import run_with_cleanup
+
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 sources_config = load_yaml(load.SOURCES_CONFIG_PATH)
 
-def run(**kwargs):
+def _run_steps(**kwargs):
     env_path = os.environ.get("OBSAN_INPUT_FILE")
     silver_path = Path(env_path) if env_path else PROJECT_ROOT / sources_config["divipola"]["source"]["silver_fact_dir"]
 
@@ -25,6 +27,10 @@ def run(**kwargs):
         print("Iniciando carga...")
         load.run(input_path=silver_path)
         print("Carga completada.")
+
+
+def run(**kwargs):
+    return run_with_cleanup(__name__, _run_steps, **kwargs)
 
 if __name__ == "__main__":
     scheduler = BlockingScheduler()

@@ -138,6 +138,57 @@ def load_run_parquets(files: list[Path]) -> pd.DataFrame:
     dfs = [pd.read_parquet(file) for file in files]
     return pd.concat(dfs, ignore_index=True)
 
+
+def summarize_run_files(files: list[Path], config: dict) -> str | None:
+    if not files:
+        logging.info("No se descargaron filas.")
+        return None
+
+    total_rows = 0
+    columns: list[str] | None = None
+    min_incremental = None
+    max_incremental = None
+    incremental_column = config.get("incremental", {}).get("column")
+    incremental_column = incremental_column.lower() if incremental_column else None
+
+    for file_path in files:
+        df = pd.read_parquet(file_path)
+        total_rows += len(df)
+
+        if columns is None:
+            columns = df.columns.tolist()
+
+        if incremental_column and incremental_column in df.columns:
+            parsed = pd.to_datetime(df[incremental_column], errors="coerce", utc=True)
+            current_min = parsed.dropna().min()
+            current_max = parsed.dropna().max()
+
+            if pd.notna(current_min):
+                min_incremental = (
+                    current_min
+                    if min_incremental is None
+                    else min(min_incremental, current_min)
+                )
+
+            if pd.notna(current_max):
+                max_incremental = (
+                    current_max
+                    if max_incremental is None
+                    else max(max_incremental, current_max)
+                )
+
+    logging.info("Filas totales descargadas: %s", total_rows)
+    logging.info("Columnas descargadas: %s", columns or [])
+
+    if incremental_column:
+        logging.info("Valor mínimo incremental: %s", min_incremental)
+        logging.info("Valor máximo incremental: %s", max_incremental)
+
+    if max_incremental is None:
+        return None
+
+    return pd.Timestamp(max_incremental).isoformat()
+
 def extract_data(
         PROJECT_ROOT: Path,
         LOG_DIR: Path,
@@ -173,12 +224,9 @@ def extract_data(
             )
         return None
 
-    df_run = load_run_parquets(files)
-    log_run_summary(df_run, config)
+    max_incremental_value = summarize_run_files(files, config)
 
     if extraction_mode == "incremental":
-        max_incremental_value = get_incremental_max_value(df_run, config)
-
         update_state(
             key=key,
             incremental_value=max_incremental_value,
