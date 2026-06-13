@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import logging
+import sqlite3
 import sys
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
 import pandas as pd
 
@@ -241,6 +243,313 @@ def upsert_victim_event_type(df: pd.DataFrame, dimension_dir: Path, config: dict
     return combined_dim
 
 
+def read_bronze_page(file_path: Path, config: dict) -> pd.DataFrame:
+    required_columns = config["validation"]["required_columns"]
+
+    try:
+        df = pd.read_parquet(file_path, columns=required_columns)
+    except TypeError:
+        df = pd.read_parquet(file_path)
+
+    df = clean_columns(df)
+    validate_required_columns(df, required_columns)
+    df = normalize_types(df, config)
+    df = parse_fecha_corte(df, config)
+
+    return df
+
+
+def prepare_page_for_sqlite(df: pd.DataFrame, config: dict) -> pd.DataFrame:
+    dedup_cfg = config["deduplication"]
+    fact_cfg = config["fact_table"]
+    date_cfg = config["date_parsing"]
+
+    id_column = dedup_cfg["id_column"]
+    order_column = dedup_cfg["order_column"]
+    parsed_date_column = date_cfg["parsed_column"]
+    invalid_date_column = date_cfg["invalid_flag_column"]
+    metric_column = fact_cfg["metric_column"]
+
+    columns = [
+        id_column,
+        order_column,
+        parsed_date_column,
+        invalid_date_column,
+        "cod_ciudad_muni",
+        "param_hecho",
+        "hecho",
+        "sexo",
+        metric_column,
+    ]
+
+    df_page = df[columns].copy()
+    df_page[order_column] = pd.to_datetime(df_page[order_column], errors="coerce", utc=True)
+    df_page = (
+        df_page
+        .dropna(subset=[id_column, order_column])
+        .sort_values([id_column, order_column])
+        .drop_duplicates(subset=[id_column], keep=dedup_cfg["keep"])
+    )
+
+    df_page[parsed_date_column] = (
+        pd.to_datetime(df_page[parsed_date_column], errors="coerce")
+        .dt.strftime("%Y-%m-%d")
+    )
+    df_page[invalid_date_column] = df_page[invalid_date_column].fillna(True).astype(int)
+    df_page[order_column] = df_page[order_column].astype("int64")
+    df_page["param_hecho"] = pd.to_numeric(df_page["param_hecho"], errors="coerce")
+    df_page[metric_column] = pd.to_numeric(df_page[metric_column], errors="coerce")
+
+    for column in [id_column, "cod_ciudad_muni", "hecho", "sexo"]:
+        df_page[column] = df_page[column].astype("string").str.strip()
+
+    return df_page.astype(object).where(pd.notna(df_page), None)
+
+
+def initialize_latest_rows_table(conn: sqlite3.Connection) -> None:
+    conn.execute("""
+        CREATE TABLE latest_victimas (
+            source_id TEXT PRIMARY KEY,
+            updated_at_ns INTEGER NOT NULL,
+            date_victim TEXT,
+            invalid_date INTEGER,
+            id_mun TEXT,
+            id_victim_event REAL,
+            event_name TEXT,
+            sexo TEXT,
+            victim_count REAL
+        );
+    """)
+
+
+def upsert_latest_rows(conn: sqlite3.Connection, df_page: pd.DataFrame) -> None:
+    rows = [
+        (
+            row[":id"],
+            int(row[":updated_at"]),
+            row["date_victim"],
+            row["invalid_date"],
+            row["cod_ciudad_muni"],
+            row["param_hecho"],
+            row["hecho"],
+            row["sexo"],
+            row["per_ocu"],
+        )
+        for row in df_page.to_dict("records")
+    ]
+
+    if not rows:
+        return
+
+    conn.executemany(
+        """
+        INSERT INTO latest_victimas (
+            source_id,
+            updated_at_ns,
+            date_victim,
+            invalid_date,
+            id_mun,
+            id_victim_event,
+            event_name,
+            sexo,
+            victim_count
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(source_id) DO UPDATE SET
+            updated_at_ns = excluded.updated_at_ns,
+            date_victim = excluded.date_victim,
+            invalid_date = excluded.invalid_date,
+            id_mun = excluded.id_mun,
+            id_victim_event = excluded.id_victim_event,
+            event_name = excluded.event_name,
+            sexo = excluded.sexo,
+            victim_count = excluded.victim_count
+        WHERE excluded.updated_at_ns >= latest_victimas.updated_at_ns;
+        """,
+        rows,
+    )
+
+
+def upsert_victim_event_type_from_sqlite(
+    conn: sqlite3.Connection,
+    dimension_dir: Path,
+    config: dict,
+) -> pd.DataFrame:
+    dim_cfg = config["dimensions"]["victim_event_type"]
+    output_id_col = dim_cfg["output_id_column"]
+    output_name_col = dim_cfg["output_name_column"]
+    file_name = dim_cfg["file_name"]
+
+    dimension_dir.mkdir(parents=True, exist_ok=True)
+    dim_path = dimension_dir / file_name
+
+    current_dim = pd.read_sql_query(
+        """
+        SELECT DISTINCT
+            id_victim_event,
+            event_name
+        FROM latest_victimas
+        WHERE id_victim_event IS NOT NULL
+        """,
+        conn,
+    ).rename(
+        columns={
+            "id_victim_event": output_id_col,
+            "event_name": output_name_col,
+        }
+    )
+
+    current_dim[output_id_col] = pd.to_numeric(current_dim[output_id_col], errors="coerce")
+    current_dim = (
+        current_dim
+        .dropna(subset=[output_id_col])
+        .drop_duplicates(subset=[output_id_col], keep="last")
+        .sort_values(output_id_col)
+        .reset_index(drop=True)
+    )
+    current_dim[output_id_col] = current_dim[output_id_col].astype(int)
+
+    if not dim_path.exists():
+        current_dim.to_parquet(dim_path, index=False)
+        logging.info("Dimensión victim_event_type creada en: %s", dim_path)
+        logging.info("Eventos guardados: %s", len(current_dim))
+        return current_dim
+
+    existing_dim = pd.read_parquet(dim_path)
+    combined_dim = (
+        pd.concat([existing_dim, current_dim], ignore_index=True)
+        .drop_duplicates(subset=[output_id_col], keep="last")
+        .sort_values(output_id_col)
+        .reset_index(drop=True)
+    )
+    combined_dim.to_parquet(dim_path, index=False)
+
+    logging.info("Dimensión victim_event_type actualizada en: %s", dim_path)
+    logging.info("Nuevos eventos agregados: %s", len(combined_dim) - len(existing_dim))
+    logging.info("Total eventos en dimensión: %s", len(combined_dim))
+
+    return combined_dim
+
+
+def build_victim_unit_from_sqlite(conn: sqlite3.Connection, config: dict) -> pd.DataFrame:
+    output_columns = config["fact_table"]["output_columns"]
+
+    victim_unit = pd.read_sql_query(
+        """
+        SELECT
+            date_victim,
+            id_mun,
+            id_victim_event,
+            sexo,
+            SUM(victim_count) AS victim_count
+        FROM latest_victimas
+        WHERE victim_count IS NOT NULL
+        GROUP BY
+            date_victim,
+            id_mun,
+            id_victim_event,
+            sexo
+        """,
+        conn,
+        parse_dates=["date_victim"],
+    )
+
+    victim_unit["id_victim_event"] = pd.to_numeric(
+        victim_unit["id_victim_event"],
+        errors="coerce",
+    )
+    victim_unit = victim_unit.sort_values(
+        ["date_victim", "id_mun", "id_victim_event", "sexo"]
+    ).reset_index(drop=True)
+    victim_unit = victim_unit[output_columns]
+
+    logging.info("Filas finales de victim_unit: %s", len(victim_unit))
+
+    return victim_unit
+
+
+def build_victim_unit_golden_from_sqlite(conn: sqlite3.Connection) -> pd.DataFrame:
+    victim_unit_golden = pd.read_sql_query(
+        """
+        SELECT
+            CAST(strftime('%Y', date_victim) AS INTEGER) AS year,
+            id_mun,
+            id_victim_event,
+            sexo,
+            SUM(victim_count) AS victim_count
+        FROM latest_victimas
+        WHERE victim_count IS NOT NULL
+        GROUP BY
+            year,
+            id_mun,
+            id_victim_event,
+            sexo
+        """,
+        conn,
+    )
+
+    victim_unit_golden["id_victim_event"] = pd.to_numeric(
+        victim_unit_golden["id_victim_event"],
+        errors="coerce",
+    )
+
+    logging.info("Filas finales de victim_unit_golden: %s", len(victim_unit_golden))
+
+    return victim_unit_golden
+
+
+def build_outputs_from_run(
+    run_dir: Path,
+    dimension_dir: Path,
+    config: dict,
+) -> tuple[pd.DataFrame, pd.DataFrame, int]:
+    files = sorted(run_dir.glob("*.parquet"))
+
+    if not files:
+        raise ValueError(f"No se encontraron archivos parquet en {run_dir}")
+
+    logging.info("Archivos parquet encontrados en la corrida: %s", len(files))
+
+    with TemporaryDirectory(prefix="victimas_") as tmp_dir:
+        db_path = Path(tmp_dir) / "victimas.sqlite"
+        conn = sqlite3.connect(db_path)
+
+        try:
+            initialize_latest_rows_table(conn)
+
+            total_rows = 0
+            for index, file_path in enumerate(files, start=1):
+                df_page = read_bronze_page(file_path, config)
+                total_rows += len(df_page)
+                prepared_page = prepare_page_for_sqlite(df_page, config)
+                upsert_latest_rows(conn, prepared_page)
+
+                if index % 10 == 0 or index == len(files):
+                    conn.commit()
+                    logging.info(
+                        "Transformadas %s/%s páginas bronze (%s filas leídas).",
+                        index,
+                        len(files),
+                        total_rows,
+                    )
+
+            conn.commit()
+            logging.info("Filas cargadas desde bronze: %s", total_rows)
+
+            upsert_victim_event_type_from_sqlite(conn, dimension_dir, config)
+            victim_unit = build_victim_unit_from_sqlite(conn, config)
+            victim_unit_golden = build_victim_unit_golden_from_sqlite(conn)
+            invalid_dates = int(
+                conn.execute(
+                    "SELECT COUNT(*) FROM latest_victimas WHERE invalid_date = 1"
+                ).fetchone()[0]
+            )
+
+            return victim_unit, victim_unit_golden, invalid_dates
+        finally:
+            conn.close()
+
+
 # ============================================================
 # TABLA DE HECHOS SILVER
 # ============================================================
@@ -332,10 +641,7 @@ def save_victim_unit(
 # ============================================================
 # RESUMEN
 # ============================================================
-def log_summary(df: pd.DataFrame, victim_unit: pd.DataFrame, config: dict) -> None:
-    invalid_col = config["date_parsing"]["invalid_flag_column"]
-    invalid_dates = int(df[invalid_col].sum()) if invalid_col in df.columns else 0
-
+def log_summary(victim_unit: pd.DataFrame, invalid_dates: int) -> None:
     logging.info("Resumen de transformación:")
     logging.info("Fechas no parseadas: %s", invalid_dates)
 
@@ -363,23 +669,15 @@ def run() -> None:
     run_dir = get_latest_bronze_run(bronze_dir)
     run_name = extract_run_name(run_dir)
 
-    df = load_latest_bronze_run(run_dir)
-    df = clean_columns(df)
-
-    validate_required_columns(df, config["validation"]["required_columns"])
-
-    df = normalize_types(df, config)
-    df = parse_fecha_corte(df, config)
-    df = deduplicate_by_id(df, config)
-    df_cleaned = apply_business_rules(df, config)
-
-    event_df = upsert_victim_event_type(df, dimension_dir, config)
-    victim_unit = build_victim_unit(df_cleaned, config)
-    victim_unit_golden = build_victim_unit_golden(df_cleaned, config)
+    victim_unit, victim_unit_golden, invalid_dates = build_outputs_from_run(
+        run_dir,
+        dimension_dir,
+        config,
+    )
 
     save_victim_unit(victim_unit, run_name, fact_dir, config)
     save_victim_unit(victim_unit_golden, run_name, fact_dir_golden, config)
-    log_summary(df, victim_unit, config)
+    log_summary(victim_unit, invalid_dates)
 
     logging.info("Transformación finalizada correctamente")
 
