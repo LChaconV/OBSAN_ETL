@@ -1,8 +1,11 @@
 
 import os
+import sys
 import time
 import requests
 import logging
+
+SERVER_DOWN_CODES = {502, 503, 504}
 
 def build_headers() -> dict:
     headers = {
@@ -58,6 +61,16 @@ def fetch_api_page(
                 )
                 time.sleep(wait_seconds)
                 continue
+
+            if status_code in SERVER_DOWN_CODES:
+                logging.error(
+                    "El servidor de la fuente de datos está caído o sobrecargado (HTTP %s). "
+                    "No se pudo completar la extracción después de %s intentos. "
+                    "Intenta ejecutar el pipeline más tarde; el checkpoint está guardado y no perderás progreso.",
+                    status_code,
+                    max_retries,
+                )
+                sys.exit(1)
 
             raise
 
