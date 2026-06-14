@@ -191,10 +191,11 @@ def _render_layer_checkbox(layer: GeoLayer, cat_id: str, cat_cfg: dict):
             help_text += f"\n\n📊 Fuente: {layer.source_name}"
         if getattr(layer, "source_url", ""):
             help_text += f"\n🔗 {layer.source_url}"
+        gen = st.session_state.get("layer_reset_gen", 0)
         checked = st.checkbox(
             label = layer.label,
             value = is_active,
-            key   = f"chk_{layer.id}",
+            key   = f"chk_{layer.id}_{gen}",
             help  = help_text or None,
         )
 
@@ -283,4 +284,5 @@ def _render_footer():
         if st.button("🗑️ Limpiar capas", width="stretch"):
             st.session_state.active_layers              = []
             st.session_state.active_exclusive_category  = None
+            st.session_state.layer_reset_gen            = st.session_state.get("layer_reset_gen", 0) + 1
             st.rerun()
