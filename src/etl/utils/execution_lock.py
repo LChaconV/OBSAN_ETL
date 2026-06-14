@@ -1,13 +1,17 @@
 from __future__ import annotations
 
-import fcntl
 import json
 import os
+import sys
 import time
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Iterator
 
+_IS_WINDOWS = sys.platform == "win32"
+
+if not _IS_WINDOWS:
+    import fcntl
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_LOCK_PATH = PROJECT_ROOT / "state" / "etl_execution.lock"
@@ -42,6 +46,9 @@ def read_lock_metadata(path: Path | None = None) -> dict:
 
 
 def read_active_lock_metadata(path: Path | None = None) -> dict:
+    if _IS_WINDOWS:
+        return {}
+
     lock_path = path or get_lock_path()
 
     try:
@@ -64,6 +71,16 @@ def acquire_etl_execution_lock(
     owner: str,
     blocking: bool,
 ) -> Iterator[dict]:
+    if _IS_WINDOWS:
+        metadata = {
+            "pipeline": pipeline_name,
+            "owner": owner,
+            "pid": os.getpid(),
+            "started_at": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
+        }
+        yield metadata
+        return
+
     lock_path = get_lock_path()
     lock_path.parent.mkdir(parents=True, exist_ok=True)
 
