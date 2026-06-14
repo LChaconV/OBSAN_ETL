@@ -716,7 +716,8 @@ LAYER_TREE = LayerGroup(
             label    = "Pobreza",
             icon     = "📉",
             expanded = False,
-            items    = [pobreza_monetaria_jefe_hogar,pobreza_monetaria_por_genero],
+            items    = [#pobreza_monetaria_jefe_hogar,
+                        pobreza_monetaria_por_genero],
         ),
         LayerGroup(
             id       = "beneficiarios",
