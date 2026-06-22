@@ -26,6 +26,7 @@ logs/
 *.ipynb
 .env
 .env.production
+.env.audit
 config/db.yaml
 config/state_db.yaml
 state/state.yaml
