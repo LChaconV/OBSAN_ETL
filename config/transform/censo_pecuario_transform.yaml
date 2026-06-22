@@ -132,8 +132,11 @@ porcino:
   validation:
     required_columns:
     - CODIGO MUNICIPIO
-    - TOTAL CERDOS
-    - TOTAL PREDIOS PORCICOLAS
+    - - TOTAL CERDOS
+      - TOTAL PORCINOS
+    - - TOTAL PREDIOS PORCICOLAS
+      - TOTAL PREDIOS PORCINOS
+      - TOTAL PREDIOS PRODUCCIÓN TECNIFICADA + TRASPATIO
   fact_table:
     rename_columns:
       CODIGO MUNICIPIO: id_mun
