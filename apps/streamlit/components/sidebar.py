@@ -49,8 +49,7 @@ def _render_header():
         st.session_state.db_status = (ok, msg)
 
     ok, msg = st.session_state.db_status
-    st.markdown("🟢" if ok else "🔴",
-                help=f"{'Conectado' if ok else 'Sin conexión'} — {msg}")
+    st.markdown("Conectado a la base de datos 🟢" if ok else "Sin conexión a la base de datos🔴")
 
 
 def _render_year_filter():
