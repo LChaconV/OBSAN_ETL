@@ -52,14 +52,30 @@ def _render_header():
     st.markdown("Conectado a la base de datos 🟢" if ok else "Sin conexión a la base de datos🔴")
 
 
+def _collect_available_years() -> list:
+    """
+    Años disponibles en el conjunto de capas registradas, no solo en
+    perfil_antioquia. Cada capa con data_table/year_col aporta sus propios
+    años distintos para que el filtro global cubra toda la data cargada.
+    """
+    years = set()
+    for layer in LAYER_TREE.all_layers():
+        table    = getattr(layer, "data_table", "")
+        year_col = getattr(layer, "year_col", "")
+        if not table or not year_col:
+            continue
+        rows = query_rows(
+            f'SELECT DISTINCT "{year_col}" FROM "{table}" WHERE "{year_col}" IS NOT NULL'
+        )
+        years.update(r[year_col] for r in rows)
+    return sorted(years, reverse=True)
+
+
 def _render_year_filter():
     st.markdown("**📅 Año**")
 
     if "available_years" not in st.session_state:
-        rows = query_rows(
-            "SELECT DISTINCT year FROM perfil_antioquia ORDER BY year DESC"
-        )
-        st.session_state.available_years = [r["year"] for r in rows] if rows else []
+        st.session_state.available_years = _collect_available_years()
 
     years = st.session_state.available_years
     if not years:
