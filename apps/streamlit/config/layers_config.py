@@ -716,8 +716,7 @@ LAYER_TREE = LayerGroup(
             label    = "Pobreza",
             icon     = "📉",
             expanded = False,
-            items    = [#
-                pobreza_monetaria_jefe_hogar,
+            items    = [#pobreza_monetaria_jefe_hogar,
                         pobreza_monetaria_por_genero],
         ),
         LayerGroup(
@@ -804,7 +803,7 @@ CATEGORIES = {
     "salud": {
         "label": "Salud",
         "icon":  "🏥",
-        "exclusive": True,
+        "exclusive": False,
     },
     "socioeconomico": {
         "label": "Condiciones Socioeconómicas",
