@@ -34,3 +34,4 @@ state/state_db.yaml
 state/*.lock
 *.zip
 *.tmp.*
+db.yaml
