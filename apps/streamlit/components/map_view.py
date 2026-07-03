@@ -168,8 +168,9 @@ def render_map():
                 folium.Element(_build_panel_a_html(panel_data, year))
             )
 
-    # Key dinámico para forzar rerenderizado cuando cambia el panel
-    map_key = f"main_map_{st.session_state.get('selected_data_key', '')}_{st.session_state.get('clicked_muni_id', '')}_{st.session_state.get('clicked_muni_coords', '')}"
+    # Key dinámico: incluye capas activas para forzar rerenderizado cuando cambia la selección
+    layers_sig = "_".join(active_ids_sorted)
+    map_key = f"main_map_{layers_sig}_{st.session_state.get('selected_data_key', '')}_{st.session_state.get('clicked_muni_id', '')}_{st.session_state.get('clicked_muni_coords', '')}"
     # ── Panel B flotante ──────────────────────────────────────
     muni_id  = st.session_state.get("clicked_muni_id")
     cat_id   = st.session_state.get("active_exclusive_category")
