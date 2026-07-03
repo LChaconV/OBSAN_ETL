@@ -10,6 +10,7 @@ Panel B: datos de la categoría activa para un municipio
 
 import streamlit as st
 from core.db import get_subregion_at_point, CATEGORY_QUERY_MAP
+from core.format_utils import format_cop
 from config.layers_config import CATEGORIES
 
 
@@ -36,6 +37,8 @@ def _fmt(value, decimals: int = 1, unit: str = "%") -> str:
     if value is None:
         return "—"
     try:
+        if unit == "COP":
+            return format_cop(value, decimals=decimals)
         formatted = f"{float(value):,.{decimals}f}"
         return f"{formatted} {unit}".strip() if unit else formatted
     except Exception:

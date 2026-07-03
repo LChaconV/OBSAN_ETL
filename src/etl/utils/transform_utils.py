@@ -42,6 +42,33 @@ def load_latest_bronze_run(run_dir: Path) -> pd.DataFrame:
     logging.info("Filas cargadas desde bronze: %s", len(df))
     return df
 
+
+def load_all_bronze_runs(bronze_dir: Path) -> pd.DataFrame:
+    """
+    Lee TODOS los run_* de bronze y los concatena en un único DataFrame.
+    Usado por pipelines incrementales donde la garantía de no duplicar
+    recaé en deduplicar por :id (fuente) tras acumular el histórico
+    completo, en lugar de sumar deltas en el UPSERT.
+    """
+    run_dirs = sorted(
+        p for p in bronze_dir.iterdir()
+        if p.is_dir() and p.name.startswith("run_")
+    )
+    if not run_dirs:
+        raise ValueError(f"No se encontraron carpetas run_ en {bronze_dir}")
+
+    logging.info("Bronze runs encontradas: %s", [r.name for r in run_dirs])
+
+    all_dfs = []
+    for run_dir in run_dirs:
+        files = sorted(run_dir.glob("*.parquet"))
+        for f in files:
+            all_dfs.append(pd.read_parquet(f))
+
+    df = pd.concat(all_dfs, ignore_index=True)
+    logging.info("Filas totales acumuladas de todos los runs: %s", len(df))
+    return df
+
 def load_latest_silver_run(silver_dir: Path, extension: str = ".csv") -> pd.DataFrame:
     # 1. Buscar archivos con la extensión indicada
     files = [p for p in silver_dir.iterdir() if p.is_file() and p.suffix == extension]
@@ -145,6 +172,8 @@ def normalize_types(df: pd.DataFrame, config: dict) -> pd.DataFrame:
     if numeric_columns:
         for col in numeric_columns:
             if col in df.columns:
+                if df[col].dtype == object:
+                    df[col] = df[col].str.replace(",", "", regex=False)
                 df[col] = pd.to_numeric(df[col], errors="coerce")
 
     if datetime_columns:

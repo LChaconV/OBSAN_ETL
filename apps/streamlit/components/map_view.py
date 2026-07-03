@@ -11,6 +11,7 @@ from config.layers_config import LAYER_TREE, MAP_CONFIG
 from core.layer import (ChoroplethLayer, PolygonLayer, PointLayer, BubbleLayer,
                         BarChartLayer, BeneficiaryLayer, LineLayer, VictimLayer,
                         HatchLayer, IconScaleLayer)
+from core.format_utils import format_cop
 def _get_muni_at_point(lat: float, lng: float) -> dict | None:
     """Identifica el municipio en un punto dado."""
     from core.db import query_rows
@@ -1133,7 +1134,10 @@ def _add_icon_scale_layer(
                 box-shadow: 0 2px 5px rgba(0,0,0,0.3);
             ">{layer.icon}</div>"""
 
-        unit_str = f" {layer.value_unit}" if layer.value_unit else ""
+        is_cop = (layer.value_unit or "").lower() == "cop"
+        valor_str = format_cop(valor) if is_cop else (
+            f"{valor:,.1f}{f' {layer.value_unit}' if layer.value_unit else ''}"
+        )
         tooltip_html = f"""
             <div style="font-family:sans-serif;min-width:160px;">
                 <div style="font-weight:700;font-size:13px;
@@ -1145,7 +1149,7 @@ def _add_icon_scale_layer(
                     </span>
                     <span style="font-size:13px;font-weight:700;
                                  color:{bg_color};">
-                        {valor:,.1f}{unit_str}
+                        {valor_str}
                     </span>
                 </div>
                 {"<div style='font-size:10px;color:#999;margin-top:3px;'>Año: " + str(year) + "</div>" if year else ""}
@@ -1161,16 +1165,27 @@ def _add_icon_scale_layer(
             tooltip = folium.Tooltip(tooltip_html),
         ).add_to(m)
 
+    if is_cop:
+        val_min_str = format_cop(val_min)
+        val_mid_str = format_cop((val_min + val_max) / 2)
+        val_max_str = format_cop(val_max)
+        legend_unit = ""
+    else:
+        val_min_str = f"{val_min:,.1f}"
+        val_mid_str = f"{(val_min + val_max) / 2:,.1f}"
+        val_max_str = f"{val_max:,.1f}"
+        legend_unit = layer.value_unit
+
     return {
         "type":       "icon_scale",
         "label":      layer.value_label or layer.label,
         "icon":       layer.icon,
         "color_low":  layer.color_low,
         "color_high": layer.color_high,
-        "val_min":    f"{val_min:,.1f}",
-        "val_mid":    f"{(val_min + val_max) / 2:,.1f}",
-        "val_max":    f"{val_max:,.1f}",
-        "unit":       layer.value_unit,
+        "val_min":    val_min_str,
+        "val_mid":    val_mid_str,
+        "val_max":    val_max_str,
+        "unit":       legend_unit,
     }
 
 def _build_panel_a_html(data: dict, year: int) -> str:
@@ -1326,10 +1341,13 @@ def _build_panel_b_html(data: dict, year: int, cat_id: str) -> str:
         if value is None:
             return ""
         try:
-            formatted = f"{float(value):,.1f}"
+            if unit == "COP":
+                val_str = format_cop(value)
+            else:
+                formatted = f"{float(value):,.1f}"
+                val_str = f"{formatted} {unit}".strip() if unit else formatted
         except Exception:
-            formatted = str(value)
-        val_str = f"{formatted} {unit}".strip() if unit else formatted
+            val_str = str(value)
         return f"""
         <div style="display:flex;justify-content:space-between;
                     font-size:11px;padding:1px 0;
