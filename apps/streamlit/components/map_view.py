@@ -51,6 +51,11 @@ def render_map():
 
     active_ids = st.session_state.get("active_layers", [])
 
+    _current_sig = frozenset(active_ids)
+    if _current_sig != st.session_state.get("_map_layer_sig"):
+        st.session_state["_map_layer_sig"] = _current_sig
+        st.session_state["_map_version"]   = st.session_state.get("_map_version", 0) + 1
+
     if not active_ids:
         st.info("☝️ Activa una capa desde el panel izquierdo.")
 
@@ -168,9 +173,13 @@ def render_map():
                 folium.Element(_build_panel_a_html(panel_data, year))
             )
 
-    # Key dinámico: incluye capas activas para forzar rerenderizado cuando cambia la selección
-    layers_sig = "_".join(active_ids_sorted)
-    map_key = f"main_map_{layers_sig}_{st.session_state.get('selected_data_key', '')}_{st.session_state.get('clicked_muni_id', '')}_{st.session_state.get('clicked_muni_coords', '')}"
+    # garantiza un componente React completamente nuevo (sin reutilización de estado viejo).
+    map_key = (
+        f"fmap_v{st.session_state.get('_map_version', 0)}"
+        f"_{st.session_state.get('selected_data_key', '')}"
+        f"_{st.session_state.get('clicked_muni_id', '')}"
+        f"_{st.session_state.get('clicked_muni_coords', '')}"
+    )
     # ── Panel B flotante ──────────────────────────────────────
     muni_id  = st.session_state.get("clicked_muni_id")
     cat_id   = st.session_state.get("active_exclusive_category")
@@ -587,7 +596,10 @@ def _add_bubble_layer(m, layer, year, dept_ids=()) -> dict | None:
     geojson  = _apply_percentile_filter(geojson, layer.percentile_threshold)
     features = geojson.get("features", [])
     if not features:
-        st.warning(f"Sin datos para **{layer.label}**" + (f" ({year})" if year else "") + ".")
+        msg = f"Sin datos para **{layer.label}**" + (f" ({year})" if year else "") + "."
+        if layer.category == "agropecuario" and layer.data_table == "census_livestock":
+            msg += " Cargue el archivo ICA correspondiente desde la sección de carga de datos."
+        st.warning(msg)
         return None
 
     values  = [f["properties"]["valor"] for f in features if f["properties"].get("valor") is not None]

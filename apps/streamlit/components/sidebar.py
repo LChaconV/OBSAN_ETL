@@ -141,13 +141,12 @@ def _render_categories():
             layers_by_cat[cat] = []
         layers_by_cat[cat].append(layer)
 
-    # Categoría exclusiva actualmente activa
-    active_exclusive = st.session_state.get("active_exclusive_category", None)
-
     for cat_id, cat_cfg in CATEGORIES.items():
         layers_in_cat = layers_by_cat.get(cat_id, [])
         if not layers_in_cat:
             continue
+
+        active_exclusive = st.session_state.get("active_exclusive_category", None)
 
         # Contar capas activas en esta categoría
         active_in_cat = sum(
@@ -276,7 +275,7 @@ def _deactivate_layer(layer_id: str, cat_id: str):
     if not remaining and cat_id == st.session_state.get("active_exclusive_category"):
         st.session_state.active_exclusive_category = None
 
-    st.rerun()
+        st.rerun()
 
 
 def _render_basemap_selector():
