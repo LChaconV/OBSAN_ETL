@@ -615,7 +615,7 @@ pecu_bovino = BubbleLayer(
     label      = "Bovinos",
     color_low  = "#ccfbf1",
     color_high = "#134e4a",
-    row_filter = "type = 'bovinos'",
+    row_filter = "type = 'bovino'",
     offset     = (0.04,  0.04),
     **_pecu_base,
 )
