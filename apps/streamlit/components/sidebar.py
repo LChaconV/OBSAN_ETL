@@ -97,10 +97,11 @@ def _render_year_filter():
         st.session_state.selected_year = None
         return
 
+    default_index = years.index(2023) if 2023 in years else 0
     selected = st.selectbox(
         label            = "Año",
         options          = years,
-        index            = 0,
+        index            = default_index,
         label_visibility = "collapsed",
     )
     if st.session_state.get("selected_year") != selected:
