@@ -12,6 +12,10 @@ from core.layer import (ChoroplethLayer, PolygonLayer, PointLayer, BubbleLayer,
                         BarChartLayer, BeneficiaryLayer, LineLayer, VictimLayer,
                         HatchLayer, IconScaleLayer)
 from core.format_utils import format_cop
+
+_TT_HTML = "font-family:sans-serif;font-size:13px;color:black;"
+_TT_GJ   = f"background:white;padding:8px;border-radius:4px;{_TT_HTML}"
+
 def _get_muni_at_point(lat: float, lng: float) -> dict | None:
     """Identifica el municipio en un punto dado."""
     from core.db import query_rows
@@ -576,8 +580,7 @@ def _add_choropleth_layer(m, layer, year, dept_ids=()) -> dict | None:
             fields   = ["layer_id", "nombre", "valor"],
             aliases  = ["", "Municipio:", f"{layer.value_label}:"],
             sticky   = True,
-            style    = ("background:white;color:#333;font-family:sans-serif;"
-                        "font-size:13px;padding:8px;border-radius:4px;"),
+            style    = _TT_GJ,
         ),
     ).add_to(m)
 
@@ -627,8 +630,8 @@ def _add_bubble_layer(m, layer, year, dept_ids=()) -> dict | None:
         ratio  = (valor - val_min) / rng
         radius = layer.radius_min + ratio * (layer.radius_max - layer.radius_min)
         color  = colormap(valor)
-        tip    = (f"<b>{props.get('nombre','—')}</b><br>"
-                  f"{layer.value_label}: <b>{valor:,.0f}</b>")
+        tip    = (f"<div style='{_TT_HTML}'><b>{props.get('nombre','—')}</b><br>"
+                  f"{layer.value_label}: <b>{valor:,.0f}</b></div>")
         folium.CircleMarker(
             location=[coords[1], coords[0]],
             radius=radius, color=color,
@@ -724,10 +727,12 @@ def _add_bar_chart_layer(m: folium.Map, layer: BarChartLayer, year: int, dept_id
             </div>"""
 
         tooltip_html = (
+            f"<div style='{_TT_HTML}'>"
             f"<b>{nombre}</b><br>"
             f"{props.get('value_label','')}<br>"
             f"{tooltip_rows}"
             + (f"Año: {year}" if year else "")
+            + "</div>"
         )
 
         folium.Marker(
@@ -847,11 +852,13 @@ def _add_beneficiary_layers(m: folium.Map, layers: list, year: int, dept_ids=())
         ])
 
         tooltip_html = (
+            f"<div style='{_TT_HTML}'>"
             f"<b>{data['nombre']}</b>"
-            f"<div style='font-size:11px;color:#555;'>"
+            f"<div style='font-size:11px;'>"
             f"{n} programa{'s' if n > 1 else ''}</div>"
             f"{programs_html}"
-            + (f"<div style='font-size:10px;color:#999;margin-top:4px;'>Año: {year}</div>" if year else "")
+            + (f"<div style='font-size:10px;margin-top:4px;'>Año: {year}</div>" if year else "")
+            + "</div>"
         )
 
         folium.Marker(
@@ -902,7 +909,10 @@ def _add_polygon_layer(m, layer, dept_ids=()):
         name               = layer.label,
         style_function     = style_fn,
         highlight_function = lambda f: {**style_fn(f), "weight": 2, "fillOpacity": min(layer.opacity + 0.2, 0.9)},
-        tooltip            = folium.GeoJsonTooltip(fields=layer.properties) if layer.properties else None,
+        tooltip            = folium.GeoJsonTooltip(
+            fields=layer.properties,
+            style=_TT_GJ,
+        ) if layer.properties else None,
     ).add_to(m)
 
 def _add_point_layer(m, layer):
@@ -911,8 +921,10 @@ def _add_point_layer(m, layer):
     for feat in geojson.get("features", []):
         coords = feat["geometry"]["coordinates"]
         props  = feat.get("properties", {})
-        tip    = "<br>".join([f"<b>{k}:</b> {v}" for k, v in props.items()
-                              if k not in ("layer_id","layer_label") and v is not None])
+        tip    = f"<div style='{_TT_HTML}'>" + "<br>".join([
+            f"<b>{k}:</b> {v}" for k, v in props.items()
+            if k not in ("layer_id","layer_label") and v is not None
+        ]) + "</div>"
         folium.CircleMarker(
             location=[coords[1], coords[0]],
             radius=style["radius"], color=style["color"],
@@ -946,11 +958,11 @@ def _add_victim_layer(m: folium.Map, layer: VictimLayer, year: int, dept_ids=())
         # Tabla HTML de eventos para el tooltip
         rows_html = "".join([
             f"""<tr>
-                <td style="padding:2px 8px 2px 0;font-size:11px;color:#444;">
+                <td style="padding:2px 8px 2px 0;font-size:11px;color:black;">
                     {e.get('event_name','—')}
                 </td>
                 <td style="padding:2px 0;font-size:11px;
-                           font-weight:700;text-align:right;color:#1d4ed8;">
+                           font-weight:700;text-align:right;color:black;">
                     {int(e.get('count', 0)):,}
                 </td>
             </tr>"""
@@ -958,20 +970,20 @@ def _add_victim_layer(m: folium.Map, layer: VictimLayer, year: int, dept_ids=())
         ])
 
         tooltip_html = f"""
-            <div style="font-family:sans-serif;min-width:200px;">
+            <div style="{_TT_HTML}min-width:200px;">
                 <div style="font-weight:700;font-size:13px;
                             margin-bottom:4px;">{nombre}</div>
-                <div style="font-size:10px;color:#666;margin-bottom:6px;">
+                <div style="font-size:10px;margin-bottom:6px;">
                     Total víctimas: <b>{int(total):,}</b>
                     {"· " + str(year) if year else ""}
                 </div>
                 <table style="width:100%;border-collapse:collapse;">
                     <thead>
                         <tr style="border-bottom:1px solid #ddd;">
-                            <th style="font-size:10px;color:#888;
+                            <th style="font-size:10px;color:black;
                                        font-weight:600;padding-bottom:3px;
                                        text-align:left;">Tipo de evento</th>
-                            <th style="font-size:10px;color:#888;
+                            <th style="font-size:10px;color:black;
                                        font-weight:600;padding-bottom:3px;
                                        text-align:right;">Víctimas</th>
                         </tr>
@@ -1062,6 +1074,7 @@ def _add_hatch_layer(m: folium.Map, layer: HatchLayer, dept_ids=()) -> dict | No
             fields   = ["nombre"],
             aliases  = ["Municipio PDET:"],
             sticky   = False,
+            style    = _TT_GJ,
         ),
     ).add_to(m)
 
@@ -1153,20 +1166,19 @@ def _add_icon_scale_layer(
             f"{valor:,.1f}{f' {layer.value_unit}' if layer.value_unit else ''}"
         )
         tooltip_html = f"""
-            <div style="font-family:sans-serif;min-width:160px;">
+            <div style="{_TT_HTML}min-width:160px;">
                 <div style="font-weight:700;font-size:13px;
                             margin-bottom:4px;">{nombre}</div>
                 <div style="display:flex;justify-content:space-between;
                             align-items:center;gap:12px;">
-                    <span style="font-size:11px;color:#555;">
+                    <span style="font-size:11px;">
                         {props.get('indicador', layer.label)}
                     </span>
-                    <span style="font-size:13px;font-weight:700;
-                                 color:{bg_color};">
+                    <span style="font-size:13px;font-weight:700;">
                         {valor_str}
                     </span>
                 </div>
-                {"<div style='font-size:10px;color:#999;margin-top:3px;'>Año: " + str(year) + "</div>" if year else ""}
+                {"<div style='font-size:10px;margin-top:3px;'>Año: " + str(year) + "</div>" if year else ""}
             </div>"""
 
         folium.Marker(
