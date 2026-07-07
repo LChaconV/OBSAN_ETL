@@ -101,49 +101,78 @@ def get_subregion_at_point(lat: float, lng: float, year: int) -> dict | None:
 
 def get_muni_salud(id_mun: str, year: int) -> dict:
     """Todos los indicadores de salud de un municipio."""
+    params = {"id_mun": id_mun, "year": year}
+    result: dict = {}
+
     rows = query_rows("""
-        SELECT
-            (SELECT SUM(total_cases_per_capita) FROM v_acute_malnutrition_5_pc
-             WHERE id_mun = %(id_mun)s AND year = %(year)s) AS desnutricion_aguda,
+        SELECT SUM(total_cases_per_capita) AS desnutricion_aguda
+        FROM v_acute_malnutrition_5_pc
+        WHERE id_mun = %(id_mun)s AND year = %(year)s
+    """, params)
+    result["desnutricion_aguda"] = rows[0]["desnutricion_aguda"] if rows else None
 
-            (SELECT SUM(total_cases_per_capita) FROM v_mortality_malnutrition_pc
-             WHERE id_mun = %(id_mun)s AND year = %(year)s) AS mortalidad_malnutricion,
+    rows = query_rows("""
+        SELECT SUM(total_cases_per_capita) AS mortalidad_malnutricion
+        FROM v_mortality_malnutrition_pc
+        WHERE id_mun = %(id_mun)s AND year = %(year)s
+    """, params)
+    result["mortalidad_malnutricion"] = rows[0]["mortalidad_malnutricion"] if rows else None
 
-            (SELECT SUM(total_cases_per_capita) FROM v_low_birth_weight_pc
-             WHERE id_mun = %(id_mun)s AND year = %(year)s) AS bajo_peso_nacer
-    """, {"id_mun": id_mun, "year": year})
-    return rows[0] if rows else {}
+    rows = query_rows("""
+        SELECT SUM(total_cases_per_capita) AS bajo_peso_nacer
+        FROM v_low_birth_weight_pc
+        WHERE id_mun = %(id_mun)s AND year = %(year)s
+    """, params)
+    result["bajo_peso_nacer"] = rows[0]["bajo_peso_nacer"] if rows else None
+
+    return result
 
 
 def get_muni_socioeconomico(id_mun: str, year: int) -> dict:
     """Indicadores socioeconómicos de un municipio."""
+    params = {"id_mun": id_mun, "year": year}
+    result: dict = {}
+
+    # Cada indicador se consulta de forma independiente para que tablas
+    # ausentes no silencien los demás indicadores.
     rows = query_rows("""
-        SELECT
-            (SELECT AVG(mp_idx_val) FROM mp_sex_head_hh m
-             JOIN dim_divipola d ON d.id_dept = m.id_dept
-             WHERE d.id_mun = %(id_mun)s AND m.year = %(year)s
-            ) AS pobreza_monetaria,
+        SELECT AVG(mp_idx_val) AS pobreza_monetaria
+        FROM mp_sex_head_hh m
+        JOIN dim_divipola d ON d.id_dept = m.id_dept
+        WHERE d.id_mun = %(id_mun)s AND m.year = %(year)s
+    """, params)
+    result["pobreza_monetaria"] = (rows[0]["pobreza_monetaria"] if rows else None)
 
-            (SELECT SUM(total) FROM employed_population
-             WHERE id_mun = %(id_mun)s AND year = %(year)s
-            ) AS poblacion_empleada,
+    rows = query_rows("""
+        SELECT SUM(total) AS poblacion_empleada
+        FROM employed_population
+        WHERE id_mun = %(id_mun)s AND year = %(year)s
+    """, params)
+    result["poblacion_empleada"] = (rows[0]["poblacion_empleada"] if rows else None)
 
-            (SELECT SUM(total_cases_per_capita) FROM v_school_education_pc
-             WHERE id_mun = %(id_mun)s AND year = %(year)s
-            ) AS cobertura_escolar
-    """, {"id_mun": id_mun, "year": year})
+    rows = query_rows("""
+        SELECT SUM(total_cases_per_capita) AS cobertura_escolar
+        FROM v_school_education_pc
+        WHERE id_mun = %(id_mun)s AND year = %(year)s
+    """, params)
+    result["cobertura_escolar"] = (rows[0]["cobertura_escolar"] if rows else None)
 
-    # Educación superior por nivel
+    rows = query_rows("""
+        SELECT SUM(total_cases_per_capita) AS cobertura_superior
+        FROM v_higher_education_pc
+        WHERE id_mun = %(id_mun)s AND year = %(year)s
+    """, params)
+    result["cobertura_superior"] = (rows[0]["cobertura_superior"] if rows else None)
+
     edu = query_rows("""
         SELECT prof_technician, technologist, university,
                specialization, master, doctorate
         FROM higher_education
         WHERE id_mun = %(id_mun)s AND year = %(year)s
         LIMIT 1
-    """, {"id_mun": id_mun, "year": year})
-
-    result = rows[0] if rows else {}
+    """, params)
     result["educacion_superior"] = edu[0] if edu else {}
+
     return result
 
 

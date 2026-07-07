@@ -141,7 +141,7 @@ def render_map():
                                                  dept_ids=layer_dept_ids)
                     if info:
                         legend_items.append(info)
-            except Exception as e:
+            except Exception:
                 st.warning(f"No se pudieron cargar los datos de **{layer.label}**.")
 
     # Beneficiarios con filtro
@@ -1390,10 +1390,12 @@ def _build_panel_b_html(data: dict, year: int, cat_id: str) -> str:
         content += section("📊 Socioeconómico")
         content += kv("Pobreza monetaria",  data.get("pobreza_monetaria"),  "%")
         content += kv("Población empleada", data.get("poblacion_empleada"), "personas")
-        content += kv("Cobertura escolar",  data.get("cobertura_escolar"),  "estudiantes")
+        content += section("🏫 Educación")
+        content += kv("Cobertura escolar (x 100 hab.)",   data.get("cobertura_escolar"),  "")
+        content += kv("Cobertura superior (x 100 hab.)",  data.get("cobertura_superior"), "")
         edu = data.get("educacion_superior", {})
         if edu and any(v for v in edu.values() if v):
-            content += section("📚 Educación Superior")
+            content += section("📚 Educación Superior — Detalle")
             content += kv("Técnico",         edu.get("prof_technician"), "")
             content += kv("Tecnólogo",       edu.get("technologist"),    "")
             content += kv("Universitario",   edu.get("university"),      "")
@@ -1439,25 +1441,27 @@ def _build_panel_b_html(data: dict, year: int, cat_id: str) -> str:
             content += section("🛒 Mercados Campesinos")
             for m in mercados:
                 content += f"<div style='font-size:11px;padding:1px 0;'>📍 {m.get('name','—')}</div>"
-                agro = data.get("agricola", [])
         agro = data.get("agricola") or []
         if agro:
             content += section("🌱 Producción Agrícola")
             for a in agro:
-                content += kv(
-                    a.get("type", "—"),
-                    f"Rend: {a.get('avg_yield','—')} t/ha · "
-                    #f"Prod: {a.get('avg_production','—')} t · "
-                    #f"Área: {a.get('avg_area','—')} ha",
-                    ""
-                )
+                try:
+                    rend = f"{float(a.get('avg_yield', 0) or 0):,.2f} t/ha"
+                except Exception:
+                    rend = "—"
+                content += kv(a.get("type", "—"), rend, "")
     elif cat_id == "conflicto":
         victimas = data.get("victimas", [])
+        iraca    = data.get("iraca", [])
+        if not victimas and not iraca:
+            content += (
+                "<div style='font-size:11px;color:#888;padding:6px 0;'>"
+                "Sin datos de conflicto disponibles para este municipio y año.</div>"
+            )
         if victimas:
             content += section("🕊️ Víctimas")
             for v in victimas:
                 content += kv(v.get("event_name", "—"), v.get("total"), "personas")
-        iraca = data.get("iraca", [])
         if iraca:
             content += section("👥 IRACA")
             for i in iraca:

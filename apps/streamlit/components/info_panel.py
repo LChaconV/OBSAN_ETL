@@ -351,13 +351,15 @@ def _render_salud(data: dict):
 
 def _render_socioeconomico(data: dict):
     _section("📊 Condiciones Socioeconómicas")
-    _kv("Pobreza monetaria",  data.get("pobreza_monetaria"))   # viene en %
-    _kv("Población empleada", data.get("poblacion_empleada"),  unit="personas")
-    _kv("Cobertura escolar",  data.get("cobertura_escolar"),   unit="estudiantes")
+    _kv("Pobreza monetaria",  data.get("pobreza_monetaria"))
+    _kv("Población empleada", data.get("poblacion_empleada"), unit="personas")
+    _section("🏫 Educación")
+    _kv("Cobertura escolar (x 100 hab.)",  data.get("cobertura_escolar"),  unit="")
+    _kv("Cobertura superior (x 100 hab.)", data.get("cobertura_superior"), unit="")
 
     edu = data.get("educacion_superior", {})
     if edu and any(v for v in edu.values() if v):
-        _section("📚 Educación Superior")
+        _section("📚 Educación Superior — Detalle")
         _kv("Técnico profesional", edu.get("prof_technician"), unit="")
         _kv("Tecnólogo",           edu.get("technologist"),    unit="")
         _kv("Universitario",       edu.get("university"),      unit="")
@@ -418,6 +420,16 @@ def _render_agropecuario(data: dict):
                 f"📍 {m.get('name','—')}</div>",
                 unsafe_allow_html=True,
             )
+
+    agro = data.get("agricola") or []
+    if agro:
+        _section("🌱 Producción Agrícola")
+        for a in agro:
+            try:
+                rend = f"{float(a.get('avg_yield', 0) or 0):,.2f} t/ha"
+            except Exception:
+                rend = "—"
+            _kv(a.get("type", "—"), rend)
 
 
 def _render_conflicto(data: dict):
