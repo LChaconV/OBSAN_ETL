@@ -15,6 +15,45 @@ from upload.backend_logging import log_upload_event, log_upload_exception
 
 SAMPLE_BYTES = 65536
 
+# Cabecera OLE2/CFB: archivos .xlsx cifrados se guardan en este formato en vez de ZIP.
+_OLE2_MAGIC = b"\xD0\xCF\x11\xE0\xA1\xB1\x1A\xE1"
+
+_ENCRYPTION_KEYWORDS = (
+    "encrypt",
+    "password",
+    "protected",
+    "badzipfile",
+    "not a zip file",
+    "is encrypted",
+    "workbook is encrypted",
+)
+
+
+def _detect_encrypted(file_obj, ext: str) -> bool:
+    """
+    Devuelve True si el archivo parece estar cifrado o protegido con contraseña.
+    Para .xlsx compara los primeros bytes con la firma OLE2 (que reemplaza al ZIP).
+    """
+    if ext in ("xlsx",):
+        try:
+            header = file_obj.read(8)
+            file_obj.seek(0)
+            if header == _OLE2_MAGIC:
+                return True
+        except Exception:
+            file_obj.seek(0)
+    return False
+
+
+def _is_encryption_error(exc: Exception) -> bool:
+    """detecta si la excepción viene de un archivo cifrado/protegido."""
+    msg       = str(exc).lower()
+    type_name = type(exc).__name__.lower()
+    return (
+        any(kw in msg for kw in _ENCRYPTION_KEYWORDS)
+        or "badzipfile" in type_name
+    )
+
 
 @dataclass
 class ValidationResult:
@@ -25,6 +64,17 @@ class ValidationResult:
     def __post_init__(self):
         if self.details is None:
             self.details = []
+
+
+def _encrypted_result() -> ValidationResult:
+    return ValidationResult(
+        valid   = False,
+        message = "El archivo está protegido con contraseña o cifrado.",
+        details = [
+            "No es posible leer un archivo encriptado o protegido con contraseña.",
+            "Por favor, desbloquéelo o guárdelo sin protección antes de subirlo.",
+        ],
+    )
 
 
 def validate_file(
@@ -152,6 +202,10 @@ def _validate_not_empty(file_obj, filename: str) -> ValidationResult:
 def _validate_tabular(file_obj, filename: str, required_cols: list) -> ValidationResult:
     """Valida Excel y CSV: lee las primeras filas y verifica columnas."""
     ext = _get_extension(filename)
+
+    if _detect_encrypted(file_obj, ext):
+        return _encrypted_result()
+
     try:
         if ext == "xlsx" or ext == "xls":
             df = pd.read_excel(file_obj, nrows=5)
@@ -159,6 +213,8 @@ def _validate_tabular(file_obj, filename: str, required_cols: list) -> Validatio
             df = pd.read_csv(file_obj, nrows=5)
         file_obj.seek(0)
     except Exception as e:
+        if _is_encryption_error(e):
+            return _encrypted_result()
         return ValidationResult(
             valid   = False,
             message = "No se pudo leer el archivo.",
