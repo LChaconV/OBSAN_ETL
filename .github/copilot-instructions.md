@@ -4,7 +4,7 @@
 
 - Install the environment with `uv sync`.
 - There is no separate build step defined in the repository.
-- Run the Streamlit app from the repository root with `uv run streamlit run apps/streamlit/app.py`.
+- Run the Streamlit app from the repository root with `uv run streamlit run apps/streamlit/Geovisor.py`.
 - Run one ETL source from the CLI with `uv run -m src.runner "<source_folder_name>"`. Example: `uv run -m src.runner "api_edu_superior"`.
 - Run the scheduler with `uv run -m src.scheduler`.
 - There is no in-repo automated test suite or lint configuration (`pytest`, `ruff`, `mypy`, GitHub Actions, and `tests/` are absent). For narrow validation, run a single pipeline module directly, for example:

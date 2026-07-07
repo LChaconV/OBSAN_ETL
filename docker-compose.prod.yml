@@ -70,7 +70,7 @@ services:
       - run
       - streamlit
       - run
-      - apps/streamlit/app.py
+      - apps/streamlit/Geovisor.py
       - --server.address=0.0.0.0
       - --server.port=8501
       - --server.headless=true

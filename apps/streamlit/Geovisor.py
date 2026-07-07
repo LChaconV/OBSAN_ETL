@@ -1,6 +1,6 @@
 """
-app.py — Observatorio de Seguridad Alimentaria de Antioquia
-Ejecutar con: uv run streamlit run apps/streamlit/app.py
+Geovisor.py — Observatorio de Seguridad Alimentaria de Antioquia
+Ejecutar con: uv run streamlit run apps/streamlit/Geovisor.py
 """
 
 import streamlit as st

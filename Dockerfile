@@ -123,4 +123,4 @@ USER 10001:10001
 EXPOSE 8501
 
 ENTRYPOINT ["tini", "--"]
-CMD ["uv", "run", "streamlit", "run", "apps/streamlit/app.py", "--server.address=0.0.0.0", "--server.port=8501", "--server.headless=true", "--server.maxUploadSize=300", "--server.maxMessageSize=300"]
+CMD ["uv", "run", "streamlit", "run", "apps/streamlit/Geovisor.py", "--server.address=0.0.0.0", "--server.port=8501", "--server.headless=true", "--server.maxUploadSize=300", "--server.maxMessageSize=300"]
