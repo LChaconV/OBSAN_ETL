@@ -15,6 +15,22 @@ from core.db import test_connection, query_rows
 NON_EXCLUSIVE = {"seguridad_alimentaria", "contexto"}
 
 
+@st.cache_data(ttl=300, show_spinner=False)
+def _layer_has_data(layer_id: str, data_table: str, year_col: str, year: int, row_filter: str) -> bool:
+    """Devuelve False si la capa no tiene registros para el año dado."""
+    if not data_table or not year_col or not year:
+        return True
+    try:
+        where_parts = [f'"{year_col}" = {year}']
+        if row_filter:
+            where_parts.append(f"({row_filter})")
+        where = " AND ".join(where_parts)
+        rows = query_rows(f'SELECT 1 FROM "{data_table}" WHERE {where} LIMIT 1')
+        return bool(rows)
+    except Exception:
+        return False
+
+
 def render_sidebar():
     _render_header()
     st.markdown("---")
@@ -23,8 +39,6 @@ def render_sidebar():
     _render_dept_filter()
     st.markdown("---")
     _render_categories()
-    st.markdown("---")
-    _render_basemap_selector()
     st.markdown("---")
     _render_footer()
 
@@ -181,19 +195,27 @@ def _render_layer_checkbox(layer: GeoLayer, cat_id: str, cat_cfg: dict):
     """Checkbox de una capa con lógica de exclusividad."""
     is_active = layer.id in st.session_state.get("active_layers", [])
 
-    # Swatch de color
+    # Verificar si la capa tiene datos para el año seleccionado
+    year       = st.session_state.get("selected_year")
+    data_table = getattr(layer, "data_table", None) or ""
+    year_col   = getattr(layer, "year_col",   None) or ""
+    row_filter = getattr(layer, "row_filter", None) or getattr(layer, "filter_sql", None) or ""
+    has_data   = _layer_has_data(layer.id, data_table, year_col, int(year) if year else 0, row_filter)
+
+  
+    opacity = "0.9" if has_data else "0.35"
     col_color, col_check = st.columns([1, 9])
     with col_color:
         if hasattr(layer, "color_high"):
             st.markdown(
-                f'<div style="width:14px;height:38px;'
+                f'<div style="width:14px;height:38px;opacity:{opacity};'
                 f'background:linear-gradient(to bottom,{layer.color_high},{layer.color_low});'
                 f'border-radius:3px;margin-top:4px;"></div>',
                 unsafe_allow_html=True,
             )
         else:
             st.markdown(
-                f'<div style="width:14px;height:14px;'
+                f'<div style="width:14px;height:14px;opacity:{opacity};'
                 f'background:{layer.color};'
                 f'border-radius:3px;margin-top:10px;"></div>',
                 unsafe_allow_html=True,
@@ -201,16 +223,20 @@ def _render_layer_checkbox(layer: GeoLayer, cat_id: str, cat_cfg: dict):
 
     with col_check:
         help_text = layer.description or ""
-        if getattr(layer, "source_name", ""):
-            help_text += f"\n\n📊 Fuente: {layer.source_name}"
-        if getattr(layer, "source_url", ""):
-            help_text += f"\n🔗 {layer.source_url}"
+        if not has_data:
+            help_text = f"Sin datos disponibles para el año {year}."
+        else:
+            if getattr(layer, "source_name", ""):
+                help_text += f"\n\n📊 Fuente: {layer.source_name}"
+            if getattr(layer, "source_url", ""):
+                help_text += f"\n🔗 {layer.source_url}"
         gen = st.session_state.get("layer_reset_gen", 0)
         checked = st.checkbox(
-            label = layer.label,
-            value = is_active,
-            key   = f"chk_{layer.id}_{gen}",
-            help  = help_text or None,
+            label    = layer.label,
+            value    = is_active,
+            key      = f"chk_{layer.id}_{gen}",
+            help     = help_text or None,
+            disabled = not has_data,
         )
 
     if checked and not is_active:
@@ -300,3 +326,27 @@ def _render_footer():
             st.session_state.active_exclusive_category  = None
             st.session_state.layer_reset_gen            = st.session_state.get("layer_reset_gen", 0) + 1
             st.rerun()
+
+
+# ─── Advertencia flotante: demasiadas capas ───────────────────
+
+@st.dialog("Demasiadas capas activas")
+def _layer_warning_dialog(n: int):
+    st.warning(
+        f"Hay **{n} capas activas** simultáneamente. "
+        "Con más de 5 capas puede dificultarse la lectura del mapa "
+        "y el rendimiento de la aplicación.",
+        icon="⚠️",
+    )
+    if st.button("Aceptar", type="primary", use_container_width=True):
+        st.session_state["_layer_warning_ack"] = True
+        st.rerun()
+
+
+def show_layer_warning_if_needed() -> None:
+    """Llama al diálogo modal si hay más de 5 capas activas y el usuario aún no aceptó."""
+    total = len(st.session_state.get("active_layers", []))
+    if total <= 5:
+        st.session_state["_layer_warning_ack"] = False
+    elif not st.session_state.get("_layer_warning_ack", False):
+        _layer_warning_dialog(total)

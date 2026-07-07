@@ -4,7 +4,7 @@ Ejecutar con: uv run streamlit run apps/streamlit/app.py
 """
 
 import streamlit as st
-from components.sidebar import render_sidebar
+from components.sidebar import render_sidebar, show_layer_warning_if_needed
 from components.map_view import render_map
 from styles import apply_global_styles
 
@@ -38,4 +38,6 @@ for k, v in defaults.items():
 
 with st.sidebar:
     render_sidebar()
+
+show_layer_warning_if_needed()
 render_map()

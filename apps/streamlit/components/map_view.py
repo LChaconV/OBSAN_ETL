@@ -176,6 +176,7 @@ def render_map():
     # garantiza un componente React completamente nuevo (sin reutilización de estado viejo).
     map_key = (
         f"fmap_v{st.session_state.get('_map_version', 0)}"
+        f"_{basemap.replace(' ', '_')}"
         f"_{st.session_state.get('selected_data_key', '')}"
         f"_{st.session_state.get('clicked_muni_id', '')}"
         f"_{st.session_state.get('clicked_muni_coords', '')}"
@@ -1538,8 +1539,5 @@ def _build_panel_b_html(data: dict, year: int, cat_id: str) -> str:
     </div>
     """
 def _add_basemap(m, name):
-    url = MAP_CONFIG["basemaps"].get(name, "OpenStreetMap")
-    if url == "OpenStreetMap":
-        folium.TileLayer("OpenStreetMap").add_to(m)
-    else:
-        folium.TileLayer(tiles=url, name=name, attr=name, max_zoom=20).add_to(m)
+    provider = MAP_CONFIG["basemaps"].get(name, "OpenStreetMap")
+    folium.TileLayer(provider, name=name).add_to(m)
