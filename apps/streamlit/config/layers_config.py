@@ -331,7 +331,7 @@ produccion_gas = IconScaleLayer(
 regalias = IconScaleLayer(
     id          = "regalias_oil_gas",
     label       = "Regalias por producción de petróleo y gas",
-    description = "Regalias por producción de petróleo y gas",
+    description = "Regalías pagadas por producción de petróleo y gas (valores en pesos colombianos corrientes; el tooltip muestra la cifra en millones o miles de millones COP según la magnitud)",
     data_table  = "royalties",  
     geo_table   = "dim_divipola",
     geo_id_col  = "id_mun",
@@ -356,7 +356,7 @@ regalias = IconScaleLayer(
 regalias_minerales = IconScaleLayer(
     id          = "regalias_minerals",
     label       = "Regalias por minerales",
-    description = "Regalias por minerales",
+    description = "Regalías pagadas por explotación de minerales (valores en pesos colombianos corrientes; el tooltip muestra la cifra en millones o miles de millones COP según la magnitud)",
     data_table  = "mineral_royalties",  
     geo_table   = "dim_divipola",
     geo_id_col  = "id_mun",
@@ -494,7 +494,7 @@ _agro_base = dict(
     geo_id_col   = "id_mun",
     geo_geom_col = "geometry",
     value_col    = "yield",
-    value_label  = "Rendimiento agrícola",
+    value_label  = "Rendimiento agrícola (t/ha)",
     agg_func     = "AVG",
     year_col     = "year",
 
@@ -591,7 +591,7 @@ _pecu_base = dict(
     geo_id_col   = "id_mun",
     geo_geom_col = "geometry",
     value_col    = "total_animals",
-    value_label  = "produccion pecuaria",
+    value_label  = "Total animales (cabezas)",
     agg_func     = "SUM",
     year_col     = "year",
     category     = "agropecuario",
@@ -842,8 +842,8 @@ MAP_CONFIG = {
     "default_basemap": "Calles (OSM)",
     "basemaps": {
         "Calles (OSM)":     "OpenStreetMap",
-        "Satélite (Esri)":  "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-        "Claro (CartoDB)":  "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
-        "Oscuro (CartoDB)": "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+        "Satélite (Esri)":  "Esri.WorldImagery",
+        "Claro (CartoDB)":  "CartoDB positron",
+        "Oscuro (CartoDB)": "CartoDB dark_matter",
     },
 }
