@@ -240,8 +240,7 @@ def _validate_tabular(file_obj, filename: str, required_cols: list) -> Validatio
 
     return ValidationResult(
         valid   = True,
-        message = f"Archivo válido — {len(df.columns)} columnas encontradas",
-        details = [f"Columnas: {', '.join(df.columns.tolist())}"],
+        message = "Archivo válido",
     )
 
 
