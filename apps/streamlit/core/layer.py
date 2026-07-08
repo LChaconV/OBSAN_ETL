@@ -320,6 +320,7 @@ def _fetch_bubble_geojson(
         FROM "{geo_table}" g
         JOIN "{data_table}" d ON g."{geo_id_col}" = d."{data_id_col}"
         WHERE d."{value_col}" IS NOT NULL
+          AND g."{geo_geom_col}" IS NOT NULL
         {year_filter}
         {dept_filter}
         {row_filter_sql}

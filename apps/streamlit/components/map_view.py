@@ -623,7 +623,12 @@ def _add_bubble_layer(m, layer, year, dept_ids=()) -> dict | None:
         valor = props.get("valor")
         if valor is None:
             continue
-        coords = feat["geometry"]["coordinates"]
+        geometry = feat.get("geometry")
+        if not geometry:
+            continue
+        coords = geometry.get("coordinates")
+        if not coords:
+            continue
         lat    = coords[1] + layer.offset[0]
         lng    = coords[0] + layer.offset[1]
 
