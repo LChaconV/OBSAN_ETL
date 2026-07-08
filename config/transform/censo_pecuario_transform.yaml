@@ -51,8 +51,10 @@ bufalino:
   validation:
     required_columns:
     - CODIGO MUNICIPIO
-    - TOTAL BUFALOS
-    - TOTAL FINCAS CON BUFALOS
+    - - TOTAL BUFALOS
+      - TOTAL BÚFALOS
+    - - TOTAL FINCAS CON BUFALOS
+      - TOTAL FINCAS CON BÚFALOS
   fact_table:
     rename_columns:
       CODIGO MUNICIPIO: id_mun
