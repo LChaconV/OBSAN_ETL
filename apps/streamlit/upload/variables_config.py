@@ -205,7 +205,7 @@ UPLOAD_VARIABLES: dict = {
             "required_columns": [],
             "pipeline": "censo_pecuario",
             "format_image": "apps/streamlit/assets/formats/censo_pecuario.png",
-            "download_url": "https://www.ica.gov.co/areas/pecuaria/servicios/epidemiologia-veterinaria/censos-2016",
+            "download_url": "https://www.ica.gov.co/areas/pecuaria/servicios/epidemiologia-veterinaria/censos-2016/censo-2018",
             "extra_fields": [
                 {
                     "id":      "year",
