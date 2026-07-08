@@ -631,6 +631,7 @@ def _add_bubble_layer(m, layer, year, dept_ids=()) -> dict | None:
         radius = layer.radius_min + ratio * (layer.radius_max - layer.radius_min)
         color  = colormap(valor)
         tip    = (f"<div style='{_TT_HTML}'><b>{props.get('nombre','—')}</b><br>"
+                  f"<span style='color:#555;font-size:11px;'>{layer.label}</span><br>"
                   f"{layer.value_label}: <b>{valor:,.0f}</b></div>")
         folium.CircleMarker(
             location=[coords[1], coords[0]],
