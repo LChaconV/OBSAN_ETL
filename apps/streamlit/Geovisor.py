@@ -31,6 +31,7 @@ defaults = {
     "clicked_muni_name":         None,
     "panel_b_data":              None,
     "panel_b_key":               None,
+    "clicked_panel_cat":         None,
 }
 for k, v in defaults.items():
     if k not in st.session_state:

@@ -16,16 +16,49 @@ from core.format_utils import format_cop
 _TT_HTML = "font-family:sans-serif;font-size:13px;color:black;"
 _TT_GJ   = f"background:white;padding:8px;border-radius:4px;{_TT_HTML}"
 
+# Categorías no-exclusivas que también deben activar el panel B de municipio.
+_NON_EXCLUSIVE_PANEL_CATS = {"salud"}
+
+def _detect_cat_from_tooltip(tooltip: str) -> str | None:
+    """
+    Identifica la categoría de la capa clicada leyendo el tooltip.
+    Las BubbleLayer incluyen layer.label en el texto; las ChoroplethLayer incluyen layer.id.
+    """
+    if not tooltip:
+        return None
+    active_layers = st.session_state.get("active_layers", [])
+    for lid in active_layers:
+        layer = LAYER_TREE.find_layer(lid)
+        if layer and (layer.label in tooltip or layer.id in tooltip):
+            return layer.category
+    return None
+
+def _get_panel_b_cat() -> str | None:
+    """
+    Devuelve la categoría que debe mostrarse en el panel B de municipio.
+    Prioridad: categoría exclusiva activa → categorías no-exclusivas con panel B.
+    """
+    cat_id = st.session_state.get("active_exclusive_category")
+    if cat_id:
+        return cat_id
+    active_layers = st.session_state.get("active_layers", [])
+    for lid in active_layers:
+        layer = LAYER_TREE.find_layer(lid)
+        if layer and layer.category in _NON_EXCLUSIVE_PANEL_CATS:
+            return layer.category
+    return None
+
 def _get_muni_at_point(lat: float, lng: float) -> dict | None:
-    """Identifica el municipio en un punto dado."""
+    """
+    Identifica el municipio más cercano a un punto.
+    Usa KNN (vecino más próximo) en vez de ST_Contains para tolerar
+    offsets de burbujas que quedan fuera del polígono municipal.
+    """
     from core.db import query_rows
     rows = query_rows("""
         SELECT id_mun, name_mun
         FROM dim_divipola
-        WHERE ST_Contains(
-            geometry,
-            ST_SetSRID(ST_Point(%s, %s), 4326)
-        )
+        ORDER BY geometry <-> ST_SetSRID(ST_Point(%s, %s), 4326)
         LIMIT 1
     """, (lng, lat))
     return rows[0] if rows else None
@@ -187,7 +220,7 @@ def render_map():
     )
     # ── Panel B flotante ──────────────────────────────────────
     muni_id  = st.session_state.get("clicked_muni_id")
-    cat_id   = st.session_state.get("active_exclusive_category")
+    cat_id   = st.session_state.get("clicked_panel_cat") or _get_panel_b_cat()
     if muni_id and cat_id:
         cache_key_b = f"panel_b_{muni_id}_{cat_id}_{year}"
         if st.session_state.get("panel_b_key") != cache_key_b:
@@ -235,19 +268,23 @@ def render_map():
                     st.session_state.selected_data_key           = None
                     st.session_state.clicked_muni_coords         = None
                     st.session_state.clicked_muni_id             = None
+                    st.session_state.clicked_panel_cat           = None
                     st.session_state.panel_b_data                = None
                     st.session_state.panel_b_key                 = None
                     st.rerun()
             else:
                 # Clic en otro elemento → Panel B
-                cat_id = st.session_state.get("active_exclusive_category")
+                # Detectar la categoría real del elemento clicado desde el tooltip
+                cat_id = _detect_cat_from_tooltip(tooltip) or _get_panel_b_cat()
                 if cat_id and cat_id != "seguridad_alimentaria":
-                    if st.session_state.get("clicked_muni_coords") != new_coords:
+                    if (st.session_state.get("clicked_muni_coords") != new_coords
+                            or st.session_state.get("clicked_panel_cat") != cat_id):
                         muni = _get_muni_at_point(lat, lng)
                         if muni:
                             st.session_state.clicked_muni_coords = new_coords
                             st.session_state.clicked_muni_id     = muni.get("id_mun")
                             st.session_state.clicked_muni_name   = muni.get("name_mun")
+                            st.session_state.clicked_panel_cat   = cat_id
                             st.session_state.panel_b_data        = None
                             st.session_state.panel_b_key         = None
                             st.session_state.clicked_coords      = None
