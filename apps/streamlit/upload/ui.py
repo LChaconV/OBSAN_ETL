@@ -488,9 +488,9 @@ def render_upload_page():
 def _render_upload_form():
     st.markdown("### 1. Selecciona la variable")
 
-    # Selectbox con las variables disponibles
+    # Selectbox con las variables disponibles (excluye las marcadas como hidden)
     options     = {"": "— Selecciona una variable —"}
-    options    |= {k: v["label"] for k, v in UPLOAD_VARIABLES.items()}
+    options    |= {k: v["label"] for k, v in UPLOAD_VARIABLES.items() if not v.get("hidden")}
     selected_id = st.selectbox(
         label            = "Variable",
         options          = list(options.keys()),
