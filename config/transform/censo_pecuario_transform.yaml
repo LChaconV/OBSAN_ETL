@@ -55,6 +55,8 @@ bufalino:
       - TOTAL BÚFALOS
     - - TOTAL FINCAS CON BUFALOS
       - TOTAL FINCAS CON BÚFALOS
+      - PREDIOS CON BUFALOS
+      - PREDIOS CON BÚFALOS
   fact_table:
     rename_columns:
       CODIGO MUNICIPIO: id_mun
