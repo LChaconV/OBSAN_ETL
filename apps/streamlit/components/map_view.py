@@ -288,9 +288,15 @@ def _build_unified_legend(items: list) -> str:
             # Escala de color + tamaño para BubbleLayer
             r_min = item['radius_min']
             r_max = item['radius_max']
+            species_html = (
+                f"<div style='font-weight:700;font-size:12px;color:#1a1f2e;'>{item['species']}</div>"
+                f"<div class='leg-title' style='margin-top:1px;'>{item['label']}</div>"
+                if item.get('species') else
+                f"<div class='leg-title'>{item['label']}</div>"
+            )
             return f"""
             <div class="leg-item">
-                <div class="leg-title">{item['label']}</div>
+                {species_html}
                 <div style="display:flex;gap:6px;align-items:stretch;margin-top:4px;">
                     <div style="width:12px;min-height:60px;
                                 background:linear-gradient(to top,{item['color_low']},{item['color_high']});
@@ -650,6 +656,7 @@ def _add_bubble_layer(m, layer, year, dept_ids=()) -> dict | None:
     return {
         "type":       "bubble",
         "label":      layer.value_label,
+        "species":    layer.label,
         "color_low":  layer.color_low,
         "color_high": layer.color_high,
         "val_min":    f"{val_min:,.0f}",
