@@ -1503,7 +1503,7 @@ def _build_panel_b_html(data: dict, year: int, cat_id: str) -> str:
         else st.session_state.get("clicked_muni_name", "—")
     )
     cat_icon  = "📊" if is_dept_level else cat_cfg.get("icon", "")
-    cat_label = "Índice de Pobreza Multidimensional" if is_dept_level else cat_cfg.get("label", "")
+    cat_label = "Incidencia de Pobreza Multidimensional" if is_dept_level else cat_cfg.get("label", "")
 
     def section(title):
         return f"""<div style="font-size:11px;font-weight:700;color:#333;

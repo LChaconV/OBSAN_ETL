@@ -231,7 +231,7 @@ UPLOAD_VARIABLES: dict = {
         },
     
     "ipm_departamentos": {
-        "label":       "Índice de Pobreza Multidimensional",
+        "label":       "Incidencia de Pobreza Multidimensional",
         "description": "IPM por departamento — hoja 'IPM_Departamentos' del archivo DANE",
         "allowed_types": ["xlsx", "xls"],
         "storage_folder": "ipm_departamentos",

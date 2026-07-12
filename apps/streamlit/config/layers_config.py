@@ -224,7 +224,7 @@ pobreza_monetaria_jefe_hogar = BarChartLayer(
 
 ipm_departamental = ChoroplethLayer(
     id           = "ipm_departamental",
-    label        = "Índice de Pobreza Multidimensional",
+    label        = "Incidencia de Pobreza Multidimensional",
     description  = "Porcentaje de la población en condición de pobreza multidimensional por departamento (Total nacional)",
     geo_table    = "dim_departament",
     geo_id_col   = "id_dept",
