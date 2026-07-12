@@ -1,0 +1,12 @@
+ipm_departamental_transform:
+  source:
+    golden_fact_dir: "data/golden/ipm_departamental"
+  fact_table:
+    file_prefix: "ipm_departamental"
+    grain:
+      - "id_dept"
+      - "year"
+    metric_columns:
+      - "total"
+      - "cabeceras"
+      - "rural"

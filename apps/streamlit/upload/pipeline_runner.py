@@ -70,6 +70,7 @@ PIPELINE_REGISTRY: dict = {
     "censo_pecuario": "ld_censo_pecuario",
     "poblacion":"ld_poblacion",
     "agricola": "ld_agricultura",
+    "ipm_departamentos": "ld_ipm_departamentos",
     # Agrega más siguiendo el patrón:
     # "id_pipeline": "nombre_carpeta_en_etl",
 }

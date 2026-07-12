@@ -222,6 +222,28 @@ pobreza_monetaria_jefe_hogar = BarChartLayer(
     category = "socioeconomico",
 )
 
+ipm_departamental = ChoroplethLayer(
+    id           = "ipm_departamental",
+    label        = "Índice de Pobreza Multidimensional",
+    description  = "Porcentaje de la población en condición de pobreza multidimensional por departamento (Total nacional)",
+    geo_table    = "dim_departament",
+    geo_id_col   = "id_dept",
+    geo_name_col = "name_dept",
+    geo_geom_col = "geometry",
+    data_table   = "ipm_departamental",
+    data_id_col  = "id_dept",
+    value_col    = "total",
+    value_label  = "IPM Total (%)",
+    year_col     = "year",
+    color_low    = "#fdfff7",
+    color_high   = "#aeee48",
+    opacity      = 0.80,
+    filterable_by_dept = False,
+    category     = "socioeconomico",
+    source_name  = "DANE",
+    source_url   = "https://www.dane.gov.co/index.php/estadisticas-por-tema/pobreza-y-condiciones-de-vida/pobreza-multidimensional",
+)
+
 pobreza_monetaria_por_genero = BarChartLayer(
     id          = "pobreza_monetaria_por_genero",
     label       = "Pobreza monetaria por genero",
@@ -716,7 +738,8 @@ LAYER_TREE = LayerGroup(
             label    = "Pobreza",
             icon     = "📉",
             expanded = False,
-            items    = [#pobreza_monetaria_jefe_hogar,
+            items    = [ipm_departamental,
+                        #pobreza_monetaria_jefe_hogar,
                         pobreza_monetaria_por_genero],
         ),
         LayerGroup(

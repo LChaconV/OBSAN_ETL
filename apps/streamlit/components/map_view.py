@@ -16,6 +16,14 @@ from core.format_utils import format_cop
 _TT_HTML = "font-family:sans-serif;font-size:13px;color:black;"
 _TT_GJ   = f"background:white;padding:8px;border-radius:4px;{_TT_HTML}"
 
+# Notas metodológicas por feature para capas coropletas específicas.
+# {layer_id: {feature_id (id_dept / id_subregion / ...): texto de la nota}}
+_CHOROPLETH_NOTES: dict[str, dict[str, str]] = {
+    "ipm_departamental": {
+        "25": "⚠️ Cifra no incluye los valores de Bogotá D.C.",
+    },
+}
+
 # Categorías no-exclusivas que también deben activar el panel B de municipio.
 _NON_EXCLUSIVE_PANEL_CATS = {"salud"}
 
@@ -599,7 +607,6 @@ def _add_choropleth_layer(m, layer, year, dept_ids=()) -> dict | None:
     val_min, val_max = min(values), max(values)
 
     colormap = cm.LinearColormap(
-        #colors=[layer.color_low, "#fc8d59", layer.color_high],
         colors=[layer.color_low, layer.color_high],
         vmin=val_min, vmax=val_max,
     )
@@ -614,14 +621,32 @@ def _add_choropleth_layer(m, layer, year, dept_ids=()) -> dict | None:
             "weight":    0.5 if layer.border_visible else 0,
         }
 
+    # Inyectar notas metodológicas en las features que aplique
+    layer_notes = _CHOROPLETH_NOTES.get(layer.id, {})
+    if layer_notes:
+        import copy
+        features_with_notes = copy.deepcopy(features)
+        for feat in features_with_notes:
+            feat_id = str(feat["properties"].get("id", ""))
+            feat["properties"]["nota"] = layer_notes.get(feat_id, "")
+        geojson_render = {"type": "FeatureCollection", "features": features_with_notes}
+    else:
+        geojson_render = geojson
+
+    tt_fields  = ["layer_id", "nombre", "valor"]
+    tt_aliases = ["", "Departamento:" if layer.geo_table == "dim_departament" else "Municipio:", f"{layer.value_label}:"]
+    if layer_notes:
+        tt_fields.append("nota")
+        tt_aliases.append("")
+
     folium.GeoJson(
-        geojson,
+        geojson_render,
         name               = layer.label,
         style_function     = style_fn,
         highlight_function = lambda f: {"weight": 3, "color": "#fff", "fillOpacity": 0.95},
         tooltip            = folium.GeoJsonTooltip(
-            fields   = ["layer_id", "nombre", "valor"],
-            aliases  = ["", "Municipio:", f"{layer.value_label}:"],
+            fields   = tt_fields,
+            aliases  = tt_aliases,
             sticky   = True,
             style    = _TT_GJ,
         ),

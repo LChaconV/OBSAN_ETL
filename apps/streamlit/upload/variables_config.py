@@ -230,6 +230,22 @@ UPLOAD_VARIABLES: dict = {
             ],
         },
     
+    "ipm_departamentos": {
+        "label":       "Índice de Pobreza Multidimensional",
+        "description": "IPM por departamento — hoja 'IPM_Departamentos' del archivo DANE",
+        "allowed_types": ["xlsx", "xls"],
+        "storage_folder": "ipm_departamentos",
+        "format_hint": (
+            "Archivo Excel del DANE con hoja **IPM_Departamentos**. "
+            "Debe contener columnas de Código DANE, Departamentos y los años disponibles "
+            "con sus subcolumnas (Total, Cabeceras, Centros poblados y rural disperso)."
+        ),
+        "required_columns": [],
+        "pipeline": "ipm_departamentos",
+        "format_image":"apps/streamlit/assets/formats/ipm departamental.png",
+        "download_url": "https://www.dane.gov.co/index.php/estadisticas-por-tema/pobreza-y-condiciones-de-vida/pobreza-multidimensional",
+    },
+
     "agricola": {
         "label":       "Producción Agrícola",
         "description": "Datos sobre producción agrícola por municipio",
