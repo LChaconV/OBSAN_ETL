@@ -32,6 +32,8 @@ defaults = {
     "panel_b_data":              None,
     "panel_b_key":               None,
     "clicked_panel_cat":         None,
+    "clicked_dept_id":           None,
+    "clicked_dept_name":         None,
 }
 for k, v in defaults.items():
     if k not in st.session_state:

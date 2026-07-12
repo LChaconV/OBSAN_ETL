@@ -71,6 +71,32 @@ def _get_muni_at_point(lat: float, lng: float) -> dict | None:
     """, (lng, lat))
     return rows[0] if rows else None
 
+def _get_dept_at_point(lat: float, lng: float) -> dict | None:
+    from core.db import query_rows
+    rows = query_rows("""
+        SELECT id_dept, name_dept
+        FROM dim_departament
+        ORDER BY geometry <-> ST_SetSRID(ST_Point(%s, %s), 4326)
+        LIMIT 1
+    """, (lng, lat))
+    return rows[0] if rows else None
+
+
+@st.cache_data(ttl=300, show_spinner=False)
+def _get_ipm_dept_data(dept_id: str, year: int | None) -> dict | None:
+    from core.db import query_rows
+    year_filter = f"AND year = {year}" if year else ""
+    rows = query_rows(f"""
+        SELECT id_dept, name_dept, year, total, cabeceras, rural
+        FROM ipm_departamental
+        WHERE id_dept = %s
+        {year_filter}
+        ORDER BY year DESC
+        LIMIT 1
+    """, (dept_id,))
+    return dict(rows[0]) if rows else None
+
+
 def _is_on_subregion(lat: float, lng: float) -> bool:
     """Retorna True si el punto cae dentro de una subregión."""
     from core.db import query_rows
@@ -227,9 +253,26 @@ def render_map():
         f"_{st.session_state.get('clicked_muni_coords', '')}"
     )
     # ── Panel B flotante ──────────────────────────────────────
-    muni_id  = st.session_state.get("clicked_muni_id")
-    cat_id   = st.session_state.get("clicked_panel_cat") or _get_panel_b_cat()
-    if muni_id and cat_id:
+    cat_id  = st.session_state.get("clicked_panel_cat") or _get_panel_b_cat()
+    dept_id = st.session_state.get("clicked_dept_id")
+    muni_id = st.session_state.get("clicked_muni_id")
+
+    if cat_id == "ipm_departamental" and dept_id:
+        # Panel B a nivel departamento para la capa IPM
+        cache_key_b = f"panel_b_ipm_{dept_id}_{year}"
+        if st.session_state.get("panel_b_key") != cache_key_b:
+            panel_data_b = _get_ipm_dept_data(dept_id, year)
+            st.session_state.panel_b_data = panel_data_b
+            st.session_state.panel_b_key  = cache_key_b
+        else:
+            panel_data_b = st.session_state.get("panel_b_data")
+        if panel_data_b:
+            m.get_root().html.add_child(
+                folium.Element(_build_panel_b_html(panel_data_b, year, "ipm_departamental"))
+            )
+
+    elif muni_id and cat_id:
+        # Panel B a nivel municipio (comportamiento estándar)
         cache_key_b = f"panel_b_{muni_id}_{cat_id}_{year}"
         if st.session_state.get("panel_b_key") != cache_key_b:
             from core.db import CATEGORY_QUERY_MAP
@@ -269,7 +312,6 @@ def render_map():
 
             if clicked_choropleth:
                 # Clic explícito en la coroplética → Panel A
-                # Limpia categoría activa para no bloquear
                 if st.session_state.get("clicked_coords") != new_coords:
                     st.session_state.clicked_coords              = new_coords
                     st.session_state.selected_data               = None
@@ -277,12 +319,31 @@ def render_map():
                     st.session_state.clicked_muni_coords         = None
                     st.session_state.clicked_muni_id             = None
                     st.session_state.clicked_panel_cat           = None
+                    st.session_state.clicked_dept_id             = None
+                    st.session_state.clicked_dept_name           = None
                     st.session_state.panel_b_data                = None
                     st.session_state.panel_b_key                 = None
                     st.rerun()
+
+            elif "ipm_departamental" in str(tooltip):
+                if (st.session_state.get("clicked_muni_coords") != new_coords
+                        or st.session_state.get("clicked_panel_cat") != "ipm_departamental"):
+                    dept = _get_dept_at_point(lat, lng)
+                    if dept:
+                        st.session_state.clicked_muni_coords = new_coords
+                        st.session_state.clicked_dept_id     = dept.get("id_dept")
+                        st.session_state.clicked_dept_name   = dept.get("name_dept")
+                        st.session_state.clicked_panel_cat   = "ipm_departamental"
+                        st.session_state.clicked_muni_id     = None
+                        st.session_state.clicked_muni_name   = None
+                        st.session_state.panel_b_data        = None
+                        st.session_state.panel_b_key         = None
+                        st.session_state.clicked_coords      = None
+                        st.session_state.selected_data       = None
+                        st.rerun()
+
             else:
-                # Clic en otro elemento → Panel B
-                # Detectar la categoría real del elemento clicado desde el tooltip
+                # Clic en otro elemento → Panel B a nivel municipio
                 cat_id = _detect_cat_from_tooltip(tooltip) or _get_panel_b_cat()
                 if cat_id and cat_id != "seguridad_alimentaria":
                     if (st.session_state.get("clicked_muni_coords") != new_coords
@@ -293,6 +354,8 @@ def render_map():
                             st.session_state.clicked_muni_id     = muni.get("id_mun")
                             st.session_state.clicked_muni_name   = muni.get("name_mun")
                             st.session_state.clicked_panel_cat   = cat_id
+                            st.session_state.clicked_dept_id     = None
+                            st.session_state.clicked_dept_name   = None
                             st.session_state.panel_b_data        = None
                             st.session_state.panel_b_key         = None
                             st.session_state.clicked_coords      = None
@@ -1431,8 +1494,16 @@ def _build_panel_a_html(data: dict, year: int) -> str:
     """
 def _build_panel_b_html(data: dict, year: int, cat_id: str) -> str:
     from config.layers_config import CATEGORIES
-    cat_cfg   = CATEGORIES.get(cat_id, {})
-    muni_name = st.session_state.get("clicked_muni_name", "—")
+    cat_cfg = CATEGORIES.get(cat_id, {})
+
+    is_dept_level = cat_id == "ipm_departamental"
+    geo_label     = "Departamento" if is_dept_level else "Municipio"
+    geo_name      = (
+        st.session_state.get("clicked_dept_name", "—") if is_dept_level
+        else st.session_state.get("clicked_muni_name", "—")
+    )
+    cat_icon  = "📊" if is_dept_level else cat_cfg.get("icon", "")
+    cat_label = "Índice de Pobreza Multidimensional" if is_dept_level else cat_cfg.get("label", "")
 
     def section(title):
         return f"""<div style="font-size:11px;font-weight:700;color:#333;
@@ -1457,17 +1528,33 @@ def _build_panel_b_html(data: dict, year: int, cat_id: str) -> str:
             <span style="font-weight:600;color:#222;">{val_str}</span>
         </div>"""
 
+    display_year = data.get("year", year) if is_dept_level else year
+
     content = f"""
         <div style="font-size:11px;color:#8b949e;text-transform:uppercase;
-                    letter-spacing:1px;margin-bottom:2px;">Municipio</div>
-        <div style="font-size:15px;font-weight:700;margin-bottom:2px;">{muni_name}</div>
+                    letter-spacing:1px;margin-bottom:2px;">{geo_label}</div>
+        <div style="font-size:15px;font-weight:700;margin-bottom:2px;">{geo_name}</div>
         <div style="font-size:11px;color:#58a6ff;margin-bottom:8px;">
-            {cat_cfg.get('icon','')} {cat_cfg.get('label','')} · {year or ''}
+            {cat_icon} {cat_label} · {display_year or ''}
         </div>
         <hr style="margin:6px 0;border-color:#eee;">
     """
 
-    if cat_id == "salud":
+    if cat_id == "ipm_departamental":
+        content += section("📊 Incidencia IPM (%)")
+        content += kv("Total",                        data.get("total"),     "%")
+        content += kv("Cabeceras",                    data.get("cabeceras"), "%")
+        content += kv("Centros pob. y rural disperso", data.get("rural"),    "%")
+        if str(data.get("id_dept", "")) == "25":
+            content += """
+            <div style="font-size:10px;color:#92400e;margin-top:8px;padding:6px 8px;
+                        background:#fef3c7;border-radius:4px;
+                        border-left:3px solid #d97706;line-height:1.4;">
+                ⚠️ Esta cifra <b>no incluye</b> los valores de Bogotá D.C.,
+                que se reportan de forma separada.
+            </div>"""
+
+    elif cat_id == "salud":
         content += section("🏥 Salud")
         content += kv("Desnutrición aguda <5",   data.get("desnutricion_aguda"),      "casos")
         content += kv("Mortalidad malnutrición", data.get("mortalidad_malnutricion"),  "casos")
