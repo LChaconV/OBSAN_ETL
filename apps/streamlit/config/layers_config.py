@@ -130,8 +130,8 @@ desnutricion_aguda_5 = BubbleLayer(
 
 mortalidad_malnutricion = BubbleLayer(
     id          = "mortalidad_malnutricion",
-    label       = "Mortalidad por malnutrición",
-    description = "Casos de mortalidad asociada a malnutrición por municipio",
+    label       = "Mortalidad por desnutrición <5 años",
+    description = "Casos de mortalidad de menores de 5 años asociada a desnutrición x 100.000 habitantes",
     data_table  = "v_mortality_malnutrition_pc",
     data_id_col = "id_mun",
     geo_table   = "dim_divipola",
@@ -801,7 +801,7 @@ CATEGORIES = {
         "exclusive": False,   # puede coexistir con cualquier categoría
     },
     "salud": {
-        "label": "Salud",
+        "label": "Estado Nutricional",
         "icon":  "🏥",
         "exclusive": False,
     },
