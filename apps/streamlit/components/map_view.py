@@ -342,6 +342,23 @@ def render_map():
                         st.session_state.selected_data       = None
                         st.rerun()
 
+            elif "nbi_municipal" in str(tooltip):
+                if (st.session_state.get("clicked_muni_coords") != new_coords
+                        or st.session_state.get("clicked_panel_cat") != "nbi_municipal"):
+                    muni = _get_muni_at_point(lat, lng)
+                    if muni:
+                        st.session_state.clicked_muni_coords = new_coords
+                        st.session_state.clicked_muni_id     = muni.get("id_mun")
+                        st.session_state.clicked_muni_name   = muni.get("name_mun")
+                        st.session_state.clicked_panel_cat   = "nbi_municipal"
+                        st.session_state.clicked_dept_id     = None
+                        st.session_state.clicked_dept_name   = None
+                        st.session_state.panel_b_data        = None
+                        st.session_state.panel_b_key         = None
+                        st.session_state.clicked_coords      = None
+                        st.session_state.selected_data       = None
+                        st.rerun()
+
             else:
                 # Clic en otro elemento → Panel B a nivel municipio
                 cat_id = _detect_cat_from_tooltip(tooltip) or _get_panel_b_cat()
@@ -1497,13 +1514,18 @@ def _build_panel_b_html(data: dict, year: int, cat_id: str) -> str:
     cat_cfg = CATEGORIES.get(cat_id, {})
 
     is_dept_level = cat_id == "ipm_departamental"
+    is_nbi        = cat_id == "nbi_municipal"
     geo_label     = "Departamento" if is_dept_level else "Municipio"
     geo_name      = (
         st.session_state.get("clicked_dept_name", "—") if is_dept_level
         else st.session_state.get("clicked_muni_name", "—")
     )
-    cat_icon  = "📊" if is_dept_level else cat_cfg.get("icon", "")
-    cat_label = "Incidencia de Pobreza Multidimensional" if is_dept_level else cat_cfg.get("label", "")
+    cat_icon  = ("📊" if is_dept_level else
+                 "🏠" if is_nbi else
+                 cat_cfg.get("icon", ""))
+    cat_label = ("Incidencia de Pobreza Multidimensional" if is_dept_level else
+                 "Necesidades Básicas Insatisfechas" if is_nbi else
+                 cat_cfg.get("label", ""))
 
     def section(title):
         return f"""<div style="font-size:11px;font-weight:700;color:#333;
@@ -1553,6 +1575,17 @@ def _build_panel_b_html(data: dict, year: int, cat_id: str) -> str:
                 ⚠️ Esta cifra <b>no incluye</b> los valores de Bogotá D.C.,
                 que se reportan de forma separada.
             </div>"""
+
+    elif cat_id == "nbi_municipal":
+        content += section("🏠 Necesidades Básicas Insatisfechas")
+        content += kv("NBI (proporción)",     data.get("prop_nbi"),     "%")
+        content += kv("Miseria (proporción)", data.get("prop_miseria"), "%")
+        content += section("📋 Componentes NBI")
+        content += kv("Vivienda",               data.get("vivienda"),              "%")
+        content += kv("Servicios",              data.get("servicios"),             "%")
+        content += kv("Hacinamiento",           data.get("hacinamiento"),          "%")
+        content += kv("Inasistencia escolar",   data.get("inasistencia"),          "%")
+        content += kv("Dependencia económica",  data.get("dependencia_economica"), "%")
 
     elif cat_id == "salud":
         content += section("🏥 Salud")

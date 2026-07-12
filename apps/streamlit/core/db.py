@@ -315,13 +315,32 @@ def get_muni_conflicto(id_mun: str, year: int) -> dict:
     }
 
 
+def get_muni_nbi(id_mun: str, year: int) -> dict:
+    """Todos los indicadores NBI de un municipio para el año indicado."""
+    rows = query_rows("""
+        SELECT indicador, valor
+        FROM nbi_municipal
+        WHERE id_mun = %s AND year = %s
+        ORDER BY indicador
+    """, (id_mun, year))
+    if not rows:
+        rows = query_rows("""
+            SELECT indicador, valor
+            FROM nbi_municipal
+            WHERE id_mun = %s
+            ORDER BY year DESC, indicador
+            LIMIT 7
+        """, (id_mun,))
+    return {r["indicador"]: r["valor"] for r in rows} if rows else {}
+
+
 CATEGORY_QUERY_MAP = {
     "salud":          get_muni_salud,
     "socioeconomico": get_muni_socioeconomico,
     "ambiente":       get_muni_ambiente,
     "agropecuario":   get_muni_agropecuario,
     "conflicto":      get_muni_conflicto,
-    "agropecuario":   get_muni_agropecuario,
+    "nbi_municipal":  get_muni_nbi,
 }
 def test_connection() -> tuple[bool, str]:
     try:

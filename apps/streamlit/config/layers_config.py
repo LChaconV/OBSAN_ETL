@@ -222,6 +222,29 @@ pobreza_monetaria_jefe_hogar = BarChartLayer(
     category = "socioeconomico",
 )
 
+nbi_municipal = ChoroplethLayer(
+    id           = "nbi_municipal",
+    label        = "Necesidades Básicas Insatisfechas",
+    description  = "Proporción de personas con al menos una necesidad básica insatisfecha por municipio",
+    geo_table    = "dim_divipola",
+    geo_id_col   = "id_mun",
+    geo_name_col = "name_mun",
+    geo_geom_col = "geometry",
+    data_table   = "nbi_municipal",
+    data_id_col  = "id_mun",
+    value_col    = "valor",
+    value_label  = "NBI (%)",
+    year_col     = "year",
+    filter_sql   = "indicador = 'prop_nbi'",
+    color_low    = "#f3c2f5",
+    color_high   = "#c001d9",
+    opacity      = 0.80,
+    filterable_by_dept = True,
+    category     = "socioeconomico",
+    source_name  = "DANE",
+    source_url   = "https://www.dane.gov.co/index.php/estadisticas-por-tema/pobreza-y-condiciones-de-vida/necesidades-basicas-insatisfechas-nbi",
+)
+
 ipm_departamental = ChoroplethLayer(
     id           = "ipm_departamental",
     label        = "Incidencia de Pobreza Multidimensional",
@@ -738,7 +761,8 @@ LAYER_TREE = LayerGroup(
             label    = "Pobreza",
             icon     = "📉",
             expanded = False,
-            items    = [ipm_departamental,
+            items    = [nbi_municipal,
+                        ipm_departamental,
                         #pobreza_monetaria_jefe_hogar,
                         pobreza_monetaria_por_genero],
         ),

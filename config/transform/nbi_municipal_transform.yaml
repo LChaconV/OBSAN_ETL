@@ -1,0 +1,7 @@
+nbi_municipal_transform:
+  source:
+    golden_fact_dir: "data/golden/nbi_municipal"
+  fact_table:
+    file_prefix: "nbi_municipal"
+    grain: ["id_mun", "year", "indicador"]
+    metric_columns: ["valor"]

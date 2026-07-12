@@ -246,6 +246,32 @@ UPLOAD_VARIABLES: dict = {
         "download_url": "https://www.dane.gov.co/index.php/estadisticas-por-tema/pobreza-y-condiciones-de-vida/pobreza-multidimensional",
     },
 
+    "nbi_municipal": {
+        "label":       "Necesidades Básicas Insatisfechas (NBI)",
+        "description": "Proporción de personas con necesidades básicas insatisfechas por municipio",
+        "allowed_types": ["xlsx", "xls"],
+        "storage_folder": "nbi_municipal",
+        "format_hint": (
+            "Archivo Excel del DANE con hoja **Municipios**. "
+            "Columnas: Código departamento, Nombre departamento, Código municipio, Nombre municipio, "
+            "seguidas de los indicadores NBI por dominio (Total, Cabeceras, Rural disperso)."
+        ),
+        "required_columns": [],
+        "pipeline": "nbi_municipal",
+        "format_image": "apps/streamlit/assets/formats/NBI.png",
+        "download_url": "https://www.dane.gov.co/index.php/estadisticas-por-tema/pobreza-y-condiciones-de-vida/necesidades-basicas-insatisfechas-nbi",
+        "extra_fields": [
+            {
+                "id":        "year",
+                "label":     "Año del censo",
+                "type":      "number_input",
+                "min_value": 2000,
+                "max_value": 2030,
+                "required":  True,
+            },
+        ],
+    },
+
     "agricola": {
         "label":       "Producción Agrícola",
         "description": "Datos sobre producción agrícola por municipio",
