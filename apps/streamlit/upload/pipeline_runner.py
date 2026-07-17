@@ -72,6 +72,7 @@ PIPELINE_REGISTRY: dict = {
     "agricola": "ld_agricultura",
     "ipm_departamentos": "ld_ipm_departamentos",
     "nbi_municipal": "ld_nbi_municipal",
+    "pobreza_monetaria_municipal": "ld_pobreza_monetaria_municipal",
     # Agrega más siguiendo el patrón:
     # "id_pipeline": "nombre_carpeta_en_etl",
 }

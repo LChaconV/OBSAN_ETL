@@ -256,10 +256,11 @@ class BubbleLayer(GeoLayer):
     extra_cols:   list = field(default_factory=list)
     color_low:    str = "#feedd9"
     color_high:   str = "#b30000"
-    radius_min:   int = 4
-    radius_max:   int = 20
-    offset:       tuple = (0.0, 0.0)
-    row_filter:   str = ""
+    radius_min:    int = 4
+    radius_max:    int = 20
+    offset:        tuple = (0.0, 0.0)
+    row_filter:    str = ""
+    decimal_places: int = 0
 
     def get_geojson(self, year: int = None, **kwargs) -> dict:
         return _fetch_bubble_geojson(

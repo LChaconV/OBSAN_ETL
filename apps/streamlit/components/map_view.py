@@ -783,9 +783,11 @@ def _add_bubble_layer(m, layer, year, dept_ids=()) -> dict | None:
         ratio  = (valor - val_min) / rng
         radius = layer.radius_min + ratio * (layer.radius_max - layer.radius_min)
         color  = colormap(valor)
+        dec    = layer.decimal_places
+        fmt    = f"{{:,.{dec}f}}"
         tip    = (f"<div style='{_TT_HTML}'><b>{props.get('nombre','—')}</b><br>"
                   f"<span style='color:#555;font-size:11px;'>{layer.label}</span><br>"
-                  f"{layer.value_label}: <b>{valor:,.0f}</b></div>")
+                  f"{layer.value_label}: <b>{fmt.format(valor)}</b></div>")
         folium.CircleMarker(
             location=[coords[1], coords[0]],
             radius=radius, color=color,
@@ -1595,7 +1597,8 @@ def _build_panel_b_html(data: dict, year: int, cat_id: str) -> str:
 
     elif cat_id == "socioeconomico":
         content += section("📊 Socioeconómico")
-        content += kv("Pobreza monetaria",  data.get("pobreza_monetaria"),  "%")
+        content += kv("Pobreza monetaria (municipio)", data.get("pobreza_monetaria_mun"), "%")
+        content += kv("Pobreza monetaria (dpto.)",     data.get("pobreza_monetaria"),     "%")
         content += kv("Población empleada", data.get("poblacion_empleada"), "personas")
         content += section("🏫 Educación")
         content += kv("Cobertura escolar (x 100 hab.)",   data.get("cobertura_escolar"),  "")

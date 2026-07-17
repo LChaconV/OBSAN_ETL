@@ -1,0 +1,7 @@
+pobreza_monetaria_municipal_transform:
+  source:
+    golden_fact_dir: "data/golden/pobreza_monetaria_municipal"
+  fact_table:
+    file_prefix: "pobreza_monetaria_municipal"
+    grain: ["id_mun", "year"]
+    metric_columns: ["estimacion"]

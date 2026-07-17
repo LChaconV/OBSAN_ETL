@@ -222,6 +222,30 @@ pobreza_monetaria_jefe_hogar = BarChartLayer(
     category = "socioeconomico",
 )
 
+pobreza_monetaria_mun = BubbleLayer(
+    id          = "pobreza_monetaria_mun",
+    label       = "Pobreza monetaria",
+    description = "Estimación de pobreza monetaria por municipio (DANE - ECV)",
+    data_table  = "pobreza_monetaria_municipal",
+    data_id_col = "id_mun",
+    geo_table   = "dim_divipola",
+    geo_id_col  = "id_mun",
+    geo_geom_col= "geometry",
+    value_col   = "estimacion",
+    value_label = "Estimación pobreza monetaria (%)",
+    agg_func    = "AVG",
+    year_col    = "year",
+    color_low   = "#fef9c3",
+    color_high  = "#7c3aed",
+    radius_min     = 4,
+    radius_max     = 20,
+    offset         = (0.0, 0.0),
+    decimal_places = 2,
+    category       = "socioeconomico",
+    source_name    = "DANE",
+    source_url     = "https://sitios.dane.gov.co/EstimacionesModeloSAE/",
+)
+
 nbi_municipal = ChoroplethLayer(
     id           = "nbi_municipal",
     label        = "Necesidades Básicas Insatisfechas",
@@ -761,7 +785,8 @@ LAYER_TREE = LayerGroup(
             label    = "Pobreza",
             icon     = "📉",
             expanded = False,
-            items    = [nbi_municipal,
+            items    = [pobreza_monetaria_mun,
+                        nbi_municipal,
                         ipm_departamental,
                         #pobreza_monetaria_jefe_hogar,
                         pobreza_monetaria_por_genero],

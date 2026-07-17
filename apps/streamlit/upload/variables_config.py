@@ -246,6 +246,22 @@ UPLOAD_VARIABLES: dict = {
         "download_url": "https://www.dane.gov.co/index.php/estadisticas-por-tema/pobreza-y-condiciones-de-vida/pobreza-multidimensional",
     },
 
+    "pobreza_monetaria_municipal": {
+        "label":       "Pobreza monetaria municipal",
+        "description": "Estimación de pobreza monetaria por municipio (DANE)",
+        "allowed_types": ["xlsx", "xls"],
+        "storage_folder": "pobreza_monetaria_municipal",
+        "format_hint": (
+            "Archivo Excel del DANE. Cada hoja debe llamarse **Monetaria YYYY** "
+            "(p.ej. 'Monetaria 2022'). El año se extrae automáticamente del nombre de la hoja; "
+            "un archivo puede contener varias hojas con distintos años.\n\n"
+            "Columnas requeridas: **Código Municipio**, **Estimación Pobreza Monetaria**."
+        ),
+        "required_columns": [],
+        "pipeline": "pobreza_monetaria_municipal",
+        "download_url": "https://sitios.dane.gov.co/EstimacionesModeloSAE/",
+    },
+
     "nbi_municipal": {
         "label":       "Necesidades Básicas Insatisfechas (NBI)",
         "description": "Proporción de personas con necesidades básicas insatisfechas por municipio",

@@ -144,6 +144,14 @@ def get_muni_socioeconomico(id_mun: str, year: int) -> dict:
     result["pobreza_monetaria"] = (rows[0]["pobreza_monetaria"] if rows else None)
 
     rows = query_rows("""
+        SELECT estimacion AS pobreza_monetaria_mun
+        FROM pobreza_monetaria_municipal
+        WHERE id_mun = %(id_mun)s AND year = %(year)s
+        LIMIT 1
+    """, params)
+    result["pobreza_monetaria_mun"] = (rows[0]["pobreza_monetaria_mun"] if rows else None)
+
+    rows = query_rows("""
         SELECT SUM(total) AS poblacion_empleada
         FROM employed_population
         WHERE id_mun = %(id_mun)s AND year = %(year)s
