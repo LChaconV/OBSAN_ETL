@@ -1,0 +1,10 @@
+gini_departamental_transform:
+  source:
+    golden_fact_dir: "data/golden/gini_departamental"
+  fact_table:
+    file_prefix: "gini_departamental"
+    grain:
+      - "id_dept"
+      - "year"
+    metric_columns:
+      - "gini"

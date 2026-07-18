@@ -262,6 +262,22 @@ UPLOAD_VARIABLES: dict = {
         "download_url": "https://sitios.dane.gov.co/EstimacionesModeloSAE/",
     },
 
+    "gini_departamental": {
+        "label":       "Coeficiente de GINI",
+        "description": "Coeficiente de Gini por departamento (DANE — Pobreza Monetaria)",
+        "allowed_types": ["xlsx", "xls"],
+        "storage_folder": "gini_departamental",
+        "format_hint": (
+            "Archivo Excel del DANE con una hoja cuyo nombre contenga **gini**. "
+            "El encabezado debe tener una columna de departamentos seguida de columnas con "
+            "los años disponibles (p. ej. 2012, 2013, …). "
+            "Los valores deben estar en formato decimal entre 0 y 1 (p. ej. 0.526)."
+        ),
+        "required_columns": [],
+        "pipeline": "gini_departamental",
+        "download_url": "https://www.dane.gov.co/index.php/estadisticas-por-tema/pobreza-y-condiciones-de-vida/pobreza-monetaria",
+    },
+
     "nbi_municipal": {
         "label":       "Necesidades Básicas Insatisfechas (NBI)",
         "description": "Proporción de personas con necesidades básicas insatisfechas por municipio",

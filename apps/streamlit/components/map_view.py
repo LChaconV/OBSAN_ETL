@@ -86,6 +86,7 @@ def _get_dept_at_point(lat: float, lng: float) -> dict | None:
 def _get_ipm_dept_data(dept_id: str, year: int | None) -> dict | None:
     from core.db import query_rows
     year_filter = f"AND year = {year}" if year else ""
+
     rows = query_rows(f"""
         SELECT id_dept, name_dept, year, total, cabeceras, rural
         FROM ipm_departamental
@@ -94,7 +95,20 @@ def _get_ipm_dept_data(dept_id: str, year: int | None) -> dict | None:
         ORDER BY year DESC
         LIMIT 1
     """, (dept_id,))
-    return dict(rows[0]) if rows else None
+    result: dict = dict(rows[0]) if rows else {"id_dept": dept_id}
+
+    rows_g = query_rows(f"""
+        SELECT gini
+        FROM gini_departamental
+        WHERE id_dept = %s
+        {year_filter}
+        ORDER BY year DESC
+        LIMIT 1
+    """, (dept_id,))
+    if rows_g:
+        result["gini"] = rows_g[0]["gini"]
+
+    return result if (result.get("total") is not None or result.get("gini") is not None) else None
 
 
 def _is_on_subregion(lat: float, lng: float) -> bool:
@@ -329,7 +343,7 @@ def render_map():
                     st.session_state.panel_b_key                 = None
                     st.rerun()
 
-            elif "ipm_departamental" in str(tooltip):
+            elif "ipm_departamental" in str(tooltip) or "gini_departamental" in str(tooltip):
                 if (st.session_state.get("clicked_muni_coords") != new_coords
                         or st.session_state.get("clicked_panel_cat") != "ipm_departamental"):
                     dept = _get_dept_at_point(lat, lng)
@@ -1529,7 +1543,7 @@ def _build_panel_b_html(data: dict, year: int, cat_id: str) -> str:
     cat_icon  = ("📊" if is_dept_level else
                  "🏠" if is_nbi else
                  cat_cfg.get("icon", ""))
-    cat_label = ("Incidencia de Pobreza Multidimensional" if is_dept_level else
+    cat_label = ("Indicadores Departamentales" if is_dept_level else
                  "Necesidades Básicas Insatisfechas" if is_nbi else
                  cat_cfg.get("label", ""))
 
@@ -1537,14 +1551,14 @@ def _build_panel_b_html(data: dict, year: int, cat_id: str) -> str:
         return f"""<div style="font-size:11px;font-weight:700;color:#333;
                                margin:8px 0 4px 0;">{title}</div>"""
 
-    def kv(label, value, unit=""):
+    def kv(label, value, unit="", decimals=1):
         if value is None:
             return ""
         try:
             if unit == "COP":
                 val_str = format_cop(value)
             else:
-                formatted = f"{float(value):,.1f}"
+                formatted = f"{float(value):,.{decimals}f}"
                 val_str = f"{formatted} {unit}".strip() if unit else formatted
         except Exception:
             val_str = str(value)
@@ -1581,6 +1595,10 @@ def _build_panel_b_html(data: dict, year: int, cat_id: str) -> str:
                 ⚠️ Esta cifra <b>no incluye</b> los valores de Bogotá D.C.,
                 que se reportan de forma separada.
             </div>"""
+        gini = data.get("gini")
+        if gini is not None:
+            content += section("📉 Desigualdad")
+            content += kv("Coeficiente de GINI", gini, decimals=3)
 
     elif cat_id == "nbi_municipal":
         content += section("🏠 Necesidades Básicas Insatisfechas")

@@ -291,6 +291,28 @@ ipm_departamental = ChoroplethLayer(
     source_url   = "https://www.dane.gov.co/index.php/estadisticas-por-tema/pobreza-y-condiciones-de-vida/pobreza-multidimensional",
 )
 
+gini_departamental = ChoroplethLayer(
+    id           = "gini_departamental",
+    label        = "Coeficiente de GINI",
+    description  = "Coeficiente de concentración del ingreso por departamento. Valores cercanos a 1 indican mayor desigualdad.",
+    geo_table    = "dim_departament",
+    geo_id_col   = "id_dept",
+    geo_name_col = "name_dept",
+    geo_geom_col = "geometry",
+    data_table   = "gini_departamental",
+    data_id_col  = "id_dept",
+    value_col    = "gini",
+    value_label  = "Coeficiente de GINI",
+    year_col     = "year",
+    color_low    = "#fff7fb",
+    color_high   = "#67001f",
+    opacity      = 0.80,
+    filterable_by_dept = True,
+    category     = "socioeconomico",
+    source_name  = "DANE",
+    source_url   = "https://www.dane.gov.co/index.php/estadisticas-por-tema/pobreza-y-condiciones-de-vida/pobreza-monetaria",
+)
+
 pobreza_monetaria_por_genero = BarChartLayer(
     id          = "pobreza_monetaria_por_genero",
     label       = "Pobreza monetaria por genero",
@@ -788,6 +810,7 @@ LAYER_TREE = LayerGroup(
             items    = [pobreza_monetaria_mun,
                         nbi_municipal,
                         ipm_departamental,
+                        gini_departamental,
                         #pobreza_monetaria_jefe_hogar,
                         pobreza_monetaria_por_genero],
         ),
