@@ -112,10 +112,11 @@ def _is_on_subregion(lat: float, lng: float) -> bool:
     return len(rows) > 0
 
 def render_map():
-    center  = MAP_CONFIG["center"]
-    zoom    = MAP_CONFIG["zoom"]
-    basemap = st.session_state.get("basemap", MAP_CONFIG["default_basemap"])
-    year    = st.session_state.get("selected_year")
+    center    = MAP_CONFIG["center"]
+    zoom      = MAP_CONFIG["zoom"]
+    basemap   = st.session_state.get("basemap", MAP_CONFIG["default_basemap"])
+    year      = st.session_state.get("selected_year")
+    overrides = st.session_state.get("layer_year_overrides", {})
 
     m = folium.Map(location=center, zoom_start=zoom, tiles=None, control_scale=True)
     _add_basemap(m, basemap)
@@ -155,22 +156,23 @@ def render_map():
             continue
 
         # Aplicar dept_ids solo si la capa lo soporta
-        layer_dept_ids = dept_ids if layer.filterable_by_dept else ()
+        layer_dept_ids  = dept_ids if layer.filterable_by_dept else ()
+        effective_year  = overrides.get(layer_id, year)
 
         with st.spinner(f"Cargando {layer.label}..."):
             try:
                 if isinstance(layer, ChoroplethLayer):
-                    info = _add_choropleth_layer(m, layer, year,
+                    info = _add_choropleth_layer(m, layer, effective_year,
                                                  dept_ids=layer_dept_ids)
                     if info:
                         legend_items.append(info)
                 elif isinstance(layer, BubbleLayer):
-                    info = _add_bubble_layer(m, layer, year,
+                    info = _add_bubble_layer(m, layer, effective_year,
                                              dept_ids=layer_dept_ids)
                     if info:
                         legend_items.append(info)
                 elif isinstance(layer, BarChartLayer):
-                    info = _add_bar_chart_layer(m, layer, year,
+                    info = _add_bar_chart_layer(m, layer, effective_year,
                                                 dept_ids=layer_dept_ids)
                     if info:
                         legend_items.append(info)
@@ -198,7 +200,7 @@ def render_map():
                         "dash_array": layer.dash_array,
                     })
                 elif isinstance(layer, VictimLayer):
-                    info = _add_victim_layer(m, layer, year,
+                    info = _add_victim_layer(m, layer, effective_year,
                                              dept_ids=layer_dept_ids)
                     if info:
                         legend_items.append(info)
@@ -208,7 +210,7 @@ def render_map():
                     if info:
                         legend_items.append(info)
                 elif isinstance(layer, IconScaleLayer):
-                    info = _add_icon_scale_layer(m, layer, year,
+                    info = _add_icon_scale_layer(m, layer, effective_year,
                                                  dept_ids=layer_dept_ids)
                     if info:
                         legend_items.append(info)
@@ -245,12 +247,14 @@ def render_map():
             )
 
     # garantiza un componente React completamente nuevo (sin reutilización de estado viejo).
+    overrides_sig = "-".join(f"{k}:{v}" for k, v in sorted(overrides.items()))
     map_key = (
         f"fmap_v{st.session_state.get('_map_version', 0)}"
         f"_{basemap.replace(' ', '_')}"
         f"_{st.session_state.get('selected_data_key', '')}"
         f"_{st.session_state.get('clicked_muni_id', '')}"
         f"_{st.session_state.get('clicked_muni_coords', '')}"
+        f"_{overrides_sig}"
     )
     # ── Panel B flotante ──────────────────────────────────────
     cat_id  = st.session_state.get("clicked_panel_cat") or _get_panel_b_cat()

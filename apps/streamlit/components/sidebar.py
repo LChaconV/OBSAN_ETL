@@ -31,7 +31,73 @@ def _layer_has_data(layer_id: str, data_table: str, year_col: str, year: int, ro
         return False
 
 
+@st.cache_data(ttl=300, show_spinner=False)
+def _get_available_years_for_layer(data_table: str, year_col: str, row_filter: str) -> list:
+    """Años con datos disponibles para una capa específica."""
+    if not data_table or not year_col:
+        return []
+    try:
+        where = f"({row_filter})" if row_filter else "TRUE"
+        rows = query_rows(
+            f'SELECT DISTINCT "{year_col}" FROM "{data_table}" '
+            f'WHERE {where} ORDER BY "{year_col}" DESC'
+        )
+        return [r[year_col] for r in rows]
+    except Exception:
+        return []
+
+
+@st.dialog("Datos no disponibles para este año")
+def _year_override_dialog():
+
+    info = st.session_state.get("_pending_yr_override")
+    if not info:
+        st.rerun()
+        return
+
+    layer_id    = info["layer_id"]
+    layer_label = info["layer_label"]
+    data_table  = info["data_table"]
+    year_col    = info["year_col"]
+    row_filter  = info["row_filter"]
+    cat_id      = info["cat_id"]
+    cat_cfg     = info["cat_cfg"]
+
+    global_year = st.session_state.get("selected_year")
+    available   = _get_available_years_for_layer(data_table, year_col, row_filter)
+
+    st.warning(
+        f"**{layer_label}** no tiene datos para el año **{global_year}**. "
+        "Puedes activarla con un año diferente; el geovisor mostrará un aviso "
+        "indicando que esta capa usa un año distinto al filtro global."
+    )
+
+    if not available:
+        st.error("No hay datos cargados para esta capa en ningún año.")
+        if st.button("Cerrar"):
+            st.session_state.pop("_pending_yr_override", None)
+            st.rerun()
+        return
+
+    override = st.selectbox("Año disponible:", options=available, key="dlg_yr_select")
+
+    c1, c2 = st.columns(2)
+    with c1:
+        if st.button("Activar capa", type="primary", use_container_width=True):
+            st.session_state.layer_year_overrides[layer_id] = override
+            gen = st.session_state.get("layer_reset_gen", 0)
+            st.session_state[f"chk_{layer_id}_{gen}"] = True
+            st.session_state.pop("_pending_yr_override", None)
+            _activate_layer(layer_id, cat_id, cat_cfg)
+    with c2:
+        if st.button("Cancelar", use_container_width=True):
+            st.session_state.pop("_pending_yr_override", None)
+            st.rerun()
+
+
 def render_sidebar():
+    if "layer_year_overrides" not in st.session_state:
+        st.session_state.layer_year_overrides = {}
     _render_header()
     st.markdown("---")
     _render_year_filter()
@@ -41,6 +107,9 @@ def render_sidebar():
     _render_categories()
     st.markdown("---")
     _render_footer()
+    # Diálogo de selección de año: se abre desde un único punto
+    if st.session_state.get("_pending_yr_override"):
+        _year_override_dialog()
 
 
 def _render_header():
@@ -106,6 +175,17 @@ def _render_year_filter():
     )
     if st.session_state.get("selected_year") != selected:
         st.session_state.selected_year = selected
+        overrides = st.session_state.get("layer_year_overrides", {})
+        for lid in list(overrides.keys()):
+            layer = LAYER_TREE.find_layer(lid)
+            if layer:
+                dt = getattr(layer, "data_table", "") or ""
+                yc = getattr(layer, "year_col",   "") or ""
+                rf = (getattr(layer, "row_filter", None)
+                      or getattr(layer, "filter_sql", None) or "")
+                if _layer_has_data(lid, dt, yc, int(selected) if selected else 0, rf):
+                    overrides.pop(lid)
+        st.session_state.layer_year_overrides = overrides
         st.cache_data.clear()
 
 
@@ -193,18 +273,23 @@ def _render_categories():
 
 
 def _render_layer_checkbox(layer: GeoLayer, cat_id: str, cat_cfg: dict):
-    """Checkbox de una capa con lógica de exclusividad."""
+    """Checkbox de una capa con lógica de exclusividad y override de año."""
     is_active = layer.id in st.session_state.get("active_layers", [])
 
-    # Verificar si la capa tiene datos para el año seleccionado
     year       = st.session_state.get("selected_year")
     data_table = getattr(layer, "data_table", None) or ""
     year_col   = getattr(layer, "year_col",   None) or ""
     row_filter = getattr(layer, "row_filter", None) or getattr(layer, "filter_sql", None) or ""
     has_data   = _layer_has_data(layer.id, data_table, year_col, int(year) if year else 0, row_filter)
 
-  
-    opacity = "0.9" if has_data else "0.35"
+    overrides    = st.session_state.get("layer_year_overrides", {})
+    has_override = layer.id in overrides
+    can_activate = has_data or has_override
+
+    opacity = "0.9" if can_activate else "0.35"
+    label   = (f"{layer.label}  ⚠️ {overrides[layer.id]}"
+               if has_override else layer.label)
+
     col_color, col_check = st.columns([1, 9])
     with col_color:
         if hasattr(layer, "color_high"):
@@ -223,27 +308,51 @@ def _render_layer_checkbox(layer: GeoLayer, cat_id: str, cat_cfg: dict):
             )
 
     with col_check:
-        help_text = layer.description or ""
-        if not has_data:
+        if has_override:
+            help_text = (
+                f"Mostrando año {overrides[layer.id]} "
+                f"(filtro global: {year}). "
+                "El mapa usa el año seleccionado para esta capa."
+            )
+        elif not has_data:
             help_text = f"Sin datos disponibles para el año {year}."
         else:
+            help_text = layer.description or ""
             if getattr(layer, "source_name", ""):
                 help_text += f"\n\n📊 Fuente: {layer.source_name}"
             if getattr(layer, "source_url", ""):
                 help_text += f"\n🔗 {layer.source_url}"
-        gen = st.session_state.get("layer_reset_gen", 0)
+
+        gen     = st.session_state.get("layer_reset_gen", 0)
         checked = st.checkbox(
-            label    = layer.label,
+            label    = label,
             value    = is_active,
             key      = f"chk_{layer.id}_{gen}",
             help     = help_text or None,
-            disabled = not has_data,
+            disabled = not can_activate,
         )
+
+    if not has_data and not has_override:
+        if st.button(
+            "📅 Activar con otro año",
+            key = f"yr_btn_{layer.id}_{gen}",
+        ):
+            st.session_state["_pending_yr_override"] = {
+                "layer_id":    layer.id,
+                "layer_label": layer.label,
+                "data_table":  data_table,
+                "year_col":    year_col,
+                "row_filter":  row_filter,
+                "cat_id":      cat_id,
+                "cat_cfg":     cat_cfg,
+            }
 
     if checked and not is_active:
         _activate_layer(layer.id, cat_id, cat_cfg)
-
     elif not checked and is_active:
+        if has_override:
+            overrides.pop(layer.id, None)
+            st.session_state.layer_year_overrides = overrides
         _deactivate_layer(layer.id, cat_id)
 
 
