@@ -88,22 +88,6 @@ resguardos_indigenas = HatchLayer(
     source_url  = "https://www.datos.gov.co",
 )
 
-red_vial = LineLayer(
-    id          = "red_vial",
-    label       = "Red vial",
-    description = "Red vial de Colombia",
-    table       = "dim_road_network",
-    geom_col    = "geometry",
-    properties  = ("id_road",),
-    color       = "#f5260b",   
-    opacity     = 0.7,
-    weight      = 1.2,
-    dash_array  = "",          # "" = sólida, "5 5" = punteada
-    z_index     = 8,
-    filterable_by_dept = False, 
-    category = "contexto"
-)
-
 
 desnutricion_aguda_5 = BubbleLayer(
     id          = "desnutricion_aguda_5",
@@ -782,14 +766,6 @@ LAYER_TREE = LayerGroup(
             expanded = True,
             items    = [municipios,departamentos, municipios_pdet, resguardos_indigenas],
         ),
-        LayerGroup(
-            id       = "infraestructura",
-            label    = "Infraestructura",
-            icon     = "🛣️",
-            expanded = False,
-            items    = [red_vial],
-        ),
-
         LayerGroup(
             id       = "seg_alimentaria",
             label    = "Seguridad alimentaria",
