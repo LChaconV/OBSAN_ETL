@@ -1,5 +1,6 @@
 const pipelineSchedules = [
     { name: "api_beneficiarios_iraca", trigger: "cron", hour: 0, minute: 0 }, // Aprox 2 minutos
+    { name: "api_oro_aluvion",         trigger: "cron", hour: 0, minute: 5 },
     { name: "api_edu_superior", trigger: "cron", hour: 0, minute: 10 }, // Aprox 1 minuto
     { name: "api_erradicacion_cultivos_coca", trigger: "cron", hour: 0, minute: 15 }, // Aprox 1 minuto
     { name: "api_indice_riesgo_irca", trigger: "cron", hour: 0, minute: 20 }, // Aprox 1 minuto

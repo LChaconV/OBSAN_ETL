@@ -51,6 +51,7 @@ PIPELINE_REGISTRY: dict = {
     "api_familias_accion": "api_familias_accion",
     "api_indice_riesgo_irca": "api_indice_riesgo_irca",
     "api_minerales": "api_minerales",
+    "api_oro_aluvion": "api_oro_aluvion",
     "api_produc_gas": "api_produc_gas",
     "api_produc_petroleo": "api_produc_petroleo",
     "api_regalias": "api_regalias",

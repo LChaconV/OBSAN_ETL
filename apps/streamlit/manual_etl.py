@@ -37,6 +37,7 @@ SCHEDULED_PIPELINES = [
     ScheduledPipeline("api_erradicacion_cultivos_coca", "Erradicación cultivos de coca", "00:15", "1 min"),
     ScheduledPipeline("api_indice_riesgo_irca", "Índice de riesgo IRCA", "00:20", "1 min"),
     ScheduledPipeline("api_minerales", "Minerales", "00:25", "1 min"),
+    ScheduledPipeline("api_oro_aluvion", "Oro de aluvión", "00:30", "1 min"),
     ScheduledPipeline("api_produc_gas", "Producción de gas", "00:30", "1 min"),
     ScheduledPipeline("api_produc_petroleo", "Producción de petróleo", "00:35", "1 min"),
     ScheduledPipeline("api_regalias", "Regalías", "00:40", "1 min"),
