@@ -44,7 +44,6 @@ class PipelineEvent:
 #  valor  = nombre de la carpeta dentro de src/etl/
 # ─────────────────────────────────────────────────────────────
 PIPELINE_REGISTRY: dict = {
-    "api_beneficiarios_iraca": "api_beneficiarios_iraca",
     "api_edu_escolar": "api_edu_escolar",
     "api_edu_superior": "api_edu_superior",
     "api_erradicacion_cultivos_coca": "api_erradicacion_cultivos_coca",

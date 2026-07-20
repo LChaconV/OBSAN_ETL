@@ -331,23 +331,6 @@ pobreza_monetaria_por_genero = BarChartLayer(
     z_index     = 5,
 )
 
-iraca = BeneficiaryLayer(
-    id           = "iraca",
-    label        = "Beneficiarios IRACA",
-    description  = "Municipios con beneficiarios del programa IRACA",
-    data_table   = "iraca_beneficiaries",
-    geo_table    = "dim_divipola",
-    geo_id_col   = "id_mun",
-    muni_id_col  = "id_mun",
-    count_col    = "beneficiaries_count",
-    year_col     = "year",
-    program_name = "IRACA",
-    extra_tooltip_cols = ("status", "type"),
-    z_index      = 20,   # encima de todo
-    category = "conflicto",
-    source_name = "Datos Abiertos",
-    source_url  = "https://www.datos.gov.co",
-)
 
 victimas = VictimLayer(
     id          = "victimas",
@@ -837,13 +820,6 @@ LAYER_TREE = LayerGroup(
                         gini_departamental,
                         #pobreza_monetaria_jefe_hogar,
                         pobreza_monetaria_por_genero],
-        ),
-        LayerGroup(
-            id       = "beneficiarios",
-            label    = "Programas sociales",
-            icon     = "👥",
-            expanded = False,
-            items    = [iraca],
         ),
         LayerGroup(
             id       = "conflicto",

@@ -1694,8 +1694,7 @@ def _build_panel_b_html(data: dict, year: int, cat_id: str) -> str:
                 content += kv(a.get("type", "—"), rend, "")
     elif cat_id == "conflicto":
         victimas = data.get("victimas", [])
-        iraca    = data.get("iraca", [])
-        if not victimas and not iraca:
+        if not victimas:
             content += (
                 "<div style='font-size:11px;color:#888;padding:6px 0;'>"
                 "Sin datos de conflicto disponibles para este municipio y año.</div>"
@@ -1704,13 +1703,6 @@ def _build_panel_b_html(data: dict, year: int, cat_id: str) -> str:
             content += section("🕊️ Víctimas")
             for v in victimas:
                 content += kv(v.get("event_name", "—"), v.get("total"), "personas")
-        if iraca:
-            content += section("👥 IRACA")
-            for i in iraca:
-                content += kv(
-                    f"{i.get('type','—')} · {i.get('status','—')}",
-                    i.get("total"), "personas"
-                )
 
     return f"""
     <style>

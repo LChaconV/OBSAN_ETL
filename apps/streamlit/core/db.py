@@ -319,17 +319,8 @@ def get_muni_conflicto(id_mun: str, year: int) -> dict:
         ORDER BY total DESC
     """, {"id_mun": id_mun, "year": year})
 
-    iraca = query_rows("""
-        SELECT SUM(beneficiaries_count) AS total,
-               status, type
-        FROM iraca_beneficiaries
-        WHERE id_mun = %(id_mun)s AND year = %(year)s
-        GROUP BY status, type
-    """, {"id_mun": id_mun, "year": year})
-
     return {
         "victimas": victimas,
-        "iraca":    iraca,
     }
 
 

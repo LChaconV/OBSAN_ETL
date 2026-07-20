@@ -439,9 +439,3 @@ def _render_conflicto(data: dict):
         for v in victimas:
             _kv(v.get("event_name", "—"), v.get("total"), unit="personas")
 
-    iraca = data.get("iraca", [])
-    if iraca:
-        _section("👥 Beneficiarios IRACA")
-        for i in iraca:
-            label = f"{i.get('type','—')} · {i.get('status','—')}"
-            _kv(label, i.get("total"), unit="personas")

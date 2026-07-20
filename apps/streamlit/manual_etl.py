@@ -32,7 +32,6 @@ class ScheduledPipeline:
 
 
 SCHEDULED_PIPELINES = [
-    ScheduledPipeline("api_beneficiarios_iraca", "Beneficiarios IRACA", "00:00", "2 min"),
     ScheduledPipeline("api_edu_superior", "Educación superior", "00:10", "1 min"),
     ScheduledPipeline("api_erradicacion_cultivos_coca", "Erradicación cultivos de coca", "00:15", "1 min"),
     ScheduledPipeline("api_indice_riesgo_irca", "Índice de riesgo IRCA", "00:20", "1 min"),
