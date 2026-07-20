@@ -917,7 +917,7 @@ CATEGORIES = {
     "seguridad_alimentaria": {
         "label": "Seguridad Alimentaria",
         "icon":  "🍽️",
-        "exclusive": False,   # puede coexistir con cualquier categoría
+        "exclusive": False,
     },
     "salud": {
         "label": "Estado Nutricional",
@@ -927,27 +927,27 @@ CATEGORIES = {
     "socioeconomico": {
         "label": "Condiciones Socioeconómicas",
         "icon":  "📊",
-        "exclusive": True,
+        "exclusive": False,
     },
     "ambiente": {
         "label": "Ambiente y Territorio",
         "icon":  "🌿",
-        "exclusive": True,
+        "exclusive": False,
     },
     "agropecuario": {
         "label": "Sector Agropecuario",
         "icon":  "🌾",
-        "exclusive": True,
+        "exclusive": False,
     },
     "conflicto": {
         "label": "Conflicto y Vulnerabilidad",
         "icon":  "🕊️",
-        "exclusive": True,
+        "exclusive": False,
     },
     "contexto": {
         "label": "Contexto Geográfico",
         "icon":  "🗺️",
-        "exclusive": False,   # siempre activable
+        "exclusive": False,
     },
 }
 # ─────────────────────────────────────────────────────────────
