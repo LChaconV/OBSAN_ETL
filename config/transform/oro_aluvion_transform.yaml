@@ -1,0 +1,51 @@
+oro_aluvion_transform:
+  source:
+    bronze_dir: "data/bronze/oro_aluvion"
+    silver_fact_dir: "data/silver/oro_aluvion"
+    golden_fact_dir: "data/golden/oro_aluvion"
+  run:
+    process_latest_run_only: true
+
+  validation:
+    required_columns:
+
+  date_parsing:
+    source_column:
+    raw_column:
+    parsed_column:
+    invalid_flag_column:
+    formats:
+      - "%d/%m/%Y"
+      - "%Y/%m/%d"
+
+  typing:
+    numeric_columns:
+      - "a_o"
+      - "hectareas_explotacion_ilicita"
+      - "total_evidencia_explotacion"
+
+    text_columns:
+      - "codigo_municipio"
+
+    datetime_columns:
+      - ":updated_at"
+
+  deduplication:
+    id_column: ":id"
+    order_column: ":updated_at"
+    keep: "last"
+
+  fact_table:
+    grain:
+      - "codigo_municipio"
+      - "a_o"
+    metric_columns:
+      - "hectareas_explotacion_ilicita"
+      - "total_evidencia_explotacion"
+    rename_columns:
+      a_o: "year"
+      hectareas_explotacion_ilicita: "illicit_hectares"
+      total_evidencia_explotacion: "total_evidence"
+      codigo_municipio: "id_mun"
+
+    file_prefix: "oro_aluvion"

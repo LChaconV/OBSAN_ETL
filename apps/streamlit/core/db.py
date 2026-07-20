@@ -51,6 +51,7 @@ def query_rows(sql: str, params: tuple = None) -> list[dict]:
     except Exception:
         return []
 
+
 def get_subregion_at_point(lat: float, lng: float, year: int) -> dict | None:
     """
     Dado un punto (lat, lng) y un año, retorna todos los indicadores
@@ -193,7 +194,7 @@ def get_muni_ambiente(id_mun: str, year: int) -> dict:
         WHERE id_mun = %(id_mun)s AND year = %(year)s
     """, {"id_mun": id_mun, "year": year})
 
-    # Petróleo y gas
+    # Petróleo y gas — tablas espaciales sin id_mun: usan el año global
     oil = query_rows("""
         SELECT SUM(produc_bls) AS produccion
         FROM oil_production
@@ -214,7 +215,6 @@ def get_muni_ambiente(id_mun: str, year: int) -> dict:
         )
     """, {"id_mun": id_mun, "year": year})
 
-    # Regalías
     royalties = query_rows("""
         SELECT SUM(royalties_cop) AS total
         FROM royalties
@@ -232,6 +232,15 @@ def get_muni_ambiente(id_mun: str, year: int) -> dict:
         WHERE id_mun = %(id_mun)s AND year = %(year)s
         GROUP BY mineral_resource
         ORDER BY total DESC
+    """, {"id_mun": id_mun, "year": year})
+
+    # Oro de aluvión
+    oro = query_rows("""
+        SELECT
+            SUM(illicit_hectares) AS illicit_hectares,
+            SUM(total_evidence)   AS total_evidence
+        FROM alluvial_gold_mining
+        WHERE id_mun = %(id_mun)s AND year = %(year)s
     """, {"id_mun": id_mun, "year": year})
 
     # Cultivos ilícitos
@@ -256,6 +265,7 @@ def get_muni_ambiente(id_mun: str, year: int) -> dict:
         "gas":            gas[0] if gas else {},
         "regalias":       royalties[0] if royalties else {},
         "minerales":      mineral,
+        "oro_aluvion":    oro[0] if oro else {},
         "cultivos":       crops,
         "clima":          clima,
     }

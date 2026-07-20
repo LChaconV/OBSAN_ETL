@@ -1644,6 +1644,16 @@ def _build_panel_b_html(data: dict, year: int, cat_id: str) -> str:
         content += kv("Regalías",  data.get("regalias", {}).get("total"),      "COP")
         for mineral in data.get("minerales", []):
             content += kv(mineral.get("mineral_resource", "—"), mineral.get("total"), "COP")
+        oro = data.get("oro_aluvion", {})
+        illicit_ha  = oro.get("illicit_hectares")
+        total_evid  = oro.get("total_evidence")
+        if illicit_ha is not None:
+            content += section("⛏️ Explotación de Oro de Aluvión")
+            content += kv("Explotación ilícita", illicit_ha, "ha")
+            content += kv("Total evidencia",     total_evid, "ha")
+            if total_evid and float(total_evid) > 0:
+                pct = round(float(illicit_ha) / float(total_evid) * 100, 1)
+                content += kv("% ilícito",       pct,        "%")
         cultivos = data.get("cultivos", [])
         if cultivos:
             content += section("🌿 Cultivos ilícitos")

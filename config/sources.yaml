@@ -389,6 +389,16 @@ minerales:
     bronze_dir: "data/bronze/minerales"
     file_prefix: "minerales"
 
+oro_aluvion:
+  base_url: "https://www.datos.gov.co/resource/g48d-yu62.json"
+  incremental: {enabled: true, column: ":updated_at", start_value: null}
+  pagination: {page_size: 50000, sleep_seconds: 0.2}
+  request: {timeout_seconds: 60, max_retries: 5}
+  select_columns: [":id", ":updated_at", "a_o", "codigo_municipio", "hectareas_explotacion_ilicita", "total_evidencia_explotacion"]
+  storage:
+    bronze_dir: "data/bronze/oro_aluvion"
+    file_prefix: "oro_aluvion"
+
 edu_superior:
   name: "Matriculados en Educación Superior"
   web_site: "https://www.datos.gov.co/Educaci-n/MEN_ESTADISTICAS-MATRICULA-POR-MUNICIPIOS_ES/y9ga-zwzy/about_data"
