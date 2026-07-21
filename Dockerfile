@@ -5,6 +5,11 @@ ARG UV_VERSION=0.11.16
 
 FROM ghcr.io/astral-sh/uv:${UV_VERSION} AS uv-bin
 
+FROM node:20-bookworm-slim AS pm2-stage
+ARG PM2_VERSION=5.4.3
+RUN npm install -g "pm2@${PM2_VERSION}" \
+    && npm cache clean --force
+
 FROM python:${PYTHON_VERSION}-slim-bookworm AS builder
 
 COPY --from=uv-bin /uv /uvx /usr/local/bin/
@@ -37,8 +42,6 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 FROM python:${PYTHON_VERSION}-slim-bookworm AS production
 
-ARG PM2_VERSION=5.4.3
-
 COPY --from=uv-bin /uv /uvx /usr/local/bin/
 
 ENV APP_HOME=/app \
@@ -60,15 +63,16 @@ RUN apt-get update \
         gdal-bin \
         libgomp1 \
         libpq5 \
-        nodejs \
-        npm \
         procps \
         proj-data \
         tini \
-    && npm install -g "pm2@${PM2_VERSION}" \
-    && npm cache clean --force \
-    && apt-get purge -y --auto-remove npm \
     && rm -rf /var/lib/apt/lists/* /tmp/* /root/.cache
+
+COPY --from=pm2-stage /usr/local/bin/node /usr/local/bin/node
+COPY --from=pm2-stage /usr/local/bin/pm2 /usr/local/bin/pm2
+COPY --from=pm2-stage /usr/local/bin/pm2-runtime /usr/local/bin/pm2-runtime
+COPY --from=pm2-stage /usr/local/bin/pm2-dev /usr/local/bin/pm2-dev
+COPY --from=pm2-stage /usr/local/lib/node_modules/pm2 /usr/local/lib/node_modules/pm2
 
 RUN groupadd --gid 10001 app \
     && useradd --uid 10001 --gid app --create-home --home-dir /tmp/app --shell /usr/sbin/nologin app
