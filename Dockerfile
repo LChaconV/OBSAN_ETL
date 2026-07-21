@@ -20,21 +20,6 @@ ENV UV_COMPILE_BYTECODE=1 \
 
 WORKDIR /app
 
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
-        build-essential \
-        g++ \
-        gcc \
-        libgdal-dev \
-        libgeos-dev \
-        libhdf5-dev \
-        libnetcdf-dev \
-        libpq-dev \
-        libproj-dev \
-        pkg-config \
-        proj-data \
-    && rm -rf /var/lib/apt/lists/*
-
 COPY pyproject.toml uv.lock ./
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-dev --no-install-project
