@@ -103,7 +103,14 @@ def _run_steps(**kwargs) -> None:
         logging.info("Año %s: %s filas cargadas.", year, rows)
         years_loaded.add(year)
 
-    # ── 7. Guardar estado ─────────────────────────────────────
+    # ── 7. Recrear vista ──────────────────────────────────────
+    from sqlalchemy import text
+    view_sql = (PROJECT_ROOT / "sql" / "views" / "v_alluvial_gold_illicit_pct.sql").read_text(encoding="utf-8")
+    with engine.begin() as conn:
+        conn.execute(text(view_sql))
+    logging.info("Vista v_alluvial_gold_illicit_pct actualizada.")
+
+    # ── 8. Guardar estado ─────────────────────────────────────
     new_checkpoint = extract.get_api_max_updated_at()
     _save_years_loaded(years_loaded, new_checkpoint)
     logging.info("Estado actualizado. Checkpoint: %s", new_checkpoint)
