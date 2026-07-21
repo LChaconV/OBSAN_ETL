@@ -20,7 +20,7 @@ from pathlib import Path
 
 import pandas as pd
 
-PROJECT_ROOT = Path(__file__).resolve().parents[4]
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
 GOLDEN_DIR   = PROJECT_ROOT / "data" / "golden" / "ipm_departamental"
 SHEET_NAME   = "IPM_Departamentos"
 YEAR_PAT     = re.compile(r"^\d{4}$")

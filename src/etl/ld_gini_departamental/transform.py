@@ -23,7 +23,7 @@ from pathlib import Path
 
 import pandas as pd
 
-PROJECT_ROOT = Path(__file__).resolve().parents[4]
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
 GOLDEN_DIR   = PROJECT_ROOT / "data" / "golden" / "gini_departamental"
 
 _DEPT_NAME_TO_CODE: dict[str, str] = {
