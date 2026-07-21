@@ -16,7 +16,7 @@ from src.etl.utils.db_utils import get_engine
 from src.etl.utils.config_utils import load_state, update_state
 from src.etl.utils.logging_utils import setup_logging
 
-PROJECT_ROOT  = Path(__file__).resolve().parents[4]
+PROJECT_ROOT  = Path(__file__).resolve().parents[3]
 GOLDEN_DIR    = PROJECT_ROOT / "data" / "golden" / "pobreza_monetaria_municipal"
 STATE_DB_PATH = PROJECT_ROOT / "config" / "state_db.yaml"
 LOG_DIR       = PROJECT_ROOT / "logs"
