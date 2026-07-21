@@ -297,24 +297,6 @@ gini_departamental = ChoroplethLayer(
     source_url   = "https://www.dane.gov.co/index.php/estadisticas-por-tema/pobreza-y-condiciones-de-vida/pobreza-monetaria",
 )
 
-pobreza_monetaria_por_genero = BarChartLayer(
-    id          = "pobreza_monetaria_por_genero",
-    label       = "Pobreza monetaria por genero",
-    description = "Índice de pobreza monetaria según genero por departamento",
-    data_table  = "mp_gender",
-    geo_table   = "dim_departament",
-    geo_id_col  = "id_dept",
-    value_col   = "mp_idx_val",
-    value_label = "Índice pobreza monetaria por genero (%)",
-    year_col    = "year",
-    group_col   = "id_gender",
-    group_table = "dim_gender",
-    bar_colors  = ("#3b82f6", "#ec4899"),   # azul=hombre, rosa=mujer
-    bar_width   = 12,
-    bar_max_height = 40,
-    z_index     = 5,
-)
-
 
 victimas = VictimLayer(
     id          = "victimas",
@@ -794,8 +776,7 @@ LAYER_TREE = LayerGroup(
                         nbi_municipal,
                         ipm_departamental,
                         gini_departamental,
-                        #pobreza_monetaria_jefe_hogar,
-                        pobreza_monetaria_por_genero],
+                        ],
         ),
         LayerGroup(
             id       = "conflicto",
