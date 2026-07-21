@@ -58,18 +58,8 @@ RUN apt-get update \
         ca-certificates \
         curl \
         gdal-bin \
-        libexpat1 \
-        libgdal32 \
-        libgeos-c1v5 \
         libgomp1 \
-        libhdf5-103-1 \
-        libjpeg62-turbo \
-        libnetcdf19 \
-        libpng16-16 \
         libpq5 \
-        libproj25 \
-        libsqlite3-0 \
-        libtiff6 \
         nodejs \
         npm \
         procps \
