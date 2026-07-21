@@ -63,7 +63,7 @@ municipios_pdet = HatchLayer(
     border_color = "#9f1239",
     border_weight= 1.2,
     z_index      = 3,
-    category = "contexto",
+    category = "conflicto",
     source_name = "Agencia de Renovación del Territorio",
     source_url  = "https://centralpdet.renovacionterritorio.gov.co/"
 )
@@ -83,7 +83,7 @@ resguardos_indigenas = HatchLayer(
     border_color     = "#15803d",
     border_weight    = 1.2,
     z_index          = 3,
-    category = "contexto",
+    category = "conflicto",
     source_name = "Datos Abiertos",
     source_url  = "https://www.datos.gov.co",
 )
@@ -764,7 +764,7 @@ LAYER_TREE = LayerGroup(
             label    = "División administrativa",
             icon     = "🗺️",
             expanded = True,
-            items    = [municipios,departamentos, municipios_pdet, resguardos_indigenas],
+            items    = [municipios, departamentos],
         ),
         LayerGroup(
             id       = "seg_alimentaria",
@@ -802,7 +802,7 @@ LAYER_TREE = LayerGroup(
             label    = "Conflicto",
             icon     = "🕊️",
             expanded = False,
-            items    = [victimas],
+            items    = [victimas, municipios_pdet, resguardos_indigenas],
         ),
         LayerGroup(
             id       = "hidrocarburos",
