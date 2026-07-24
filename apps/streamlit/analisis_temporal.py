@@ -136,6 +136,11 @@ def fetch_time_series(
     value_col = getattr(layer, "value_col", "")
     agg       = getattr(layer, "agg_func", "AVG")
 
+    # Las tasas per cápita no deben sumarse cuando se agrega sobre varios
+    # municipios o departamentos — la suma de tasas no tiene significado estadístico.
+    if agg == "SUM" and "per_capita" in value_col and not id_mun:
+        agg = "AVG"
+
     row_filter = (
         getattr(layer, "row_filter", "")
         or getattr(layer, "filter_sql", "")
@@ -177,7 +182,7 @@ def fetch_time_series(
 
 # ─── Descripciones automáticas ───────────────────────────────────────────────
 
-def _describe_trend(df: pd.DataFrame, label: str) -> str:
+def _describe_trend(df: pd.DataFrame, label: str, value_label: str = "") -> str:
     if len(df) < 2:
         return f"**{label}**: datos insuficientes para determinar tendencia."
 
@@ -191,6 +196,8 @@ def _describe_trend(df: pd.DataFrame, label: str) -> str:
     min_yr   = int(df.loc[df["value"].idxmin(), "year"])
     min_val  = df["value"].min()
 
+    unit_note = f" (medido en {value_label})" if value_label else ""
+
     if abs(slope) < 1e-9:
         direction, change = "estable", "sin variaciones significativas"
     elif slope > 0:
@@ -201,7 +208,7 @@ def _describe_trend(df: pd.DataFrame, label: str) -> str:
         change = f"una reducción del {abs(pct):.1f}% entre el primer y último año registrado"
 
     return (
-        f"**{label}** presenta una tendencia **{direction}**, con {change}. "
+        f"**{label}**{unit_note} presenta una tendencia **{direction}**, con {change}. "
         f"El valor más alto se registró en **{peak_yr}** ({peak_val:,.2f}) "
         f"y el más bajo en **{min_yr}** ({min_val:,.2f})."
     )
@@ -472,7 +479,7 @@ def render_analisis_temporal() -> None:
             st.markdown(f"#### {label}")
             fig = _single_line_chart(label, df, color, y_label)
             st.plotly_chart(fig, use_container_width=True)
-            st.markdown(_describe_trend(df, label))
+            st.markdown(_describe_trend(df, label, y_label))
             if i < len(frames) - 1:
                 st.divider()
 
