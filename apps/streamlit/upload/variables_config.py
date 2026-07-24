@@ -275,6 +275,7 @@ UPLOAD_VARIABLES: dict = {
         ),
         "required_columns": [],
         "pipeline": "gini_departamental",
+        "format_image":"apps/streamlit/assets/formats/gini.png",
         "download_url": "https://www.dane.gov.co/index.php/estadisticas-por-tema/pobreza-y-condiciones-de-vida/pobreza-monetaria",
     },
 
