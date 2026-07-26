@@ -183,36 +183,92 @@ def fetch_time_series(
 # ─── Descripciones automáticas ───────────────────────────────────────────────
 
 def _describe_trend(df: pd.DataFrame, label: str, value_label: str = "") -> str:
-    if len(df) < 2:
+    n = len(df)
+    if n < 2:
         return f"**{label}**: datos insuficientes para determinar tendencia."
 
-    coef  = np.polyfit(df["year"], df["value"], 1)
-    slope = coef[0]
-    v0, v1 = df["value"].iloc[0], df["value"].iloc[-1]
-    pct = ((v1 - v0) / abs(v0) * 100) if v0 != 0 else 0.0
+    is_rate   = value_label and ("%" in value_label or "tasa" in value_label.lower())
+    unit_note = f" (medido en {value_label})" if is_rate else ""
 
     peak_yr  = int(df.loc[df["value"].idxmax(), "year"])
     peak_val = df["value"].max()
     min_yr   = int(df.loc[df["value"].idxmin(), "year"])
     min_val  = df["value"].min()
-
-    unit_note = f" (medido en {value_label})" if value_label else ""
-
-    if abs(slope) < 1e-9:
-        direction, change = "estable", "sin variaciones significativas"
-    elif slope > 0:
-        direction = "creciente"
-        change = f"un aumento del {abs(pct):.1f}% entre el primer y último año registrado"
-    else:
-        direction = "decreciente"
-        change = f"una reducción del {abs(pct):.1f}% entre el primer y último año registrado"
-
-    return (
-        f"**{label}**{unit_note} presenta una tendencia **{direction}**, con {change}. "
+    stats_txt = (
         f"El valor más alto se registró en **{peak_yr}** ({peak_val:,.2f}) "
         f"y el más bajo en **{min_yr}** ({min_val:,.2f})."
     )
 
+    y0, y1 = int(df["year"].iloc[0]), int(df["year"].iloc[-1])
+    v0, v1 = df["value"].iloc[0], df["value"].iloc[-1]
+
+    # ── Caso especial: muy pocos años para validar una tendencia lineal ──────
+    if n < 4:
+        pct_endpoint = ((v1 - v0) / abs(v0) * 100) if v0 != 0 else float("nan")
+        if np.isnan(pct_endpoint):
+            change = f"pasó de {v0:,.2f} a {v1:,.2f}"
+        elif pct_endpoint >= 0:
+            change = f"un aumento del {pct_endpoint:.1f}%"
+        else:
+            change = f"una reducción del {abs(pct_endpoint):.1f}%"
+        return (
+            f"**{label}**{unit_note} solo cuenta con {n} años de dato ({y0}–{y1}), "
+            f"insuficientes para validar una tendencia estadística. Entre esos años "
+            f"registró {change} (de {v0:,.2f} a {v1:,.2f}). {stats_txt}"
+        )
+
+    # ── Ajuste lineal ─────────────────────────────────────────────────────────
+    slope, intercept = np.polyfit(df["year"], df["value"], 1)
+    pred   = slope * df["year"] + intercept
+    ss_res = float(np.sum((df["value"] - pred) ** 2))
+    ss_tot = float(np.sum((df["value"] - df["value"].mean()) ** 2))
+    r2     = 1.0 - ss_res / ss_tot if ss_tot != 0 else 1.0
+
+    R2_MIN            = 0.35   # por debajo: no se reporta tendencia lineal
+    PCT_STABLE        = 3.0    # % de cambio de tendencia por debajo del cual es "estable"
+    OSCILLATION_RATIO = 0.6    # proporción de cambios de signo para marcar "con oscilaciones"
+
+    if r2 < R2_MIN:
+        return (
+            f"**{label}**{unit_note} no presenta una tendencia lineal clara "
+            f"(R² = {r2:.2f}) — los valores fluctúan entre {y0} y {y1} sin un patrón sostenido. "
+            f"{stats_txt}"
+        )
+
+    pred_start = slope * df["year"].iloc[0] + intercept
+    pred_end   = slope * df["year"].iloc[-1] + intercept
+    pct_trend  = (
+        (pred_end - pred_start) / abs(pred_start) * 100
+        if pred_start != 0 else float("nan")
+    )
+
+    diffs      = np.diff(df["value"].to_numpy())
+    signs_nz   = np.sign(diffs)
+    signs_nz   = signs_nz[signs_nz != 0]
+    n_posibles = max(len(signs_nz) - 1, 0)
+    n_cambios  = int(np.sum(np.diff(signs_nz) != 0)) if len(signs_nz) > 1 else 0
+    ratio_osc  = (n_cambios / n_posibles) if n_posibles > 0 else 0.0
+
+    if not np.isnan(pct_trend) and abs(pct_trend) < PCT_STABLE:
+        direction = "estable"
+        change    = f"una variación de tendencia mínima ({pct_trend:+.1f}%)"
+    elif slope > 0:
+        direction = "creciente"
+        change    = (f"un aumento de tendencia del {abs(pct_trend):.1f}%"
+                      if not np.isnan(pct_trend) else "una tendencia al alza")
+    else:
+        direction = "decreciente"
+        change    = (f"una reducción de tendencia del {abs(pct_trend):.1f}%"
+                      if not np.isnan(pct_trend) else "una tendencia a la baja")
+
+    oscil_note = ""
+    if direction != "estable" and ratio_osc >= OSCILLATION_RATIO:
+        oscil_note = ", con oscilaciones interanuales importantes"
+
+    return (
+        f"**{label}**{unit_note} presenta una tendencia **{direction}**{oscil_note}, "
+        f"con {change} entre {y0} y {y1} (R² = {r2:.2f}). {stats_txt}"
+    )
 
 def _describe_correlation(r: float, label_x: str, label_y: str, n: int) -> str:
     if n < 3:
