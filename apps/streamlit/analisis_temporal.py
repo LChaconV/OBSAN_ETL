@@ -11,6 +11,7 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
+from scipy import stats as scipy_stats
 
 STREAMLIT_ROOT = Path(__file__).resolve().parent
 if str(STREAMLIT_ROOT) not in sys.path:
@@ -306,7 +307,9 @@ def _metodologia_texto(method: str, r2, n_years: int) -> str:
             f"(indicador **R² = {r2:.2f}**, donde 1 sería un ajuste perfecto)."
         )
     return "Datos insuficientes para aplicar un método de cálculo."
-def _describe_correlation(r: float, label_x: str, label_y: str, n: int) -> str:
+def _describe_correlation(
+    r: float, label_x: str, label_y: str, n: int, p_value: float | None = None
+) -> str:
     if n < 3:
         return "Se necesitan al menos 3 años con datos comunes para calcular la correlación."
 
@@ -323,9 +326,22 @@ def _describe_correlation(r: float, label_x: str, label_y: str, n: int) -> str:
     elif abs_r < 0.4:
         extra = " Las dos variables no muestran una asociación lineal clara."
 
+    if p_value is not None:
+        p_fmt = f"{p_value:.3f}" if p_value >= 0.001 else "< 0.001"
+        if p_value < 0.05:
+            sig_note = f" El resultado es **estadísticamente significativo** (p = {p_fmt})."
+        else:
+            sig_note = (
+                f" **Precaución:** el resultado **no es estadísticamente significativo** "
+                f"(p = {p_fmt}) — con solo {n} años de datos comunes, la correlación "
+                f"puede deberse al azar."
+            )
+    else:
+        sig_note = ""
+
     return (
         f"La correlación entre **{label_x}** y **{label_y}** es "
-        f"**{strength}** y **{direction}** (r = {r:.2f}, n = {n} años).{extra}"
+        f"**{strength}** y **{direction}** (r = {r:.2f}, n = {n} años).{extra}{sig_note}"
     )
 
 
@@ -365,9 +381,16 @@ def _single_line_chart(label: str, df: pd.DataFrame, color: str, y_label: str) -
 def _scatter_chart(
     df_x: pd.DataFrame, df_y: pd.DataFrame,
     label_x: str, label_y: str,
-) -> tuple[go.Figure, float, int]:
+) -> tuple[go.Figure, float, float | None, int]:
     merged = df_x.merge(df_y, on="year", suffixes=("_x", "_y")).dropna()
-    r = merged["value_x"].corr(merged["value_y"]) if len(merged) >= 2 else float("nan")
+    if len(merged) >= 3:
+        r, p_value = scipy_stats.pearsonr(merged["value_x"], merged["value_y"])
+    elif len(merged) == 2:
+        r = merged["value_x"].corr(merged["value_y"])
+        p_value = None
+    else:
+        r = float("nan")
+        p_value = None
 
     fig = go.Figure()
 
@@ -413,7 +436,7 @@ def _scatter_chart(
         margin = dict(t=20, b=50, l=60, r=20),
         height = 400,
     )
-    return fig, r, len(merged)
+    return fig, r, p_value, len(merged)
 
 
 def _matrix_chart(frames: dict[str, pd.DataFrame]) -> go.Figure | None:
@@ -601,14 +624,14 @@ def render_analisis_temporal() -> None:
                 if sel_x == sel_y:
                     st.warning("Selecciona dos variables distintas.")
                 else:
-                    fig_s, r, n = _scatter_chart(
+                    fig_s, r, p_value, n = _scatter_chart(
                         frames[sel_x], frames[sel_y], sel_x, sel_y
                     )
                     st.plotly_chart(fig_s, use_container_width=True)
 
                     st.markdown("### 📝 Descripción de resultados")
                     if not np.isnan(r):
-                        st.markdown(_describe_correlation(r, sel_x, sel_y, n))
+                        st.markdown(_describe_correlation(r, sel_x, sel_y, n, p_value))
                     else:
                         st.warning("No hay suficientes años en común para calcular la correlación.")
 
@@ -630,7 +653,27 @@ def render_analisis_temporal() -> None:
                     for i in range(len(labels)):
                         for j in range(i + 1, len(labels)):
                             r_val = corr.iloc[i, j]
-                            pair  = f"**{labels[i]}** y **{labels[j]}** (r = {r_val:.2f})"
+                            # calcular p-valor con los datos reales del par
+                            s_i = combined[labels[i]].dropna()
+                            s_j = combined[labels[j]].dropna()
+                            common = s_i.index.intersection(s_j.index)
+                            n_pair = len(common)
+                            if n_pair >= 3:
+                                _, p_pair = scipy_stats.pearsonr(
+                                    s_i.loc[common], s_j.loc[common]
+                                )
+                                p_fmt = f"{p_pair:.3f}" if p_pair >= 0.001 else "< 0.001"
+                                sig = "✓" if p_pair < 0.05 else "⚠️ n.s."
+                                pair = (
+                                    f"**{labels[i]}** y **{labels[j]}** "
+                                    f"(r = {r_val:.2f}, p = {p_fmt} {sig}, n = {n_pair})"
+                                )
+                            else:
+                                pair = (
+                                    f"**{labels[i]}** y **{labels[j]}** "
+                                    f"(r = {r_val:.2f}, n = {n_pair} — no es posible realizar "
+                                    f"prueba de significancia con menos de 3 años en común)"
+                                )
                             if abs(r_val) >= 0.7:
                                 pairs_strong.append(pair)
                             elif abs(r_val) >= 0.4:
@@ -644,3 +687,4 @@ def render_analisis_temporal() -> None:
                         st.markdown(f"**Correlación moderada** (0.4 ≤ |r| < 0.7): {'; '.join(pairs_mod)}.")
                     if pairs_weak:
                         st.markdown(f"**Correlación débil** (|r| < 0.4): {'; '.join(pairs_weak)}.")
+                    st.caption("✓ = estadísticamente significativo (p < 0.05) · ⚠️ n.s. = no significativo")
