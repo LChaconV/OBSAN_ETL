@@ -294,15 +294,13 @@ def _metodologia_texto(method: str, r2, n_years: int) -> str:
             "comportamiento de la serie. Esto se mide con un indicador llamado **R²** "
             f"(va de 0 a 1; entre más cercano a 1, mejor explica la línea los datos). "
             f"Aquí el R² fue de solo **{r2:.2f}**, por eso no se reporta un porcentaje "
-            "de tendencia — solo se muestran el valor más alto y más bajo registrados."
+            "de tendencia."
         )
     if method == "tendencia":
         return (
             "Se ajustó una **línea de tendencia** a todos los años disponibles (una "
             "técnica llamada regresión lineal), y el porcentaje mostrado se calculó "
-            "**a partir de esa línea**"
-            "Esto evita que un solo año atípico (por ejemplo, un dato "
-            "incompleto o un pico inusual) distorsione el porcentaje reportado. "
+            "**a partir de esa línea. **"
             f"La línea explica razonablemente bien el comportamiento de los datos "
             f"(indicador **R² = {r2:.2f}**, donde 1 sería un ajuste perfecto)."
         )
@@ -348,11 +346,23 @@ def _describe_correlation(
 # ─── Gráficos ────────────────────────────────────────────────────────────────
 
 def _single_line_chart(label: str, df: pd.DataFrame, color: str, y_label: str) -> go.Figure:
-    years = df["year"].astype(int).tolist()
+    years  = df["year"].astype(int).tolist()
+    values = df["value"].tolist()
+
+    # Insertar None entre años no consecutivos para que Plotly no una los puntos
+    x_plot: list = []
+    y_plot: list = []
+    for k, (yr, val) in enumerate(zip(years, values)):
+        if k > 0 and yr - years[k - 1] > 1:
+            x_plot.append(None)
+            y_plot.append(None)
+        x_plot.append(yr)
+        y_plot.append(val)
+
     fig = go.Figure()
     fig.add_trace(go.Scatter(
-        x    = years,
-        y    = df["value"],
+        x    = x_plot,
+        y    = y_plot,
         mode = "lines+markers",
         name = label,
         line = dict(color=color, width=2),
