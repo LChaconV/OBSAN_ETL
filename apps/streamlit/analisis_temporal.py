@@ -182,10 +182,18 @@ def fetch_time_series(
 
 # ─── Descripciones automáticas ───────────────────────────────────────────────
 
-def _describe_trend(df: pd.DataFrame, label: str, value_label: str = "") -> str:
+def _describe_trend(df: pd.DataFrame, label: str, value_label: str = "") -> dict:
+    """
+    Devuelve:
+      text     -> texto principal en lenguaje llano
+      method   -> "insuficiente" | "pocos_datos" | "sin_tendencia" | "tendencia"
+      r2       -> R² (float) o None si no aplica
+      n_years  -> número de años con dato
+    """
     n = len(df)
     if n < 2:
-        return f"**{label}**: datos insuficientes para determinar tendencia."
+        return {"text": f"**{label}**: datos insuficientes para determinar tendencia.",
+                "method": "insuficiente", "r2": None, "n_years": n}
 
     is_rate   = value_label and ("%" in value_label or "tasa" in value_label.lower())
     unit_note = f" (medido en {value_label})" if is_rate else ""
@@ -202,7 +210,6 @@ def _describe_trend(df: pd.DataFrame, label: str, value_label: str = "") -> str:
     y0, y1 = int(df["year"].iloc[0]), int(df["year"].iloc[-1])
     v0, v1 = df["value"].iloc[0], df["value"].iloc[-1]
 
-    # ── Caso especial: muy pocos años para validar una tendencia lineal ──────
     if n < 4:
         pct_endpoint = ((v1 - v0) / abs(v0) * 100) if v0 != 0 else float("nan")
         if np.isnan(pct_endpoint):
@@ -211,29 +218,29 @@ def _describe_trend(df: pd.DataFrame, label: str, value_label: str = "") -> str:
             change = f"un aumento del {pct_endpoint:.1f}%"
         else:
             change = f"una reducción del {abs(pct_endpoint):.1f}%"
-        return (
-            f"**{label}**{unit_note} solo cuenta con {n} años de dato ({y0}–{y1}), "
-            f"insuficientes para validar una tendencia estadística. Entre esos años "
-            f"registró {change} (de {v0:,.2f} a {v1:,.2f}). {stats_txt}"
+        text = (
+            f"**{label}**{unit_note} solo cuenta con {n} años de dato ({y0}–{y1}). "
+            f"Entre esos años registró {change} (de {v0:,.2f} a {v1:,.2f}), calculado "
+            f"directamente entre el primer y el último dato disponible ℹ️. {stats_txt}"
         )
+        return {"text": text, "method": "pocos_datos", "r2": None, "n_years": n}
 
-    # ── Ajuste lineal ─────────────────────────────────────────────────────────
     slope, intercept = np.polyfit(df["year"], df["value"], 1)
     pred   = slope * df["year"] + intercept
     ss_res = float(np.sum((df["value"] - pred) ** 2))
     ss_tot = float(np.sum((df["value"] - df["value"].mean()) ** 2))
     r2     = 1.0 - ss_res / ss_tot if ss_tot != 0 else 1.0
 
-    R2_MIN            = 0.35   # por debajo: no se reporta tendencia lineal
-    PCT_STABLE        = 3.0    # % de cambio de tendencia por debajo del cual es "estable"
-    OSCILLATION_RATIO = 0.6    # proporción de cambios de signo para marcar "con oscilaciones"
+    R2_MIN            = 0.35
+    PCT_STABLE        = 3.0
+    OSCILLATION_RATIO = 0.6
 
     if r2 < R2_MIN:
-        return (
-            f"**{label}**{unit_note} no presenta una tendencia lineal clara "
-            f"(R² = {r2:.2f}) — los valores fluctúan entre {y0} y {y1} sin un patrón sostenido. "
-            f"{stats_txt}"
+        text = (
+            f"**{label}**{unit_note} no muestra un patrón sostenido de aumento o disminución ℹ️ "
+            f"— los valores fluctúan bastante entre {y0} y {y1}. {stats_txt}"
         )
+        return {"text": text, "method": "sin_tendencia", "r2": r2, "n_years": n}
 
     pred_start = slope * df["year"].iloc[0] + intercept
     pred_end   = slope * df["year"].iloc[-1] + intercept
@@ -251,25 +258,54 @@ def _describe_trend(df: pd.DataFrame, label: str, value_label: str = "") -> str:
 
     if not np.isnan(pct_trend) and abs(pct_trend) < PCT_STABLE:
         direction = "estable"
-        change    = f"una variación de tendencia mínima ({pct_trend:+.1f}%)"
+        change    = f"una variación mínima ({pct_trend:+.1f}%)"
     elif slope > 0:
         direction = "creciente"
-        change    = (f"un aumento de tendencia del {abs(pct_trend):.1f}%"
+        change    = (f"un aumento del {abs(pct_trend):.1f}% en la tendencia general"
                       if not np.isnan(pct_trend) else "una tendencia al alza")
     else:
         direction = "decreciente"
-        change    = (f"una reducción de tendencia del {abs(pct_trend):.1f}%"
+        change    = (f"una reducción del {abs(pct_trend):.1f}% en la tendencia general"
                       if not np.isnan(pct_trend) else "una tendencia a la baja")
 
     oscil_note = ""
     if direction != "estable" and ratio_osc >= OSCILLATION_RATIO:
-        oscil_note = ", con oscilaciones interanuales importantes"
+        oscil_note = ", aunque con altibajos importantes de un año a otro"
 
-    return (
+    text = (
         f"**{label}**{unit_note} presenta una tendencia **{direction}**{oscil_note}, "
-        f"con {change} entre {y0} y {y1} (R² = {r2:.2f}). {stats_txt}"
+        f"con {change} entre {y0} y {y1} ℹ️. {stats_txt}"
     )
-
+    return {"text": text, "method": "tendencia", "r2": r2, "n_years": n}
+def _metodologia_texto(method: str, r2, n_years: int) -> str:
+    if method == "pocos_datos":
+        return (
+            f"Esta variable solo tiene **{n_years} años** con dato disponible. "
+            "Con tan pocos puntos no es posible calcular una tendencia estadísticamente "
+            "confiable, así que el porcentaje se calculó **directamente entre el primer "
+            "y el último dato registrado**, sin ajustar ninguna línea de tendencia."
+        )
+    if method == "sin_tendencia":
+        return (
+            "Se intentó ajustar una **línea de tendencia** (una técnica llamada "
+            "regresión lineal) a todos los años disponibles, pero los valores suben y "
+            "bajan de forma tan irregular que la línea no logra explicar bien el "
+            "comportamiento de la serie. Esto se mide con un indicador llamado **R²** "
+            f"(va de 0 a 1; entre más cercano a 1, mejor explica la línea los datos). "
+            f"Aquí el R² fue de solo **{r2:.2f}**, por eso no se reporta un porcentaje "
+            "de tendencia — solo se muestran el valor más alto y más bajo registrados."
+        )
+    if method == "tendencia":
+        return (
+            "Se ajustó una **línea de tendencia** a todos los años disponibles (una "
+            "técnica llamada regresión lineal), y el porcentaje mostrado se calculó "
+            "**a partir de esa línea**"
+            "Esto evita que un solo año atípico (por ejemplo, un dato "
+            "incompleto o un pico inusual) distorsione el porcentaje reportado. "
+            f"La línea explica razonablemente bien el comportamiento de los datos "
+            f"(indicador **R² = {r2:.2f}**, donde 1 sería un ajuste perfecto)."
+        )
+    return "Datos insuficientes para aplicar un método de cálculo."
 def _describe_correlation(r: float, label_x: str, label_y: str, n: int) -> str:
     if n < 3:
         return "Se necesitan al menos 3 años con datos comunes para calcular la correlación."
@@ -535,7 +571,11 @@ def render_analisis_temporal() -> None:
             st.markdown(f"#### {label}")
             fig = _single_line_chart(label, df, color, y_label)
             st.plotly_chart(fig, use_container_width=True)
-            st.markdown(_describe_trend(df, label, y_label))
+            #st.markdown(_describe_trend(df, label, y_label))
+            desc = _describe_trend(df, label, y_label)
+            st.markdown(desc["text"])
+            with st.expander("ℹ️ ¿Cómo se calculó este porcentaje?"):
+                st.markdown(_metodologia_texto(desc["method"], desc["r2"], desc["n_years"]))
             if i < len(frames) - 1:
                 st.divider()
 
