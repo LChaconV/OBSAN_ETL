@@ -59,8 +59,17 @@ def run() -> None:
         # 3. Lectura de datos
         df_silver = pd.read_parquet(latest_file)
 
+        dim_dir = PROJECT_ROOT / "data" / "golden" / "dimensions"
+        df_dim = pd.read_parquet(dim_dir / "victim_event_type.parquet")
+
         # 4. Definición del Esquema (DDL)
-      
+        create_dim_query = """
+        CREATE TABLE IF NOT EXISTS dim_victim_event (
+            id_victim_event INTEGER PRIMARY KEY,
+            event_name      VARCHAR(200)
+        );
+        """
+
         create_table_query = f"""
         CREATE TABLE IF NOT EXISTS {table_name} (
             id_victim SERIAL PRIMARY KEY,
@@ -70,19 +79,32 @@ def run() -> None:
             sexo VARCHAR(20),
             victim_count INTEGER,
 
-            CONSTRAINT fk_event_type 
-                FOREIGN KEY (id_victim_event) 
+            CONSTRAINT fk_event_type
+                FOREIGN KEY (id_victim_event)
                 REFERENCES dim_victim_event(id_victim_event)
         );
         """
 
         # 5. Ejecución de Carga
         with engine.begin() as conn:
+            logging.info("Creando/verificando tabla dim_victim_event")
+            conn.execute(text(create_dim_query))
+
+            logging.info("Cargando %d filas en dim_victim_event", len(df_dim))
+            df_dim.to_sql("temp_dim_victim_event", conn, if_exists="replace", index=False)
+            conn.execute(text("""
+                INSERT INTO dim_victim_event (id_victim_event, event_name)
+                SELECT id_victim_event, event_name FROM temp_dim_victim_event
+                ON CONFLICT (id_victim_event) DO UPDATE
+                    SET event_name = EXCLUDED.event_name;
+            """))
+            conn.execute(text("DROP TABLE IF EXISTS temp_dim_victim_event;"))
+
             logging.info("Verificando esquema de tabla %s", table_name)
             conn.execute(text(create_table_query))
-            
+
             logging.info("Insertando %d registros en %s", len(df_silver), table_name)
-            
+
             df_silver.to_sql(
                 name=table_name,
                 con=conn,
