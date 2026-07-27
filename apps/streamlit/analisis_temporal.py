@@ -300,7 +300,7 @@ def _metodologia_texto(method: str, r2, n_years: int) -> str:
         return (
             "Se ajustó una **línea de tendencia** a todos los años disponibles (una "
             "técnica llamada regresión lineal), y el porcentaje mostrado se calculó "
-            "**a partir de esa línea. **"
+            "**a partir de esa línea.**"
             f"La línea explica razonablemente bien el comportamiento de los datos "
             f"(indicador **R² = {r2:.2f}**, donde 1 sería un ajuste perfecto)."
         )
