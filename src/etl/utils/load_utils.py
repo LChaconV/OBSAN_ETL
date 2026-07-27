@@ -145,10 +145,13 @@ def load_parquet_to_postgres(
                 logging.warning("No se encontraron archivos en la ruta: %s", source_dir)
                 return
 
-        db_state = load_state(state_key, STATE_DB_PATH)
-        if db_state.get(state_field_name) == latest_file.name:
-            logging.info("El archivo %s ya fue cargado. Omitiendo.", latest_file.name)
-            return
+        # Cuando el archivo viene de un upload manual (input_file_path definido),
+        # siempre se carga para permitir correcciones de datos ya existentes.
+        if not input_file_path:
+            db_state = load_state(state_key, STATE_DB_PATH)
+            if db_state.get(state_field_name) == latest_file.name:
+                logging.info("El archivo %s ya fue cargado. Omitiendo.", latest_file.name)
+                return
 
         df = read_parquet_frame(latest_file)
 
