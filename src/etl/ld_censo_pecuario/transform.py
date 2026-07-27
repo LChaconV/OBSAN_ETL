@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import os
 import sys
+import unicodedata
 from pathlib import Path
 import yaml
 import pandas as pd
@@ -58,7 +59,7 @@ def find_header_row_excel(file_path: Path, required_columns: list, max_rows: int
     normalized = normalize_required_columns(required_columns)
 
     for idx, row in preview.iterrows():
-        row_cols_upper = {str(v).strip().upper(): str(v) for v in row.dropna()}
+        row_cols_upper = {_norm(str(v)): str(v) for v in row.dropna()}
         if all(
             find_matching_column(group, row_cols_upper) is not None
             for group in normalized
@@ -90,7 +91,7 @@ def read_input_file(file_path, required_columns: list[str]) -> pd.DataFrame:
 
 def validate_required_columns(df: pd.DataFrame, config: dict) -> None:
     normalized = normalize_required_columns(config["validation"]["required_columns"])
-    df_cols_upper = {col.strip().upper(): col for col in df.columns}
+    df_cols_upper = {_norm(col): col for col in df.columns}
 
     missing = [
         group for group in normalized
@@ -167,7 +168,7 @@ def resolve_column_aliases(df: pd.DataFrame, required_columns: list) -> dict:
     """
     normalized = normalize_required_columns(required_columns)
     rename = {}
-    df_cols_upper = {col.strip().upper(): col for col in df.columns}
+    df_cols_upper = {_norm(col): col for col in df.columns}
 
     for group in normalized:
         canonical = group[0]
@@ -177,6 +178,11 @@ def resolve_column_aliases(df: pd.DataFrame, required_columns: list) -> dict:
 
     return rename
 
+def _norm(s: str) -> str:
+    """Normaliza a NFC, quita espacios extremos y pasa a mayúsculas."""
+    return unicodedata.normalize("NFC", s).strip().upper()
+
+
 def find_matching_column(aliases: list[str], df_cols_upper: dict[str, str]) -> str | None:
     """
     Busca en df_cols_upper la primera columna que coincida con algún alias.
@@ -185,7 +191,7 @@ def find_matching_column(aliases: list[str], df_cols_upper: dict[str, str]) -> s
     """
     for strategy in ("exact", "startswith", "contains"):
         for alias in aliases:
-            alias_up = alias.strip().upper()
+            alias_up = _norm(alias)
             for col_up, col_real in df_cols_upper.items():
                 if strategy == "exact"      and col_up == alias_up:
                     return col_real
