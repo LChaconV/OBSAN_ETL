@@ -66,26 +66,28 @@ class ChoroplethLayer(GeoLayer):
     color_low:    str = "#fff5f0"
     color_high:   str = "#cb181d"
     year_col:     str = "year"
-    filter_sql:   str = "" 
+    filter_sql:     str = ""
+    value_decimals: int = 4
     border_visible: bool = True
 
     def get_geojson(self, year: int = None, **kwargs) -> dict:
         return _fetch_choropleth_geojson(
-            layer_id     = self.id,
-            layer_label  = self.label,
-            geo_table    = self.geo_table,
-            geo_id_col   = self.geo_id_col,
-            geo_name_col = self.geo_name_col,
-            geo_geom_col = self.geo_geom_col,
-            data_table   = self.data_table,
-            data_id_col  = self.data_id_col,
-            value_col    = self.value_col,
-            value_label  = self.value_label,
-            year_col     = self.year_col,
-            extra_cols   = tuple(self.extra_cols),
-            year         = year,
-            dept_ids     = kwargs.get("dept_ids", ()),
-            filter_sql   = self.filter_sql,
+            layer_id       = self.id,
+            layer_label    = self.label,
+            geo_table      = self.geo_table,
+            geo_id_col     = self.geo_id_col,
+            geo_name_col   = self.geo_name_col,
+            geo_geom_col   = self.geo_geom_col,
+            data_table     = self.data_table,
+            data_id_col    = self.data_id_col,
+            value_col      = self.value_col,
+            value_label    = self.value_label,
+            year_col       = self.year_col,
+            extra_cols     = tuple(self.extra_cols),
+            year           = year,
+            dept_ids       = kwargs.get("dept_ids", ()),
+            filter_sql     = self.filter_sql,
+            value_decimals = self.value_decimals,
         )
 
     def get_folium_style(self) -> dict:
@@ -97,7 +99,7 @@ def _fetch_choropleth_geojson(
     layer_id, layer_label, geo_table, geo_id_col, geo_name_col,
     geo_geom_col, data_table, data_id_col, value_col, value_label,
     year_col, extra_cols, year, dept_ids=(),
-    filter_sql="" 
+    filter_sql="", value_decimals=4,
 ) -> dict:
     extra_json  = ", ".join([f"'{c}', p.\"{c}\"" for c in extra_cols if c != year_col])
     year_filter = f"AND p.\"{year_col}\" = {year}" if year else ""
@@ -105,7 +107,7 @@ def _fetch_choropleth_geojson(
     if dept_ids:
         ids_str     = ", ".join([f"'{d}'" for d in dept_ids])
         dept_filter = f"AND s.id_dept IN ({ids_str})"
-    extra_filter = f"AND p.{filter_sql}" if filter_sql else ""  
+    extra_filter = f"AND p.{filter_sql}" if filter_sql else ""
 
     query = f"""
         SELECT json_build_object(
@@ -116,7 +118,7 @@ def _fetch_choropleth_geojson(
                 'layer_label', '{layer_label}',
                 'id',          s."{geo_id_col}",
                 'nombre',      s."{geo_name_col}",
-                'valor',       AVG(p."{value_col}"),
+                'valor',       ROUND(AVG(p."{value_col}")::numeric, {value_decimals}),
                 'indicador',   '{value_label}',
                 '{year_col}',  p."{year_col}"
                 {', ' + extra_json if extra_json else ''}
