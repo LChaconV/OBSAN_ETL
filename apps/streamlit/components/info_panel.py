@@ -426,7 +426,7 @@ def _render_agropecuario(data: dict):
         _section("🌱 Producción Agrícola")
         for a in agro:
             try:
-                rend = f"{float(a.get('avg_yield', 0) or 0):,.2f} t/ha"
+                rend = f"{float(a.get('total_production', 0) or 0):,.2f} t"
             except Exception:
                 rend = "—"
             _kv(a.get("type", "—"), rend)

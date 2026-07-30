@@ -1688,7 +1688,7 @@ def _build_panel_b_html(data: dict, year: int, cat_id: str) -> str:
             content += section("🌱 Producción Agrícola")
             for a in agro:
                 try:
-                    rend = f"{float(a.get('avg_yield', 0) or 0):,.2f} t/ha"
+                    rend = f"{float(a.get('total_production', 0) or 0):,.2f} t"
                 except Exception:
                     rend = "—"
                 content += kv(a.get("type", "—"), rend, "")

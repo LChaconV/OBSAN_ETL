@@ -557,9 +557,9 @@ _agro_base = dict(
     geo_table    = "dim_divipola",
     geo_id_col   = "id_mun",
     geo_geom_col = "geometry",
-    value_col    = "yield",
-    value_label  = "Rendimiento agrícola (t/ha)",
-    agg_func     = "AVG",
+    value_col    = "production",
+    value_label  = "Producción agrícola (t)",
+    agg_func     = "SUM",
     year_col     = "year",
 
     category     = "agropecuario",
