@@ -27,6 +27,7 @@ def apply_global_styles(*, map_layout: bool = False, compact_top: bool = False) 
             #MainMenu {{ visibility: hidden; }}
             footer {{ visibility: hidden; }}
 
+
             html,
             body,
             .stApp,

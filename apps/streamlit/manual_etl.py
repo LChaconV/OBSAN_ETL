@@ -15,7 +15,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from src.etl.utils.execution_lock import get_lock_path, read_active_lock_metadata
+from src.etl.utils.execution_lock import read_active_lock_metadata
 from upload.pipeline_runner import PIPELINE_REGISTRY, stream_pipeline
 from upload.pipelines.base import PipelineResult
 
@@ -29,33 +29,36 @@ class ScheduledPipeline:
     label: str
     schedule: str
     estimate: str
+    description: str = ""
 
 
 SCHEDULED_PIPELINES = [
-    ScheduledPipeline("api_edu_superior", "Educación superior", "00:10", "1 min"),
-    ScheduledPipeline("api_erradicacion_cultivos_coca", "Erradicación cultivos de coca", "00:15", "1 min"),
-    ScheduledPipeline("api_indice_riesgo_irca", "Índice de riesgo IRCA", "00:20", "1 min"),
-    ScheduledPipeline("api_minerales", "Minerales", "00:25", "1 min"),
-    ScheduledPipeline("api_oro_aluvion", "Oro de aluvión", "00:30", "1 min"),
-    ScheduledPipeline("api_produc_gas", "Producción de gas", "00:30", "1 min"),
-    ScheduledPipeline("api_produc_petroleo", "Producción de petróleo", "00:35", "1 min"),
-    ScheduledPipeline("api_regalias", "Regalías", "00:40", "1 min"),
-    ScheduledPipeline("url_terraclimate", "Terraclimate", "00:45", "1 h"),
-    ScheduledPipeline("api_edu_escolar", "Educación escolar", "01:45", "2 h"),
-    ScheduledPipeline("api_victimas", "Víctimas", "03:30", "3 h"),
-    ScheduledPipeline("api_familias_accion", "Familias en Acción", "06:30", "1 h"),
+    ScheduledPipeline("api_edu_superior", "Educación superior", "00:10", "1 min",
+        "Actualiza los datos de matrícula en educación superior (universidades, institutos técnicos y tecnológicos) por municipio."),
+    ScheduledPipeline("api_erradicacion_cultivos_coca", "Erradicación cultivos de coca", "00:15", "1 min",
+        "Actualiza el registro de erradicación de cultivos de coca por municipio."),
+    ScheduledPipeline("api_indice_riesgo_irca", "Índice de riesgo IRCA", "00:20", "1 min",
+        "Actualiza el Índice de Riesgo de la Calidad del Agua para Consumo Humano (IRCA) por municipio."),
+    ScheduledPipeline("api_minerales", "Minerales", "00:25", "1 min",
+        "Actualiza el registro de regalías por explotación de minerales pagadas a cada municipio."),
+    ScheduledPipeline("api_oro_aluvion", "Oro de aluvión", "00:30", "1 min",
+        "Actualiza los datos de minería de oro de aluvión — hectáreas ilícitas y evidencias registradas — por municipio."),
+    ScheduledPipeline("api_produc_gas", "Producción de gas", "00:30", "1 min",
+        "Actualiza la producción de gas natural por municipio."),
+    ScheduledPipeline("api_produc_petroleo", "Producción de petróleo", "00:35", "1 min",
+        "Actualiza la producción de petróleo por municipio."),
+    ScheduledPipeline("api_regalias", "Regalías", "00:40", "1 min",
+        "Actualiza el registro general de regalías pagadas por municipio."),
+    ScheduledPipeline("url_terraclimate", "Terraclimate", "00:45", "1 h",
+        "Actualiza las variables climáticas (precipitación, temperatura, humedad, entre otras) por municipio. Puede tardar hasta una hora."),
+    ScheduledPipeline("api_edu_escolar", "Educación escolar", "01:45", "2 h",
+        "Actualiza los datos de cobertura en educación básica y media por municipio. Puede tardar hasta dos horas."),
+    ScheduledPipeline("api_victimas", "Víctimas", "03:30", "3 h",
+        "Actualiza el registro de víctimas del conflicto armado por municipio, año, tipo de hecho y sexo. Puede tardar hasta tres horas."),
+    ScheduledPipeline("api_familias_accion", "Familias en Acción", "06:30", "1 h",
+        "Actualiza el número de familias beneficiarias del programa Familias en Acción por municipio."),
 ]
 
-
-def _format_seconds(seconds: int) -> str:
-    hours, remainder = divmod(seconds, 3600)
-    minutes, secs = divmod(remainder, 60)
-
-    if hours:
-        return f"{hours}h {minutes}m"
-    if minutes:
-        return f"{minutes}m {secs}s"
-    return f"{secs}s"
 
 
 def _pipeline_label(pipeline: ScheduledPipeline) -> str:
@@ -90,31 +93,23 @@ def _looks_like_error(line: str) -> bool:
 def _render_execution_lock() -> None:
     metadata = read_active_lock_metadata()
     if not metadata:
-        st.info(f"Sin ejecución ETL activa. Lock: `{get_lock_path()}`")
         return
 
+    pipeline_id = metadata.get("pipeline", "")
+    friendly = next(
+        (p.label for p in SCHEDULED_PIPELINES if p.id == pipeline_id),
+        pipeline_id or "desconocida",
+    )
     st.warning(
-        "Ejecución activa: "
-        f"`{metadata.get('pipeline', 'desconocida')}` · "
-        f"{metadata.get('owner', 'sin origen')} · "
-        f"{metadata.get('started_at', 'sin hora')}"
+        f"Hay una actualización de datos en curso ({friendly}). "
+        "Por favor espera a que termine antes de iniciar otra."
     )
 
 
 def _render_pipeline_summary(pipeline: ScheduledPipeline) -> None:
-    folder = PIPELINE_REGISTRY[pipeline.id]
-    col_schedule, col_estimate, col_timeout = st.columns(3)
+    if pipeline.description:
+        st.info(pipeline.description, icon="ℹ️")
 
-    col_schedule.metric("Horario programado", pipeline.schedule)
-    col_estimate.metric("Tiempo estimado", pipeline.estimate)
-    col_timeout.metric("Timeout manual", _format_seconds(MANUAL_TIMEOUT_SECONDS))
-
-    st.caption(
-        " · ".join([
-            f"Carpeta ETL: `{folder}`",
-            f"Comando: `uv run -m src.runner {folder}`",
-        ])
-    )
 
 
 def _run_selected_pipeline(pipeline: ScheduledPipeline) -> PipelineResult | None:
@@ -167,6 +162,14 @@ def _run_selected_pipeline(pipeline: ScheduledPipeline) -> PipelineResult | None
 
 def render_manual_etl_page() -> None:
     st.markdown("## Ejecuciones ETL")
+    st.markdown(
+        "Esta página permite actualizar manualmente los datos del observatorio. "
+        "Cada fuente se actualiza de forma automática, "
+        "pero aquí puedes forzar una actualización inmediata cuando lo necesites — "
+        "por ejemplo, después de corregir un error o cuando los datos automáticos no se hayan cargado correctamente. "
+        "Selecciona la fuente que quieres actualizar, confirma la acción y espera a que el proceso termine."
+    )
+    st.divider()
     _render_execution_lock()
 
     pipelines = _active_scheduled_pipelines()
