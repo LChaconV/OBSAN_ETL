@@ -173,21 +173,27 @@ def render_map():
         layer_dept_ids  = dept_ids if layer.filterable_by_dept else ()
         effective_year  = overrides.get(layer_id, year)
 
+        def _with_year_note(info: dict | None) -> dict | None:
+            """Leyenda del año que está mostrando cada capa"""
+            if info:
+                info["label"] = f"{info.get('label', layer.label)} — año {effective_year}"
+            return info
+
         with st.spinner(f"Cargando {layer.label}..."):
             try:
                 if isinstance(layer, ChoroplethLayer):
-                    info = _add_choropleth_layer(m, layer, effective_year,
-                                                 dept_ids=layer_dept_ids)
+                    info = _with_year_note(_add_choropleth_layer(m, layer, effective_year,
+                                                 dept_ids=layer_dept_ids))
                     if info:
                         legend_items.append(info)
                 elif isinstance(layer, BubbleLayer):
-                    info = _add_bubble_layer(m, layer, effective_year,
-                                             dept_ids=layer_dept_ids)
+                    info = _with_year_note(_add_bubble_layer(m, layer, effective_year,
+                                             dept_ids=layer_dept_ids))
                     if info:
                         legend_items.append(info)
                 elif isinstance(layer, BarChartLayer):
-                    info = _add_bar_chart_layer(m, layer, effective_year,
-                                                dept_ids=layer_dept_ids)
+                    info = _with_year_note(_add_bar_chart_layer(m, layer, effective_year,
+                                                dept_ids=layer_dept_ids))
                     if info:
                         legend_items.append(info)
                 elif isinstance(layer, PolygonLayer):
@@ -214,8 +220,8 @@ def render_map():
                         "dash_array": layer.dash_array,
                     })
                 elif isinstance(layer, VictimLayer):
-                    info = _add_victim_layer(m, layer, effective_year,
-                                             dept_ids=layer_dept_ids)
+                    info = _with_year_note(_add_victim_layer(m, layer, effective_year,
+                                             dept_ids=layer_dept_ids))
                     if info:
                         legend_items.append(info)
                 elif isinstance(layer, HatchLayer):
@@ -224,8 +230,8 @@ def render_map():
                     if info:
                         legend_items.append(info)
                 elif isinstance(layer, IconScaleLayer):
-                    info = _add_icon_scale_layer(m, layer, effective_year,
-                                                 dept_ids=layer_dept_ids)
+                    info = _with_year_note(_add_icon_scale_layer(m, layer, effective_year,
+                                                 dept_ids=layer_dept_ids))
                     if info:
                         legend_items.append(info)
             except Exception:
@@ -732,7 +738,7 @@ def _add_choropleth_layer(m, layer, year, dept_ids=()) -> dict | None:
         geojson_render = geojson
 
     tt_fields  = ["layer_id", "nombre", "valor"]
-    tt_aliases = ["", "Departamento:" if layer.geo_table == "dim_departament" else "Municipio:", f"{layer.value_label}:"]
+    tt_aliases = ["", "Departamento:" if layer.geo_table == "dim_departament" else "Municipio:", f"{layer.value_label} ({year}):"]
     if layer_notes:
         tt_fields.append("nota")
         tt_aliases.append("")
@@ -805,7 +811,8 @@ def _add_bubble_layer(m, layer, year, dept_ids=()) -> dict | None:
         fmt    = f"{{:,.{dec}f}}"
         tip    = (f"<div style='{_TT_HTML}'><b>{props.get('nombre','—')}</b><br>"
                   f"<span style='color:#555;font-size:11px;'>{layer.label}</span><br>"
-                  f"{layer.value_label}: <b>{fmt.format(valor)}</b></div>")
+                  f"{layer.value_label}: <b>{fmt.format(valor)}</b><br>"
+                  f"<span style='color:#999;font-size:10px;'>Año: {year}</span></div>")
         folium.CircleMarker(
             location=[coords[1], coords[0]],
             radius=radius, color=color,
