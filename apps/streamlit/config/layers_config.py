@@ -176,9 +176,9 @@ inseguridad_alimentaria = ChoroplethLayer(
     value_label  = "% inseguridad alimentaria (<18 años)",
     year_col     = "year",
 
-    # Escala de color: blanco rosado → rojo oscuro
-    color_low    = "#fff5f0",
-    color_high   = "#cb181d",
+    # Escala de color: naranjas colorblind-safe (ColorBrewer "Oranges")
+    color_low    = "#feedde",
+    color_high   = "#a63603",
     opacity      = 0.80,
 
     filterable_by_dept = False, 
@@ -245,8 +245,9 @@ nbi_municipal = ChoroplethLayer(
     year_col     = "year",
     filter_sql     = "indicador = 'prop_nbi'",
     value_decimals = 2,
-    color_low    = "#f3c2f5",
-    color_high   = "#c001d9",
+    # Escala de color: morados colorblind-safe (ColorBrewer "Purples")
+    color_low    = "#f2f0f7",
+    color_high   = "#54278f",
     opacity      = 0.80,
     filterable_by_dept = True,
     category     = "socioeconomico",
@@ -267,8 +268,9 @@ ipm_departamental = ChoroplethLayer(
     value_col    = "total",
     value_label  = "IPM Total (%)",
     year_col     = "year",
-    color_low    = "#fdfff7",
-    color_high   = "#aeee48",
+    # Escala de color: amarillo-verde colorblind-safe (ColorBrewer "YlGn")
+    color_low    = "#ffffcc",
+    color_high   = "#006837",
     opacity      = 0.80,
     filterable_by_dept = True,
     category     = "socioeconomico",
@@ -289,8 +291,9 @@ gini_departamental = ChoroplethLayer(
     value_col    = "gini",
     value_label  = "Coeficiente de GINI",
     year_col     = "year",
-    color_low    = "#fff7fb",
-    color_high   = "#67001f",
+    # Escala de color: rojos colorblind-safe (ColorBrewer "Reds")
+    color_low    = "#fee5d9",
+    color_high   = "#a50f15",
     opacity      = 0.80,
     filterable_by_dept = True,
     category     = "socioeconomico",
