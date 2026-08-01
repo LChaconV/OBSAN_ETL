@@ -742,7 +742,6 @@ def _process_file(uploaded, variable_id: str, config: dict, extra_values: dict =
     st.markdown("**Ejecutando pipeline ETL...**")
     status = st.status(f"Ejecutando pipeline `{config['pipeline']}`...", expanded=True)
     progress_bar = st.progress(0, text="Preparando ejecución...")
-    live_log = st.empty()
     logs: list[str] = []
     pipeline_result = None
 
@@ -753,7 +752,6 @@ def _process_file(uploaded, variable_id: str, config: dict, extra_values: dict =
     ):
         if event.kind in {"meta", "log", "heartbeat"}:
             logs.append(event.message)
-            live_log.code("\n".join(logs[-120:]), language="text")
             if event.kind == "log" and _looks_like_error(event.message):
                 _add_upload_event(
                     "ERROR",

@@ -115,8 +115,6 @@ def _render_pipeline_summary(pipeline: ScheduledPipeline) -> None:
 def _run_selected_pipeline(pipeline: ScheduledPipeline) -> PipelineResult | None:
     status = st.status(f"Ejecutando `{pipeline.id}`...", expanded=True)
     progress_bar = st.progress(0, text="Preparando ejecución...")
-    live_log = st.empty()
-    logs: list[str] = []
     result: PipelineResult | None = None
 
     for event in stream_pipeline(
@@ -125,10 +123,6 @@ def _run_selected_pipeline(pipeline: ScheduledPipeline) -> PipelineResult | None
         timeout_seconds=MANUAL_TIMEOUT_SECONDS,
         lock_owner="streamlit_manual",
     ):
-        if event.kind in {"meta", "log", "heartbeat"}:
-            logs.append(event.message)
-            live_log.code("\n".join(logs[-180:]), language="text")
-
         if event.kind == "log" and _looks_like_error(event.message):
             status.update(label=event.message, state="error", expanded=True)
 
