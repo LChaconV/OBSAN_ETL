@@ -54,10 +54,10 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/* /tmp/* /root/.cache
 
 COPY --from=pm2-stage /usr/local/bin/node /usr/local/bin/node
-COPY --from=pm2-stage /usr/local/bin/pm2 /usr/local/bin/pm2
-COPY --from=pm2-stage /usr/local/bin/pm2-runtime /usr/local/bin/pm2-runtime
-COPY --from=pm2-stage /usr/local/bin/pm2-dev /usr/local/bin/pm2-dev
 COPY --from=pm2-stage /usr/local/lib/node_modules/pm2 /usr/local/lib/node_modules/pm2
+RUN ln -s /usr/local/lib/node_modules/pm2/bin/pm2         /usr/local/bin/pm2 \
+ && ln -s /usr/local/lib/node_modules/pm2/bin/pm2-runtime /usr/local/bin/pm2-runtime \
+ && ln -s /usr/local/lib/node_modules/pm2/bin/pm2-dev     /usr/local/bin/pm2-dev
 
 RUN groupadd --gid 10001 app \
     && useradd --uid 10001 --gid app --create-home --home-dir /tmp/app --shell /usr/sbin/nologin app
