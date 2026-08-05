@@ -2,7 +2,6 @@
 UPLOAD_VARIABLES: dict = {
 
 "divipola": {
-        "hidden": False,
         "label": "División municipal de Colombia",
         "description": "División político-administrativa a nivel municipal de Colombia (DIVIPOLA).",
         "allowed_types": ["geojson", "parquet"],
@@ -27,7 +26,6 @@ UPLOAD_VARIABLES: dict = {
     },
 
     "departamento": {
-        "hidden": False,
         "label": "División departamental de Colombia",
         "description": "División político-administrativa a nivel departamental de Colombia.",
         "allowed_types": ["geojson", "parquet"],
@@ -52,7 +50,6 @@ UPLOAD_VARIABLES: dict = {
     },
 
     "municipios_pdet": {
-        "hidden": False,
         "label":       "Municipios PDET",
         "description": "Listado de municipios con Programas de Desarrollo con Enfoque Territorial",
         "allowed_types": ["xlsx", "csv"],
@@ -68,7 +65,6 @@ UPLOAD_VARIABLES: dict = {
     },
 
     "subregiones": {
-        "hidden": False,
         "label":       "Subregiones de Antioquia",
         "description": "Listado de subregiones de Antioquia",
         "allowed_types": ["geojson", "parquet"],

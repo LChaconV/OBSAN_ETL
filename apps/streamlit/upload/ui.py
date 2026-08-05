@@ -486,11 +486,14 @@ def render_upload_page():
 # ─────────────────────────────────────────────────────────────
 
 def _render_upload_form():
+    import importlib
+    import upload.variables_config as _vc
+    importlib.reload(_vc)
+
     st.markdown("### 1. Selecciona la variable")
 
-    # Selectbox con las variables disponibles (excluye las marcadas como hidden)
     options     = {"": "— Selecciona una variable —"}
-    options    |= {k: v["label"] for k, v in UPLOAD_VARIABLES.items() if not v.get("hidden")}
+    options    |= {k: v["label"] for k, v in _vc.UPLOAD_VARIABLES.items()}
     selected_id = st.selectbox(
         label            = "Variable",
         options          = list(options.keys()),
